@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Writers’ Room · Interactive prototype</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">
+<style>
+:root{--bg:#fff;--side:#E9E9EC;--sel:#D6D7DC;--text:#1F1F22;--muted:#5F5F64;--icon:#6B6B70;--line:#DEDEE2;--line2:#ECECEF;--accent:#2F6DB5;--accent-bg:#E6E7EB;--desk:#E9E9EC;--page:#fff;--ink:#111;--ins-bg:#E3F1E6;--ins-fg:#1E5A2E;--del-bg:#F8E3E1;--del-fg:#9A2B23;--amber:#C98A1B;--amber-ring:#F6E7CC;--blue-ring:#DCE6F5;--panel:#FAFAFB;--menu:#fff;--hover:rgba(0,0,0,.05);--toast:#2B2B2F;--toast-fg:#fff;--toast-link:#9CC1F0;--green:#3B8E4F;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1C1C1E;--side:#26262A;--sel:#3A3A3F;--text:#ECECEE;--muted:#A1A1A8;--icon:#A1A1A8;--line:#38383C;--line2:#2F2F33;--accent:#6EA2E6;--accent-bg:#34363C;--desk:#26262A;--page:#1C1C1E;--ink:#E8E8EA;--ins-bg:#1F3A27;--ins-fg:#9FD6AE;--del-bg:#3F2322;--del-fg:#F0A49C;--amber:#E0A84A;--amber-ring:#4A3A1E;--blue-ring:#22344D;--panel:#202023;--menu:#2A2A2E;--hover:rgba(255,255,255,.06);--toast:#ECECEE;--toast-fg:#1C1C1E;--toast-link:#2F6DB5;--green:#6CC685;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1C1C1E;--side:#26262A;--sel:#3A3A3F;--text:#ECECEE;--muted:#A1A1A8;--icon:#A1A1A8;--line:#38383C;--line2:#2F2F33;--accent:#6EA2E6;--accent-bg:#34363C;--desk:#26262A;--page:#1C1C1E;--ink:#E8E8EA;--ins-bg:#1F3A27;--ins-fg:#9FD6AE;--del-bg:#3F2322;--del-fg:#F0A49C;--amber:#E0A84A;--amber-ring:#4A3A1E;--blue-ring:#22344D;--panel:#202023;--menu:#2A2A2E;--hover:rgba(255,255,255,.06);--toast:#ECECEE;--toast-fg:#1C1C1E;--toast-link:#2F6DB5;--green:#6CC685;color-scheme:dark}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+#app{height:100%;display:flex;flex-direction:column;overflow:hidden}
+.T{transition:opacity .22s ease,transform .22s ease}
+header{height:56px;flex-shrink:0;position:relative;background:var(--bg);border-bottom:1px solid var(--line2);z-index:10}
+header>div{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 12px}
+#tbHome{padding-left:20px}
+.title{font-size:15px;font-weight:600;white-space:nowrap}
+.grp{display:flex;align-items:center;gap:2px;position:relative}
+.lgrp{display:flex;align-items:center;gap:8px;position:relative;min-width:0}
+.ib{width:32px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--icon)}
+.ib:hover{background:var(--hover)}.ib.on{background:var(--accent-bg);color:var(--accent)}
+.sw{font-size:13px;color:var(--icon);white-space:nowrap;padding:4px 2px}
+.av{width:24px;height:24px;border-radius:50%;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.a1{background:#C9D8EE;color:#1F3F6B}.a2{background:#E2D4EC;color:#4A2A63;margin-left:-6px}.a3{background:#D9E6D3;color:#2E4A25}
+.dv{width:1px;height:22px;background:var(--line);margin:0 8px}
+.ta{display:inline-grid;font-weight:400;cursor:pointer;font-size:13px;color:var(--muted)}
+.ta::after{content:attr(data-t);font-weight:600;height:0;visibility:hidden;overflow:hidden}
+.ta.flash,.ta.hold{font-weight:600;color:var(--text)}
+#body{flex:1;display:flex;min-height:0;position:relative}
+#left{width:300px;flex-shrink:0;overflow:hidden;background:var(--side);position:relative;transition:width .24s ease}
+#left .in{position:absolute;top:0;bottom:0;left:0;width:300px;border-right:1px solid var(--line);box-sizing:border-box;display:flex;flex-direction:column;overflow-y:auto}
+.left-closed #left{width:0}
+#center{flex:1;min-width:0;position:relative;background:var(--bg);transition:background-color .24s ease}
+.left-closed.is-script #center{background:var(--desk)}
+#center .in{position:absolute;inset:0;overflow:auto}
+#right{width:0;flex-shrink:0;overflow:hidden;background:var(--panel);transition:width .24s ease}
+.right-open #right{width:340px}
+#rp{width:340px;height:100%;box-sizing:border-box;border-left:1px solid var(--line);display:flex;flex-direction:column}
+.is-script .L-home,.is-home .L-script{opacity:0;transform:translateX(-10px);pointer-events:none}
+.is-home .L-script{transform:translateX(10px)}
+.tabs{display:flex;gap:20px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.tab{padding-bottom:8px;margin-bottom:-11px;border-bottom:2px solid transparent}
+.tab.on{color:var(--text);font-weight:600;border-color:var(--accent)}
+.list{padding:10px 8px 0}
+.row{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;padding:9px 12px;border-radius:6px;font-size:15px;font-weight:500}
+.row:hover{background:var(--hover)}.row.sel{background:var(--sel)}
+.row.big>span{display:flex;flex-direction:column}
+small{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
+.lab{font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--muted);padding:16px 12px 6px}
+.lab.r{display:flex;justify-content:space-between;align-items:center}
+.lab .ta{letter-spacing:0}
+.act{padding:8px 12px}
+.snap{padding:8px 12px;font-size:14px}.snap small{display:block}
+.tag{font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;background:#DCE8F7;color:#2E5A8C}
+.nd{font-size:13px}.nd.blue{color:var(--accent)}.nd.amber{color:var(--amber)}
+.legend{margin-top:auto;padding:14px 20px;font-size:12px;color:var(--muted)}
+.desk{min-width:max-content;display:flex;justify-content:center;padding:40px 24px 80px}
+.page{position:relative;width:612px;min-height:792px;flex-shrink:0;box-sizing:border-box;padding:48px 72px 48px 108px;background:var(--page);font-family:"Courier Prime","Courier New",monospace;font-size:16px;line-height:1.15;color:var(--ink);box-shadow:0 0 0 rgba(0,0,0,0);transition:box-shadow .24s ease}
+.left-closed .page{box-shadow:0 1px 3px rgba(0,0,0,.12),0 8px 24px rgba(0,0,0,.08)}
+.pn{text-align:right;margin-right:-24px;height:18px;opacity:0;transition:opacity .24s ease}
+.left-closed .pn{opacity:1}
+.sc{cursor:text}
+.b{margin-top:18px}.b.h{position:relative;margin-top:36px;border-radius:3px}.sc:first-of-type .b.h{margin-top:14px}
+.b.c{margin-left:158px}.b.p{margin-top:0;margin-left:115px}.b.d{margin-top:0;margin-left:72px;width:252px}
+.b.h.pulse{animation:pulse 1.2s ease}
+@keyframes pulse{0%,40%{background:var(--blue-ring)}100%{background:transparent}}
+ins{background:var(--ins-bg);color:var(--ins-fg);text-decoration:none}
+del{background:var(--del-bg);color:var(--del-fg)}
+.dot{position:absolute;left:-36px;top:4px;width:10px;height:10px;border-radius:50%}
+.dot.blue{background:var(--accent)}.dot.amber{background:var(--amber)}
+.dot.blue.on{box-shadow:0 0 0 4px var(--blue-ring)}.dot.amber.on{box-shadow:0 0 0 4px var(--amber-ring)}
+.pop,.menu{position:absolute;z-index:20;padding:4px;background:var(--menu);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:13px;line-height:1.2;color:var(--text)}
+.pop{left:-214px;top:22px;width:170px}
+.menu{top:36px;min-width:200px}
+.mi{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;height:30px;padding:0 10px;border-radius:6px;font-size:13px;gap:12px}
+.mi:hover{background:var(--hover)}.mi span{font-size:12px;color:var(--muted)}
+.rh{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 12px 12px 20px;border-bottom:1px solid var(--line2)}
+.rh b{font-size:13px}.rh>span{display:flex;flex-direction:column}
+.rb{flex:1;padding:20px;overflow:auto}
+.pv{font-family:"Courier Prime","Courier New",monospace;font-size:13px;line-height:1.2;color:var(--ink)}
+.pv .b{margin-top:14px}.pv .b.h{margin-top:0}.pv .b.c{margin-left:104px}.pv .b.p{margin-left:76px}.pv .b.d{margin-left:48px;width:180px}
+.note,.empty{font-size:12px;color:var(--muted);margin-top:18px;line-height:1.45}.empty{margin-top:0}
+.rf{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid var(--line2)}
+.pb{height:30px;display:inline-flex;align-items:center;padding:0 12px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:600}
+.pb[disabled]{opacity:.45;cursor:default}
+.home{max-width:760px;margin:0 auto;padding:40px 48px}
+.sh{display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 14px}
+.sh>span:first-child{display:flex;flex-direction:column}
+.eps{border-top:1px solid var(--line2)}
+.ep{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;height:48px;padding:0 12px;border-bottom:1px solid var(--line2);font-size:15px}
+.ep:hover{background:var(--hover)}
+.live{color:var(--green)}
+.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);opacity:0;pointer-events:none;display:flex;gap:14px;align-items:center;padding:10px 16px;border-radius:8px;background:var(--toast);color:var(--toast-fg);font-size:13px;white-space:nowrap;z-index:50;transition:opacity .2s ease,transform .2s ease}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{color:var(--toast-link);font-weight:600}
+.shade{position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.18);display:flex;align-items:flex-start;justify-content:center;padding-top:60px;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.review .shade{opacity:1;pointer-events:auto}
+.sheet{width:min(520px,92%);background:var(--menu);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.sheet h2{font-size:15px;font-weight:600;margin:0;padding:18px 20px 4px}
+.sheet>p{margin:0;padding:0 20px 12px;font-size:12px;color:var(--muted)}
+.rv{display:flex;align-items:center;gap:12px;padding:10px 20px;border-top:1px solid var(--line2);font-size:14px}
+.rv input{accent-color:var(--accent);width:15px;height:15px}
+.rv .st{margin-left:auto;font-size:12px;color:var(--muted)}
+.sf{display:flex;justify-content:flex-end;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid var(--line2)}
+.rvr{height:32px}.rvr .rvn{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text)}
+.rvr .nd{font-size:9px}.rvr .nd.blue{color:var(--accent)}.rvr .nd.amber{color:var(--amber)}
+.rvr .ck{width:14px;text-align:right;font-size:13px;color:var(--accent)}.rvr .ta{font-size:13px}
+.sep{height:1px;background:var(--line2);margin:4px 6px}
+.mi.send{color:var(--accent);font-weight:600}.mi.send[disabled]{color:var(--muted);font-weight:400;cursor:default}.mi.send[disabled]:hover{background:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div id="app" class="is-home">
+<header>
+<div id="tbHome" class="T L-home"><span class="title">Home</span><span class="grp" style="gap:14px"><span class="ta" data-t="+ New script" data-act="flash" tabindex="0">+ New script</span><button class="ib" id="thm" data-act="theme"></button><span class="av a3" style="border:0">AR</span></span></div>
+<div id="tbScript" class="T L-script"></div>
+</header>
+<div id="body">
+<aside id="left"><div class="in T L-home">
+<div class="lab">RECENT</div><div class="list" style="padding-top:0"><button class="row" data-act="open">Ep 3 · The Long Night</button></div>
+<div class="lab">SERIES</div><div class="list" style="padding-top:0"><div class="row sel">The Long Night</div><div class="row">Harbor Lights</div></div>
+<div class="lab">INVITATIONS</div><div class="list" style="padding-top:0"><div class="row" style="cursor:default"><span style="display:flex;flex-direction:column">Fogline<small>from Sam</small></span><span class="ta" id="acc" data-t="Accepted ✓" data-act="accept" tabindex="0">Accept</span></div></div>
+</div><div class="in T L-script" id="navS"></div></aside>
+<main id="center">
+<div class="in T L-home"><div class="home">
+<div class="sh"><span><span class="title">The Long Night</span><small>3 episodes · you’re the showrunner</small></span><span class="grp" style="gap:16px"><span class="ta" data-t="+ New episode" data-act="flash" tabindex="0">+ New episode</span><span class="ta" data-t="Members" data-act="flash" tabindex="0">Members</span></span></div>
+<div class="eps">
+<button class="ep" data-act="open">Ep 1 · Pilot<small>Maya · edited Oct 12</small></button>
+<button class="ep" data-act="open">Ep 2 · Undertow<small>Sam · edited Oct 16</small></button>
+<button class="ep" data-act="open">Ep 3 · The Long Night<small><span class="live">●</span> Maya, Sam · editing now</small></button>
+</div></div></div>
+<div class="in T L-script" id="scroller"><div class="desk"><div class="page" id="page"></div></div></div>
+</main>
+<aside id="right"><div id="rp"></div></aside>
+<div class="shade" id="shade"></div>
+</div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const P='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+const ic={side:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',back:'<path d="M15 5l-7 7 7 7"/>',share:'<path d="M12 15V3M8 7l4-4 4 4M5 12v8h14v-8"/>',chg:'<path d="M12 4v8M8 8h8M8 18h8"/>',rev:'<path d="M4 6h12M4 12h12M4 18h7M15 17l2 2 4-4"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'};
+const svg=k=>P+ic[k]+'</svg>';
+const $=s=>document.querySelector(s);
+const S=[
+{id:'km',nav:'Kitchen – Morning',main:[['h','INT. KITCHEN – MORNING'],['a','Gray light. MARA sets out two mugs, then puts one back.']]},
+{id:'kn',nav:'Kitchen – Night',main:[['h','INT. KITCHEN – NIGHT'],['a','Rain hammers the window. MARA grips the counter.'],['c','MARA'],['d','We can still fix this.'],['a','She doesn’t believe it either.']],
+ wi:[['h','INT. KITCHEN – NIGHT'],['a','Rain hammers the window. MARA grips the counter.{+ The kettle screams, ignored.+}'],['c','MARA'],['d','{-We can still fix this.-} {+It’s already too late.+}'],['a','She doesn’t believe it either.']]},
+{id:'hd',nav:'Harbor – Dawn',conflict:true,by:'Sam, 1h ago',main:[['h','EXT. HARBOR – DAWN'],['a','Fog lifts off the water. DEV waits on the pier.{+ A gull circles overhead.+}'],['c','DEV'],['d','She isn’t coming.']],
+ wi:[['h','EXT. HARBOR – DAWN'],['a','Fog lifts off the water. DEV waits on the pier{+, soaked+}.'],['c','DEV'],['p','(to himself)'],['d','She isn’t coming{+ back+}.']]},
+{id:'ld',nav:'Lighthouse – Day',main:[['h','INT. LIGHTHOUSE – DAY'],['a','A beam sweeps the empty keeper’s room.']],wi:[['h','INT. LIGHTHOUSE – DAY'],['a','A beam sweeps the empty keeper’s room.{+ DEV climbs the last stair, breathing hard.+}']]},
+{id:'od',nav:'Office – Day',main:[['h','INT. HARBORMASTER’S OFFICE – DAY'],['a','Charts pinned edge to edge. A radio crackles with nobody on it.']]}];
+S.forEach(s=>s.sent=false);
+const st={screen:'home',draft:'main',left:true,right:false,auto:false,chg:false,tab:'scenes',cur:'kn',pop:null,menu:null,review:false,rv:new Set(),snaps:[{n:'Table read draft',m:'Oct 15 · Maya',tag:'BLUE'}],wis:['Darker ending'],sess:false,undo:null};
+const clean=t=>t.replace(/\{\+(.*?)\+\}/g,'$1').replace(/\{-(.*?)-\}/g,'');
+const diff=t=>t.replace(/\{\+(.*?)\+\}/g,'<ins>$1</ins>').replace(/\{-(.*?)-\}/g,'<del>$1</del>');
+const sc=id=>S.find(s=>s.id===id);
+const status=s=>(st.draft!=='wi'||!s.wi||s.sent)?null:(s.conflict?'amber':'blue');
+const pending=()=>S.filter(s=>status(s));
+function blocks(s){if(st.draft==='wi'&&s.wi){if(s.sent)return s.wi.map(([k,t])=>[k,clean(t)]);return s.wi.map(([k,t])=>[k,st.chg?diff(t):clean(t)])}return s.main.map(([k,t])=>[k,clean(t)])}
+function tbScript(){const wi=st.draft==='wi';
+return `<div class="lgrp"><button class="ib" data-act="home" title="Back to home" aria-label="Back to home">${svg('back')}</button><button class="ib" data-act="left" title="${st.left?'Hide':'Show'} sidebar" aria-label="Toggle sidebar">${svg('side')}</button><span class="title">Ep 3 · The Long Night</span><button class="sw" data-act="menu" data-v="draft" title="Switch draft">${wi?'Main › Darker ending':'Main'} ▾</button>${st.menu==='draft'?`<div class="menu" style="left:250px"><button class="mi" data-act="draft" data-v="main">Main<span>${wi?'':'✓'}</span></button><button class="mi" data-act="draft" data-v="wi">Darker ending<span>${wi?'✓':''}</span></button></div>`:''}</div>
+<div class="grp"><span style="display:flex;margin-right:6px"><span class="av a1">MA</span><span class="av a2">SJ</span></span><span class="dv"></span>${wi?`<button class="ib${st.chg?' on':''}" data-act="chg" title="Show changes from main" aria-label="Show changes from main" aria-pressed="${st.chg}">${svg('chg')}</button><button class="ib${st.review?' on':''}" data-act="review" title="Review all changes" aria-label="Review all changes">${svg('rev')}</button>${st.review?rvMenu():''}`:''}<button class="ib${st.menu==='share'?' on':''}" data-act="menu" data-v="share" title="Share" aria-label="Share">${svg('share')}</button>${st.menu==='share'?`<div class="menu" style="right:0"><button class="mi" data-act="toast" data-v="Invite link copied">Copy invite link</button><button class="mi" data-act="toast" data-v="Inviting co-writers comes with roles in phase 2">Invite co-writer…</button></div>`:''}</div>`}
+function nav(){const wi=st.draft==='wi';let h=`<div class="tabs"><button class="ta tab${st.tab==='scenes'?' on':''}" data-t="Scenes" data-act="tab" data-v="scenes">Scenes</button><button class="ta tab${st.tab==='drafts'?' on':''}" data-t="Drafts" data-act="tab" data-v="drafts">Drafts</button></div>`;
+if(st.tab==='scenes'){h+='<div class="list">'+S.map(s=>{const x=status(s);const m=wi&&s.sent?'<small style="margin:0">Sent ✓</small>':x?`<span class="nd ${x}">●</span>`:'';return `<button class="row${st.cur===s.id?' sel':''}" data-act="jump" data-id="${s.id}">${s.nav}${m}</button>`}).join('')+'</div>'+(wi?'<div class="legend"><span class="nd blue">●</span> differs from main &nbsp; <span class="nd amber">●</span> main changed too</div>':'')}
+else{h+=`<div class="list"><button class="row big${!wi?' sel':''}" data-act="draft" data-v="main"><span><span style="font-weight:600">Main</span><small>Editing now · Maya, Sam</small></span></button><div class="act"><span class="ta" data-t="+ New what-if" data-act="newwi" tabindex="0">+ New what-if</span></div></div><div class="lab">WHAT-IFS</div><div class="list" style="padding-top:0">`+st.wis.map((w,i)=>`<button class="row big${wi&&!i?' sel':''}" data-act="draft" data-v="${i?'x':'wi'}"><span>${w}<small>${i?'you · just now · no changes yet':'Maya · 2h ago · '+pending().length+' scenes differ'}</small></span></button>`).join('')+`</div><div class="lab r"><span>SNAPSHOTS</span><span class="ta" data-t="+ Snapshot" data-act="snap" tabindex="0">+ Snapshot</span></div><div class="list" style="padding-top:0">`+st.snaps.map(x=>`<div class="snap">${x.n}${x.tag?` <span class="tag">${x.tag}</span>`:''}<small>${x.m}</small></div>`).join('')+'</div>'}
+return h}
+function page(){let h='<div class="pn">1.</div>';S.forEach(s=>{const x=status(s);h+=`<section class="sc" data-scene="${s.id}" id="sc-${s.id}">`;blocks(s).forEach(([k,t])=>{if(k==='h'){const on=st.pop===s.id||(st.right&&st.cur===s.id);h+=`<div class="b h" id="h-${s.id}">${x?`<button class="dot ${x}${on?' on':''}" data-act="dot" data-id="${s.id}" title="${x==='amber'?'Main changed this scene too':'Differs from main'}" aria-label="${x==='amber'?'Main changed this scene too':'Differs from main'}"></button>`:''}${st.pop===s.id?`<div class="pop" role="menu"><button class="mi" data-act="send" data-id="${s.id}">Send to main<span>⌘↵</span></button><button class="mi" data-act="compare" data-id="${s.id}">Compare<span>⌘⇧↵</span></button></div>`:''}${t}</div>`}else h+=`<div class="b ${k}">${t}</div>`});h+='</section>'});return h}
+function right(){const s=sc(st.cur),x=s&&status(s);let body;
+if(!x)body=`<p class="empty">${st.draft!=='wi'?'Compare shows main’s version while you work in a what-if.':s.sent?'This scene was sent. It matches main now.':'This scene matches main.'}</p>`;
+else body=`<div class="pv">${s.main.map(([k,t])=>`<div class="b ${k}">${s.conflict?diff(t):clean(t)}</div>`).join('')}</div><p class="note">${s.conflict?'Highlights show what Sam added since this what-if began.':'Main hasn’t changed this scene since your what-if began.'}</p>`;
+return `<div class="rh"><span><b>Main’s version</b><small>${s.nav}${x&&s.by?' · changed by '+s.by:''}</small></span><button class="ib" data-act="closeR" title="Close compare" aria-label="Close compare">${svg('x')}</button></div><div class="rb">${body}</div><div class="rf"><small style="margin:0">Esc to close</small>${x?`<button class="pb" data-act="sendc" data-id="${s.id}">Send mine to main</button>`:''}</div>`}
+function sheetOld(){const p=pending();return `<div class="sheet" role="dialog" aria-label="Review all changes"><h2>Send changes to main</h2><p>Scenes main also changed start unticked. Compare them first.</p>${p.length?p.map(s=>`<label class="rv"><input type="checkbox" data-act="rvt" data-id="${s.id}" ${st.rv.has(s.id)?'checked':''}>${s.nav}<span class="st">${s.conflict?'<span class="nd amber">●</span> main changed too · <span class="ta" data-t="Compare" data-act="rvc" data-id="'+s.id+'">Compare</span>':'<span class="nd blue">●</span> differs'}</span></label>`).join(''):'<p style="padding:10px 20px">Nothing left to send.</p>'}<div class="sf"><span class="ta" data-t="Cancel" data-act="review">Cancel</span><button class="pb" data-act="rvsend" ${st.rv.size?'':'disabled'}>Send ${st.rv.size} scene${st.rv.size===1?'':'s'} to main</button></div></div>`}
+function rvMenu(){const p=pending();return `<div class="menu" style="right:0;width:270px" role="menu" aria-label="Send changes to main"><div class="lab" style="padding:8px 10px 6px">SEND TO MAIN</div>${p.length?p.map(s=>s.conflict?`<div class="mi rvr"><span class="rvn"><span class="nd amber">●</span>${s.nav}</span><span class="ta" data-t="Compare" data-act="rvc" data-id="${s.id}">Compare</span></div>`:`<button class="mi rvr" data-act="rvt" data-id="${s.id}" role="menuitemcheckbox" aria-checked="${st.rv.has(s.id)}"><span class="rvn"><span class="nd blue">●</span>${s.nav}</span><span class="ck">${st.rv.has(s.id)?'✓':''}</span></button>`).join('')+`<div class="sep"></div><button class="mi send" data-act="rvsend" ${st.rv.size?'':'disabled'}>${st.rv.size?'Send '+st.rv.size+' scene'+(st.rv.size===1?'':'s'):'Select scenes to send'}</button>`:'<div class="mi" style="color:var(--muted)">Everything’s in main</div>'}</div>`}
+function render(){const a=$('#app');a.className=(st.screen==='home'?'is-home':'is-script')+(st.left||st.screen==='home'?'':' left-closed')+(st.right&&st.screen==='script'?' right-open':'');
+$('#tbScript').innerHTML=tbScript();$('#navS').innerHTML=nav();$('#page').innerHTML=page();$('#rp').innerHTML=right();$('#shade').innerHTML=''}
+let tt;function toast(m,undo){const t=$('#toast');t.innerHTML=m+(undo?'<button data-act="undo">Undo</button>':'');t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),6000)}
+function flash(el){el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),700)}
+function pulse(ids){requestAnimationFrame(()=>ids.forEach(id=>{const h=$('#h-'+id);if(h){h.classList.remove('pulse');void h.offsetWidth;h.classList.add('pulse')}}))}
+function send(ids){st.undo=ids.map(id=>{const s=sc(id);return[s,s.main]});ids.forEach(id=>{const s=sc(id);s.main=s.wi.map(([k,t])=>[k,clean(t)]);s.sent=true});
+if(!st.sess){st.snaps.unshift({n:'Before sending from “Darker ending”',m:'just now · automatic'});st.sess=true}
+st.pop=null;render();pulse(ids);toast(ids.length===1?`“${sc(ids[0]).nav}” sent to main`:`${ids.length} scenes sent to main`,true)}
+function compare(id){st.cur=id;st.pop=null;if(!st.right&&st.left&&innerWidth<1300){st.left=false;st.auto=true}st.right=true;render()}
+function closeR(){st.right=false;if(st.auto){st.left=true;st.auto=false}render()}
+function trySend(id){const s=sc(id);if(s.conflict){compare(id);toast('Main changed this scene too, so compare it first')}else send([id])}
+document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');const a=el&&el.dataset.act,id=el&&el.dataset.id,v=el&&el.dataset.v;
+if(!el){const s=e.target.closest('.sc');let ch=false;if(st.pop||st.menu||st.review){st.pop=null;st.menu=null;st.review=false;ch=true}if(s&&st.cur!==s.dataset.scene){st.cur=s.dataset.scene;ch=true}if(ch)render();return}
+if(a!=='menu'&&a!=='dot'&&a!=='rvt'){st.menu=null}
+if(a!=='review'&&a!=='rvt')st.review=false;
+switch(a){
+case'open':st.screen='script';st.left=true;st.right=false;render();break;
+case'home':Object.assign(st,{screen:'home',right:false,review:false,pop:null,auto:false});render();break;
+case'left':st.left=!st.left;st.auto=false;st.pop=null;render();break;
+case'menu':st.menu=st.menu===v?null:v;st.pop=null;render();break;
+case'draft':if(v==='x'){toast('Only “Darker ending” is wired up in this prototype');render();break}st.draft=v;st.pop=null;st.review=false;if(v==='main'){st.right=false;if(st.auto){st.left=true;st.auto=false}}render();break;
+case'chg':st.chg=!st.chg;render();break;
+case'review':st.review=!st.review;st.pop=null;st.rv=new Set(pending().filter(s=>!s.conflict).map(s=>s.id));render();break;
+case'rvt':st.rv.has(id)?st.rv.delete(id):st.rv.add(id);render();break;
+case'rvc':st.review=false;compare(id);break;
+case'rvsend':if(st.rv.size){const ids=[...st.rv];st.review=false;send(ids)}break;
+case'tab':st.tab=v;render();break;
+case'jump':st.cur=id;st.pop=null;render();$('#sc-'+id).scrollIntoView({behavior:'smooth',block:'start'});break;
+case'dot':st.cur=id;st.pop=st.pop===id?null:id;st.menu=null;render();break;
+case'send':trySend(id);break;
+case'compare':compare(id);break;
+case'sendc':send([id]);break;
+case'closeR':closeR();break;
+case'undo':if(st.undo){const ids=st.undo.map(([s])=>s.id);st.undo.forEach(([s,m])=>{s.main=m;s.sent=false});st.undo=null;render();toast('Send undone')}$('#toast').classList.remove('show');break;
+case'snap':st.snaps.unshift({n:'Snapshot',m:'just now · you'});render();flash(document.querySelector('[data-act="snap"]'));break;
+case'newwi':st.wis.push('Untitled what-if');render();flash(document.querySelector('[data-act="newwi"]'));break;
+case'accept':el.textContent='Accepted ✓';el.dataset.act='';flash(el);break;
+case'toast':render();toast(v);break;
+case'flash':flash(el);break;
+case'theme':theme=theme==='dark'?'light':'dark';applyTheme(theme);try{localStorage.setItem('wr-theme',theme)}catch(err){}break}
+});
+document.addEventListener('keydown',e=>{if(st.screen!=='script')return;
+if(e.key==='Escape'){if(st.pop||st.menu){st.pop=null;st.menu=null;render()}else if(st.review){st.review=false;render()}else if(st.right)closeR();return}
+if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();const s=sc(st.cur);if(!status(s)){toast('This scene has nothing to send');return}if(e.shiftKey)compare(s.id);else trySend(s.id)}});
+let theme;try{theme=localStorage.getItem('wr-theme')}catch(err){}
+if(theme!=='light'&&theme!=='dark')theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+function applyTheme(t){document.documentElement.dataset.theme=t;const b=$('#thm');const l=t==='dark'?'Switch to light mode':'Switch to dark mode';b.innerHTML=svg(t==='dark'?'sun':'moon');b.title=l;b.setAttribute('aria-label',l)}
+applyTheme(theme);
+render();
+</script>
+</body>
+</html>
