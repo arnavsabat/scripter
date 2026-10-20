@@ -23,6 +23,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **Local S3-compatible store:** SeaweedFS (D-004).
 - **Plan:** SPEC Part 6. Spike first (2-3 days, gates the stack); Phase 1 with a hard checkpoint at the end of week 6 and a fixed cut order; Phase 2; closed beta; Phase 3; beta hardening. v1 is roughly 8.5-10.5 weeks after the spike.
 - **Where the log lives:** in the repo, alongside SPEC.md and CLAUDE.md (D-001).
+- **Hosting the code:** a public GitHub repo, `arnavsabat/writers-room`, as `origin`; `main` is pushed (D-008).
 
 ## Proposed (awaiting Arnav)
 
@@ -121,10 +122,19 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-008 · 2026-10-20 · The repo is on GitHub
+
+- **Decision:** the local repo's remote `origin` is https://github.com/arnavsabat/writers-room, a public repository that Arnav created through the GitHub website. `main` is pushed to it.
+- **Options considered:** (a) Arnav creates the repo on github.com and Claude adds the remote and pushes; (b) install the GitHub CLI (`gh`) so Claude can create repos and open pull requests itself. On visibility: public now, or private until the spike passes.
+- **Tradeoffs:** (a) needs no new tools, but pull requests have to be opened in the browser. (b) adds a tool to Arnav's machine. A public repo is visible to recruiters from day one, but so is half-finished work.
+- **What changes for writers:** nothing. **For the system:** the code and this log are backed up off the laptop and can be shared, and CI can be added later (that would be its own decision).
+- **Rejected:** (b) for now, because nothing needs `gh` yet. It can be revisited when pull requests or CI come up.
+- **Status:** Arnav's call (Arnav chose the website route; the repo was created public).
+
 ### D-007 · 2026-10-20 · Issue: local services can't run yet on the dev machine
 
 - **What happened:** Phase 0 setup found no container runtime and no global pnpm on Arnav's Mac. `docker-compose.yml` is written but has not been started. All other Phase 0 checks (format, lint, typecheck, tests, web build) ran through `corepack pnpm` and pass.
-- **Options:** (a) Arnav installs a container runtime (Docker Desktop, OrbStack or Colima) and runs `corepack enable`; (b) Claude installs them. Not chosen: (b), because changing global software on Arnav's machine is his call.
+- **Options:** (a) Arnav installs a container runtime (Docker Desktop, OrbStack or Colima) and runs `corepack enable`; (b) Claude installs them. Not chosen: (b), because changing global software on Arnav's machine is Arnav's call.
 - **What changes for writers:** nothing. **For the system:** the Postgres, DynamoDB Local and SeaweedFS containers are unverified until a runtime exists. They're needed from Phase 1.
 - **Status:** open issue. Arnav's action.
 
