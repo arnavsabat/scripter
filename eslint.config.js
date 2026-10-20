@@ -14,7 +14,12 @@ export default defineConfig(
       parserOptions: {
         projectService: {
           // Config files that sit outside every package's tsconfig.
-          allowDefaultProject: ['*.js', '*.ts', 'apps/web/vite.config.ts'],
+          allowDefaultProject: [
+            '*.js',
+            '*.ts',
+            'apps/web/vite.config.ts',
+            'spike/vitest.config.ts',
+          ],
         },
         tsconfigRootDir: import.meta.dirname,
       },

@@ -31,11 +31,23 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- Nothing right now. The spike's outcome will land here as a proposal.
+- **D-012: the spike's outcome** (full evidence in `docs/spike-report.md`). Go with Yjs + y-prosemirror. Loro and prosemirror-collab aren't needed, so the offline promise stands. Four decisions:
+  - **P1:** store the element type as an attribute on one `block` node, not as separate node types. Recommended, because separate node types lost co-writers' text in tests 3 and 4.
+  - **P2:** accept test 2's split degradation for v1. Nothing is lost; a co-writer's words can land on the other half of the line.
+  - **P3:** after a remote change, run document fix-ups as a deferred local transaction, made deterministic.
+  - **P4:** anchor the viewport to the cursor's block.
+  - Also two required settings (protect every block type from undo deletion; recompute every decoration from the document) and a proposed performance budget (p95 keystroke at or under 16 ms on 110 pages).
 
 ## Open issues
 
 **Blockers and environment issues**
+
+- **Spike follow-ups (D-012):**
+  - The key editor tests have only run in Chromium; WebKit and Firefox still need running in the editor phase.
+  - Duplicate-ID repair after merges must become deterministic.
+  - The word diff must group changes into phrases.
+  - Watch the beta for test 2's split degradation.
+  - One long task of about 100-160 ms per run during solo typing needs a look.
 
 - **D-007:** No container runtime (Docker Desktop, OrbStack or Colima) is installed on Arnav's machine, so `docker-compose.yml` has not been started or verified. pnpm isn't on PATH either. Arnav runs `corepack enable` once to fix that.
 
@@ -113,9 +125,11 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Known risks
 
-- Mid-line paragraph splits under concurrent editing (Yjs binding).
-- Cursor stability when nodes are deleted by other users.
-- Page-break markers must survive remote updates (annotation handling in the Yjs binding).
+- Mid-line paragraph splits under concurrent editing (Yjs binding). Measured in the spike (D-012, test 2): nothing is lost and the structure never corrupts, but text typed concurrently in the second half of a line lands on the first half, and an in-progress word can tear. The risk is accepted pending P2.
+- Cursor stability when nodes are deleted by other users. Tested in the spike: the cursor moves to the start of the next line. Low risk now.
+- Page-break markers must survive remote updates (annotation handling in the Yjs binding). Resolved by design (D-012, F3): y-prosemirror replaces the whole document on every remote change, so decorations must be recomputed from the document. Mapped decorations vanish (20 → 0 in the control test).
+- New (D-012, F2): any transaction appended during a remote change is never written to Yjs, so clients silently diverge. Every auto-fix after a remote change must run as a separate local transaction.
+- New (D-012): y-prosemirror 1.3.7 is in maintenance mode. Its local keystroke cost grows with document length (p95 8 ms at 110 pages, so about 2x headroom).
 - Binding churn: a rewrite of the ProseMirror-Yjs binding has been planned, and no stable release has been confirmed. Update (D-010): the rewrite now exists as the pre-release `@y/prosemirror` 2.0.0-15 on the Yjs 14 beta, and the stable `y-prosemirror` 1.3.7 hasn't had a release since July 2025. We build on the stable line, and an upgrade later would be its own decision.
 - Scene IDs staying unique through copy-paste and splits.
 - Timeline: v1 is roughly 8.5-10.5 weeks after the spike (supersedes the imported 7-9 week estimate), alongside midterms and NeetCode prep.
@@ -126,6 +140,30 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-012 · 2026-10-20 · Spike outcome: Yjs passes, with four design changes
+
+- **What happened:** the 2-3 day spike ran all 8 tests from the spike plan. It used real headless Chromium with real key presses, two simulated clients, and both schema variants, for 56 test cases. All passed under the design proposed below. Full results, evidence and limits are in `docs/spike-report.md`.
+- **Proposal:** keep Yjs 13.6 + y-prosemirror 1.3.7. Loro and prosemirror-collab are not needed, so SPEC 4.9's offline promise ("edits made offline merge on reconnect, no length limit") stands. Adopt:
+  - **P1. Element type as an attribute.** One `block` node with a `type` attribute (`scene_heading`, `action`, …) instead of one ProseMirror node type per element.
+    - Options: (a) attribute; (b) node types, as SPEC 4.1 reads literally; (c) node types plus custom binding code.
+    - Tradeoffs: (a) is safe under concurrency, but per-type rules live in our code rather than in the schema. (b) is idiomatic ProseMirror but loses data. (c) means maintaining a fork of y-prosemirror's diffing.
+    - Writers: with (b), pressing Tab while a co-writer types in that line silently deleted the co-writer's words (test 3), and 12% of edits were lost in a long offline merge (test 4). With (a), nothing is lost.
+  - **P2. Accept the split degradation for v1.**
+    - Options: (a) accept it; (b) a custom split that keeps the original element for the half where a remote cursor sits (about 1-2 days).
+    - Writers: if you split the exact line a co-writer is typing in, their new words may land on the first half and an in-progress word can tear across the two lines. Nothing is ever lost. (b) only moves the problem to the other half.
+  - **P3. Fix-ups after remote changes run as a deferred, deterministic local transaction.**
+    - Options: (a) a deferred transaction; (b) one elected client repairs; (c) the server repairs.
+    - Why it's needed: y-prosemirror drops transactions appended during a remote change, which made the clients' documents diverge in test 3.
+    - Writers: nothing visible. Without the fix, screens could silently disagree.
+  - **P4. Viewport anchored to the cursor's block.**
+    - Options: (a) the cursor's block; (b) the browser's built-in anchoring.
+    - Writers: with (a), your line moved 0 px through six kinds of remote edit above you. With (b) it moved about 32 px whenever a page break reflowed.
+  - **Required settings (no real alternative):** protect every block type in the undo manager, because under the default, undoing a split deleted a co-writer's text (test 6); and recompute every decoration from the document, keying position-based features by block ID, because mapped decorations vanish on every remote change (test 5).
+  - **Proposed performance budget:** a regression test failing if p95 local keystroke or remote update exceeds 16 ms on a 110-page script. Measured: p95 8.0 ms and 3.5 ms.
+- **Rejected, from the user's point of view:** node types per element (it eats co-writers' words); Loro and prosemirror-collab (not needed, since Yjs passed); the browser's built-in scroll anchoring alone (your line still jumps when pages reflow).
+- **What changes for writers:** nothing they'd notice, which is the point. Typing, Tab, offline work, undo, Send to main and page breaks all behave as SPEC describes, under concurrency. **For the system:** SPEC 4.1 (how element types are stored) and SPEC 4.6 (when the ID plugin runs) change once approved, along with three rules for all future editor code (F2, F3, F4 in the report).
+- **Status:** Claude's proposal, awaiting Arnav.
 
 ### D-011 · 2026-10-20 · Spike test harness: real Chromium
 

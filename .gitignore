@@ -8,3 +8,7 @@ cdk.out/
 !.env.example
 .DS_Store
 .vite/
+
+# Throwaway spike artifacts (D-011)
+.vitest/
+spike/evidence/demo-build/
