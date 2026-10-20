@@ -24,12 +24,14 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **Plan:** SPEC Part 6. Spike first (2-3 days, gates the stack); Phase 1 with a hard checkpoint at the end of week 6 and a fixed cut order; Phase 2; closed beta; Phase 3; beta hardening. v1 is roughly 8.5-10.5 weeks after the spike.
 - **Where the log lives:** in the repo, alongside SPEC.md and CLAUDE.md (D-001).
 - **Hosting the code:** a public GitHub repo, `arnavsabat/writers-room`, as `origin`; `main` is pushed (D-008).
+- **Tooling:** the D-006 defaults are confirmed, including TypeScript 6.0.3 instead of 7.0 (D-009).
+- **Revision colors:** all out of v1. That means no page colors, no margin asterisks after sends, and no snapshot color tags. The prototype's "BLUE" snapshot tag is not built (D-009).
+- **Spike binding:** the stable line, `yjs` 13.6.33 with `y-prosemirror` 1.3.7 (D-010).
+- **Spike harness:** all 8 tests run in real headless Chromium (Vitest browser mode with Playwright), plus a two-editor demo page (D-011).
 
 ## Proposed (awaiting Arnav)
 
-- **D-006: Phase 0 tooling defaults** (TypeScript 6.0.3 rather than 7.0, pnpm 12.12.1 through corepack, Node 24.12 pin, module resolution, ESLint and Prettier settings, Vitest projects, the `@wr/*` package names, Postgres 18.6 locally, font-stack variables in tokens.css). Each one is easy to reverse.
-- **D-005, item 12:** the imported "revision colors after merges (asterisks in the margin)" item is treated as out of v1, because SPEC Part 2 puts revision colors in future versions and doesn't list them for v1.
-- **D-005, item 16:** the prototype's "BLUE" tag on the "Table read draft" snapshot will not be built, because revision color tags on snapshots are a future version.
+- Nothing right now. The spike's outcome will land here as a proposal.
 
 ## Open issues
 
@@ -102,7 +104,10 @@ Rejected since the log moved into the repo:
 - LocalStack as the local S3 store (D-004): since 2026.03.0 it needs an account auth token, which adds a sign-up step for every contributor.
 - Adobe S3Mock (D-004): a mock, so snapshot code could pass locally and still fail against real S3.
 - Garage (D-004): needs a one-time layout and key bootstrap before first use. That's extra setup friction for no benefit here.
-- TypeScript 7.0 for now (D-006, proposed): typescript-eslint doesn't support it yet, so we would lose the type-aware lint rules that catch bugs like un-awaited promises.
+- TypeScript 7.0 for now (D-006, confirmed in D-009): typescript-eslint doesn't support it yet, so we would lose the type-aware lint rules that catch bugs like un-awaited promises.
+- Revision colors or margin asterisks in v1 (D-009, Arnav's call): both would add Phase 3 scope that SPEC puts in future versions. Writers still see what was sent through Changes and Compare.
+- The `@y/prosemirror` 2.0 rewrite for the spike (D-010, Arnav's call): it's a pre-release on the Yjs 14 beta, so its API could change mid-build and the spike's results might not hold at its final release.
+- A jsdom-only spike, or jsdom plus separate Playwright scripts (D-011, Arnav's call): jsdom can't lay out a page, so it can't prove cursor and viewport stability (test 5) or real typing performance (test 7), and two setups would be more to explain.
 
 Earlier rejections, with reasons from the writer's point of view, are in the imported log below (section "Rejected options and why").
 
@@ -111,7 +116,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 - Mid-line paragraph splits under concurrent editing (Yjs binding).
 - Cursor stability when nodes are deleted by other users.
 - Page-break markers must survive remote updates (annotation handling in the Yjs binding).
-- Binding churn: a rewrite of the ProseMirror-Yjs binding has been planned, and no stable release has been confirmed.
+- Binding churn: a rewrite of the ProseMirror-Yjs binding has been planned, and no stable release has been confirmed. Update (D-010): the rewrite now exists as the pre-release `@y/prosemirror` 2.0.0-15 on the Yjs 14 beta, and the stable `y-prosemirror` 1.3.7 hasn't had a release since July 2025. We build on the stable line, and an upgrade later would be its own decision.
 - Scene IDs staying unique through copy-paste and splits.
 - Timeline: v1 is roughly 8.5-10.5 weeks after the spike (supersedes the imported 7-9 week estimate), alongside midterms and NeetCode prep.
 - New (D-003): the true-geometry promise assumes Courier Prime renders exactly 10 characters per inch at 16 px (an advance width of 0.6 em) in every browser. If it doesn't, character-count line wrapping and the on-screen lines will disagree. This gets verified in the editor phase, before pagination is built on it.
@@ -121,6 +126,34 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-011 · 2026-10-20 · Spike test harness: real Chromium
+
+- **Decision:** the spike's 8 tests run in Vitest browser mode, driving headless Chromium through Playwright, with real keyboard input. There's also a two-editor demo page Arnav can open and try. `playwright` and `@vitest/browser-playwright` are installed in `spike/` only and leave with it.
+- **Options considered:** (a) real Chromium for all 8 tests; (b) jsdom for the convergence tests plus separate Playwright scripts for tests 5 and 7; (c) jsdom only.
+- **Tradeoffs:** (a) is one runner with real layout, real input events and real timing, but slower to start and needs a Chromium download of about 150 MB. (b) gives the same evidence with two setups. (c) is fastest but has no layout, so it can't measure cursor and viewport stability or real typing cost.
+- **What changes for writers:** nothing directly. The spike's verdict on "your view doesn't jump" and "typing stays fast" is measured in a real browser, not simulated. **For the system:** the evidence is trustworthy.
+- **Rejected:** (b) adds a second setup for the same evidence; (c) can't answer tests 5 and 7.
+- **Status:** Arnav's call.
+
+### D-010 · 2026-10-20 · Spike binding: stable y-prosemirror
+
+- **Decision:** the spike tests `yjs` 13.6.33 with `y-prosemirror` 1.3.7, the stable line, against ProseMirror's current 1.x packages.
+- **Options considered:** (a) the stable line; (b) the `@y/prosemirror` 2.0 pre-release rewrite on the Yjs 14 beta; (c) both, stable first, then tests 2 and 5 again on the rewrite.
+- **Tradeoffs:** (a) is mature and widely used, but in maintenance mode, with no release since July 2025. (b) is future-facing, but a pre-release whose API could still change. (c) costs about half a day more.
+- **What changes for writers:** nothing directly. They get the editor binding that's most likely to behave the same tomorrow as it does today. **For the system:** v1 builds on a proven base. Moving to the rewrite later would be a separate decision with its own tests.
+- **Rejected:** (b) for the risk of the API changing under us; (c) wasn't needed for the go/no-go call.
+- **Status:** Arnav's call.
+
+### D-009 · 2026-10-20 · Confirmations: tooling defaults and revision colors
+
+- **Decision:** (1) every D-006 tooling default is confirmed, with TypeScript 6.0.3 rather than 7.0 as the headline. (2) The two D-005 readings are confirmed: revision colors after sends (Hollywood page colors and margin asterisks) are out of v1, and the prototype's "BLUE" snapshot tag is not built.
+- **Options considered for revision colors:** (a) all future, matching SPEC; (b) margin asterisks in v1 with colors later; (c) everything in v1.
+- **Tradeoffs:** (a) keeps Phase 3 at its planned scope. (b) is cheap, because it's built from the diff we already compute, but it's still added scope. (c) adds the most scope and contradicts SPEC Part 2.
+- **What changes for writers:** in v1, writers find out what changed through Changes, Compare and the margin dots, not through revision colors. **For the system:** no revision-color state on snapshots in v1, though the snapshots table can take a tag later.
+- **Note:** Arnav found the first framing of the D-005 question unclear, because it pointed at item numbers instead of saying what would change. From now on, questions are asked in plain terms first.
+- **Rejected:** (b) and (c), as added scope with no v1 need.
+- **Status:** Arnav's call.
 
 ### D-008 · 2026-10-20 · The repo is on GitHub
 
