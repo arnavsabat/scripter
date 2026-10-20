@@ -1,0 +1,13 @@
+{
+  "name": "@wr/pagination",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure pagination function over document blocks.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

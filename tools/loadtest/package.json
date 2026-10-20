@@ -1,0 +1,13 @@
+{
+  "name": "@wr/loadtest",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Load-test harness for the sync service.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

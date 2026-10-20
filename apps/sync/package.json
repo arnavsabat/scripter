@@ -1,0 +1,13 @@
+{
+  "name": "@wr/sync",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Custom Node WebSocket sync server on y-protocols (home servers, leases, edit log).",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

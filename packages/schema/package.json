@@ -1,0 +1,13 @@
+{
+  "name": "@wr/schema",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "ProseMirror schema, element types, Enter/Tab state machine, ID plugin.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  }
+}

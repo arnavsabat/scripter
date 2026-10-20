@@ -1,0 +1,8 @@
+pnpm-lock.yaml
+node_modules/
+dist/
+coverage/
+cdk.out/
+# docs/ holds the verbatim spec, the decision log and the prototype (visual source of truth); never reformat them.
+docs/
+CLAUDE.md
