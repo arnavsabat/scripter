@@ -1,0 +1,49 @@
+# Local services for development. Start with `pnpm services:up`.
+# Credentials here are for local development only and must never be reused anywhere else.
+name: writers-room
+
+services:
+  postgres:
+    image: postgres:18.6
+    environment:
+      POSTGRES_USER: wr
+      POSTGRES_PASSWORD: wr_dev_only
+      POSTGRES_DB: writers_room
+    ports:
+      - '5432:5432'
+    volumes:
+      # Postgres 18 images keep data under /var/lib/postgresql/<major>/, so mount the parent.
+      - postgres-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U wr -d writers_room']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Edit log, ownership leases and server membership (SPEC 5.4).
+  dynamodb:
+    image: amazon/dynamodb-local:3.3.1
+    command: -jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data
+    working_dir: /home/dynamodblocal
+    user: root
+    ports:
+      - '8000:8000'
+    volumes:
+      - dynamodb-data:/home/dynamodblocal/data
+
+  # S3-compatible store for compacted snapshots (SeaweedFS, decision log D-004).
+  s3:
+    image: chrislusf/seaweedfs:4.48
+    command: server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
+    ports:
+      - '8333:8333'
+    volumes:
+      - s3-data:/data
+      - ./infra/local/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+
+  # The three local sync nodes (SPEC 5.1) are added here in Phase 1, once apps/sync exists.
+
+volumes:
+  postgres-data:
+  dynamodb-data:
+  s3-data:
