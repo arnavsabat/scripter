@@ -14,6 +14,14 @@ const logger = {
 };
 
 async function storageFromEnv(): Promise<Storage> {
+  // Never fall through to real AWS by accident: without local endpoints the AWS SDK would use
+  // whatever credentials this machine has. Real AWS must be asked for explicitly.
+  if (env.WR_STORAGE !== 'memory' && env.WR_STORAGE !== 'aws' && !env.DYNAMODB_ENDPOINT) {
+    logger.error(
+      'no storage configured: copy .env.example to .env (local services), or set WR_STORAGE=memory, or WR_STORAGE=aws for real AWS',
+    );
+    process.exit(1);
+  }
   if (env.WR_STORAGE === 'memory') {
     logger.info('⚠️  in-memory storage: nothing survives a restart (development only)');
     return memoryStorage();

@@ -75,7 +75,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 **Blockers and environment issues**
 
-- **D-020: the storage-backed tests haven't run yet.** OrbStack isn't installed, so `pnpm --filter @wr/sync test:services` hasn't been run. That's the real DynamoDB edit log, the S3 snapshots, and a SIGKILL crash of a real server process. Every guarantee is proven with in-memory storage, which has the same semantics, in Node and in the browser, but the real-service run is still owed.
+- ~~D-020: storage-backed tests not yet run~~: resolved in D-021. All 6 pass against DynamoDB Local and SeaweedFS, three runs in a row, including the SIGKILL crash of a real server process.
 - **D-020: no client heartbeat.** The browser notices a dead connection through the WebSocket closing and the browser's offline event. If the network dies silently (a "half-open" socket), the Offline cue can lag until the OS times out the socket. Edits are never lost either way, because they're kept on the device and resent by the handshake. A small app-level heartbeat is a candidate for the next phase.
 - **D-020: web test runs end with a 10-second wait.** Vite's own browser connections outlive the test server's teardown, so Vitest waits out its timeout. The run still exits 0, and our servers leave nothing open.
 
@@ -86,7 +86,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Watch the beta for test 2's split degradation.
   - One long task of about 100-160 ms per run during solo typing needs a look.
 
-- **D-007:** No container runtime (Docker Desktop, OrbStack or Colima) is installed on Arnav's machine, so `docker-compose.yml` has not been started or verified. pnpm isn't on PATH either. Arnav runs `corepack enable` once to fix that.
+- ~~D-007: no container runtime~~: resolved. OrbStack is installed, and the compose services run (D-021).
 
 **Decisions the spec leaves open** (each is brought to Arnav with options when its phase starts)
 
@@ -192,6 +192,17 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-021 · 2026-10-22 · Local services running; storage-backed tests pass; two fixes
+
+- **What happened:** Arnav installed OrbStack, and `docker compose up` started Postgres, DynamoDB Local and SeaweedFS. The 6 storage-backed tests then passed: append order with conditional writes, 900 KB updates in chunks, an incomplete chunk group skipped without reusing its seq, truncation, the S3 snapshot round trip, and a real server process killed with SIGKILL mid-typing with every word recovered from DynamoDB and S3 alone. That closes the gap left in D-020. (Arnav's first `pnpm services:up` ran from his home folder rather than the repo, which is why it said the script didn't exist.)
+- **Issue found and fixed (1): SeaweedFS ran out of volumes.** On the second run, S3 PUTs failed with `InternalError`. The logs showed "no free volumes left". SeaweedFS reserves 7 volumes per bucket and allows 8 per server by default, so any second bucket fails, including the app's real `wr-snapshots` alongside a test bucket.
+  - Fix: `-volume.max=100 -master.volumeSizeLimitMB=64` in `docker-compose.yml` (volumes aren't preallocated, so no disk is used until written), and the tests now reuse one test table and bucket with per-run document IDs.
+  - Options considered: (a) raise the limits; (b) lower SeaweedFS's per-bucket growth count through a master.toml file; (c) one bucket for everything. (a) is a single line and local-only.
+  - What changes for writers: nothing; it's development only.
+- **Issue found and fixed (2): the sync server could reach real AWS by accident.** Without `.env`, the server had no local endpoints, so the AWS SDK would have used whatever AWS credentials the machine has. It now refuses to start unless storage is explicit: local endpoints (from `.env`), `WR_STORAGE=memory`, or `WR_STORAGE=aws`.
+  - What changes for writers: nothing. For the system, an accidental write to a real AWS account (and its bill) can't happen.
+- **Status:** fixes made by Claude as part of the approved phase; reported to Arnav.
 
 ### D-020 · 2026-10-22 · Sync phase built: one server, durable log, presence, offline
 

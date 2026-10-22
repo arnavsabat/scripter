@@ -22,9 +22,11 @@ const DYNAMO = process.env.DYNAMODB_ENDPOINT ?? 'http://localhost:8000';
 const S3 = process.env.S3_ENDPOINT ?? 'http://localhost:8333';
 const S3_KEY = process.env.S3_ACCESS_KEY_ID ?? 'wr_local';
 const S3_SECRET = process.env.S3_SECRET_ACCESS_KEY ?? 'wr_local_secret';
+// One fixed test table and bucket (a new bucket per run would use up SeaweedFS's volumes);
+// every run uses its own document IDs, so runs never see each other's data.
 const run = Date.now().toString(36);
-const TABLE = `wr-edit-log-test-${run}`;
-const BUCKET = `wr-snapshots-test-${run}`;
+const TABLE = 'wr-edit-log-test';
+const BUCKET = 'wr-snapshots-test';
 
 describe.skipIf(!enabled)('DynamoDB edit log and S3 snapshots (local services)', () => {
   const ddb = dynamoClient(DYNAMO, 'us-east-1');
