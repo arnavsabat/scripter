@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-015) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-016) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -86,4 +86,6 @@ REPO WORKING NOTES
 - Log entries are numbered D-001, D-002, …; the newest goes at the top of "Log entries". Update the current-state sections at the same time.
 - Commit messages end with the attribution line given in the session's system reminder.
 - After every commit, push `main` to GitHub (D-015). Never force-push or touch other branches.
-- apps/web integration tests run in real Chromium (Vitest browser mode with Playwright, D-015); packages tests run in plain Node.
+- apps/web integration tests run in real Chromium (Vitest browser mode with Playwright, D-015); install it once with `pnpm --filter @wr/web exec playwright install chromium`. Package tests run in plain Node.
+- Margin overlays are positioned with `topInPage()` (apps/web/src/editor/marginKeys.ts), never `offsetTop`: ProseMirror's stylesheet makes the editor the lines' offset parent.
+- `apps/web/src/editor/devStore.ts` is temporary (D-014 item 8). Delete it when the editor connects to apps/sync.

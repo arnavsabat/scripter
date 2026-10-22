@@ -4,7 +4,7 @@ A real-time collaborative screenwriting tool built like a TV writers' room (work
 
 The systems centerpiece is a horizontally scaled sync service: one home server per script, chosen by consistent hashing; ownership leases with fencing tokens; a durable edit log; and failover with zero lost edits, measured by a load-test harness.
 
-**Status:** Phase 0 (repo scaffold). No features yet. See `docs/SPEC.md` for the full specification and `docs/decision-log.md` for every decision and why it was made.
+**Status:** editor core and the static Highland UI shell: one writer, local only, no server yet. See `docs/SPEC.md` for the full specification and `docs/decision-log.md` for every decision and why it was made.
 
 ## Repo layout
 
@@ -35,8 +35,12 @@ corepack enable          # once per machine; provides the pinned pnpm version
 pnpm install
 cp .env.example .env     # local-only settings for the services below
 pnpm services:up         # Postgres :5432, DynamoDB Local :8000, SeaweedFS S3 :8333
-pnpm dev:web             # the web app (an empty shell until Phase 1)
+pnpm dev:web             # the script editor at http://localhost:5173
 ```
+
+Open the app with `?reset` (`http://localhost:5173/?reset`) to start from a blank script. Until the sync server exists, the script is saved only in this browser's IndexedDB. That temporary store lives in `apps/web/src/editor/devStore.ts`.
+
+The web integration tests run in real Chromium. Install it once with `pnpm --filter @wr/web exec playwright install chromium`.
 
 ## Scripts
 

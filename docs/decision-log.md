@@ -37,6 +37,9 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Editor phase built (D-016), awaiting Arnav's review:**
+  - `packages/schema` (schema, state machine, IDs, warnings, scenes; 64 Node tests).
+  - The `apps/web` script screen (toolbar, sidebar, page view, element menu, warnings, combine toast, dev persistence; 12 Chromium tests).
 
 ## Proposed (awaiting Arnav)
 
@@ -45,6 +48,10 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Structural actions get their own undo step.
   - Scene names in the navigator are derived from headings, as in the prototype ("INT. KITCHEN - NIGHT" shows as "Kitchen – Night").
   - Placeholder toasts for controls whose features come later.
+- **Choices made while building the editor phase (D-016), awaiting Arnav:**
+  - The element menu opens with the current type's row aligned with your line, like a native pop-up menu.
+  - A heading-only scene turned into action also counts as "combined".
+  - The script title placeholder is "Untitled script", with one presence avatar ("AR") until accounts exist.
 
 ## Open issues
 
@@ -155,13 +162,44 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 - Binding churn: a rewrite of the ProseMirror-Yjs binding has been planned, and no stable release has been confirmed. Update (D-010): the rewrite now exists as the pre-release `@y/prosemirror` 2.0.0-15 on the Yjs 14 beta, and the stable `y-prosemirror` 1.3.7 hasn't had a release since July 2025. We build on the stable line, and an upgrade later would be its own decision.
 - Scene IDs staying unique through copy-paste and splits.
 - Timeline: v1 is roughly 8.5-10.5 weeks after the spike (supersedes the imported 7-9 week estimate), alongside midterms and NeetCode prep.
-- New (D-003): the true-geometry promise assumes Courier Prime renders exactly 10 characters per inch at 16 px (an advance width of 0.6 em) in every browser. If it doesn't, character-count line wrapping and the on-screen lines will disagree. This gets verified in the editor phase, before pagination is built on it.
+- ~~New (D-003): Courier Prime must render at exactly 10 characters per inch.~~ Verified in Chromium (D-016): 60 characters measure 575.6 px against an ideal of 576 px (0.07% off), and an automated test guards it. Safari and Firefox are still to be checked with the other cross-browser runs.
+- New (D-016): Courier Prime loads from Google Fonts with `display=swap`, so the first paint can show Courier New for a moment. Both fonts are 0.6 em wide, so no line rewraps. PDF export will need a bundled copy of the font anyway (open decision 24).
 - New (D-004): SeaweedFS's S3 behavior may differ from AWS S3 in edge cases, so snapshot code also has to be tested against real S3 before the first deploy.
 - New (D-006): typescript-eslint lags behind TypeScript 7, so we stay on TS 6.0 until it catches up.
 
 ---
 
 ## Log entries (newest first)
+
+### D-016 · 2026-10-22 · Editor phase built: schema package and Highland UI shell
+
+- **What was built:**
+  - **`packages/schema`:**
+    - One `block` node with a `type` attribute (D-013).
+    - The Enter, Tab and Shift+Tab state machine from SPEC 4.2 plus the D-014 rules. Each action is one transaction marked "structural".
+    - Deterministic ID repair: the first copy keeps its ID and later copies become `-2`, `-3`, and so on. It runs in `appendTransaction` after local edits and is deferred after remote changes.
+    - Orphan-dialogue detection with "Add character cue" and "Make this action" fixes.
+    - Scene listing, combine detection, and navigator names.
+    - 64 Node tests.
+  - **`apps/web`:**
+    - The script screen, pixel-matched to the prototype: toolbar, sidebar with a live Scenes tab and a placeholder Drafts tab, toasts, and the system light/dark theme.
+    - The one-button collapse into page view with the true geometry of SPEC 3.8.
+    - The editor bound to a Y.Doc through y-prosemirror, with the spike's settings: every block protected from undo deletion, and ID repair deferred after remote changes.
+    - The Esc element menu in the margin; warning marks with their popover; the "Scenes N and N+1 combined · Undo" toast; temporary IndexedDB persistence.
+    - 12 integration tests in real Chromium.
+- **Found and fixed while building** (bugs, not decisions):
+  1. Enter inside a parenthetical just before ")" left the cursor behind the ")", so the next line's text went into the parenthetical. A split now always puts the cursor at the start of the new line.
+  2. The element menu and warning popover appeared about 100 px too high: ProseMirror's stylesheet makes the editor the lines' offset parent, so `offsetTop` missed the page's 96 px top margin. Overlays are now measured against the page.
+  3. Turning a heading-only scene into action wasn't reported as a combine (see below).
+- **Deviations, for Arnav to confirm:**
+  - (a) SPEC 3.7 says the sidebar's contents fade as it collapses, while the prototype only clips them. The build fades them over the same 240 ms, because the spec wins over the prototype (Part 1, rule 5).
+  - (b) The prototype shows "1." on page 1, but SPEC 3.8 says page 1 has no number. The build shows none.
+  - (c) The element menu opens with the current type's row aligned with your line, the way a native pop-up menu does.
+  - (d) A heading-only scene turned into action counts as "combined", because its line survives inside the previous scene. A scene deleted outright still isn't reported.
+  - (e) The placeholders: the title "Untitled script", one presence avatar ("AR", "You"), and toasts for unbuilt controls (D-014 item 11).
+- **Measured:** Courier Prime at 16 px is 9.594 px per character (575.6 px per 60), against the ideal 9.6. The D-003 risk is resolved for Chromium. Collapsing and expanding the sidebar leaves every line's position, width, height and line count unchanged on every animation frame (automated test).
+- **What changes for writers:** they can write a whole scene from the keyboard. Enter and Tab cover the common flow, Esc opens the menu for anything else (including Shot), every action undoes in one step, and the page looks the same open or collapsed.
+- **Status:** built and tested; awaiting Arnav's review and confirmation of (a)-(e) and of D-014 items 9-11.
 
 ### D-015 · 2026-10-22 · Workflow: push after every commit; web tests in real Chromium
 
