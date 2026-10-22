@@ -38,6 +38,14 @@ pnpm services:up         # Postgres :5432, DynamoDB Local :8000, SeaweedFS S3 :8
 pnpm dev:web             # the script editor at http://localhost:5173
 ```
 
+If `corepack enable` fails with `EACCES: permission denied` (it tries to write to `/usr/local/bin`), install the shims into your home folder instead:
+
+```sh
+mkdir -p ~/.local/bin
+corepack enable --install-directory ~/.local/bin
+echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
+```
+
 Open the app with `?reset` (`http://localhost:5173/?reset`) to start from a blank script. Until the sync server exists, the script is saved only in this browser's IndexedDB. That temporary store lives in `apps/web/src/editor/devStore.ts`.
 
 The web integration tests run in real Chromium. Install it once with `pnpm --filter @wr/web exec playwright install chromium`.
