@@ -45,6 +45,10 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Remote carets are thin, with the name on hover; the offline cue is quiet text after the switcher.
   - The server uses `ws`, AWS SDK v3 and `tsx`.
   - The dev identity comes from `?as=Name` (and `?ep=` picks the episode).
+- **Sync phase built (D-020), awaiting Arnav's review:**
+  - `apps/sync`: rooms loaded on demand, append before ack, the chunked DynamoDB log, S3 snapshots.
+  - `packages/shared`: the protocol and `SyncClient`.
+  - Web: live co-writing, presence, the offline cue, and y-indexeddb.
 - **Editor phase built (D-016), awaiting Arnav's review:**
   - `packages/schema` (schema, state machine, IDs, warnings, scenes; 64 Node tests).
   - The `apps/web` script screen (toolbar, sidebar, page view, element menu, warnings, combine toast, dev persistence; 12 Chromium tests).
@@ -56,6 +60,12 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Structural actions get their own undo step.
   - Scene names in the navigator are derived from headings, as in the prototype ("INT. KITCHEN - NIGHT" shows as "Kitchen – Night").
   - Placeholder toasts for controls whose features come later.
+- **Choices made while building the sync phase (D-020), awaiting Arnav:**
+  - Toolbar avatars show co-writers only; the Drafts tab says "Editing now · You, Maya".
+  - "Syncing…" appears only while reconnecting, or when an edit has waited more than 1.5 s for its ack, so normal typing never flickers it.
+  - A brand-new episode starts with one empty action line once the server confirms it's empty.
+  - A dev-only `WR_STORAGE=memory` server mode, for running without containers.
+  - `SyncClient` lives in `packages/shared`.
 - **Choices made while building the editor phase (D-016), awaiting Arnav:**
   - The element menu opens with the current type's row aligned with your line, like a native pop-up menu.
   - A heading-only scene turned into action also counts as "combined".
@@ -64,6 +74,10 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 ## Open issues
 
 **Blockers and environment issues**
+
+- **D-020: the storage-backed tests haven't run yet.** OrbStack isn't installed, so `pnpm --filter @wr/sync test:services` hasn't been run. That's the real DynamoDB edit log, the S3 snapshots, and a SIGKILL crash of a real server process. Every guarantee is proven with in-memory storage, which has the same semantics, in Node and in the browser, but the real-service run is still owed.
+- **D-020: no client heartbeat.** The browser notices a dead connection through the WebSocket closing and the browser's offline event. If the network dies silently (a "half-open" socket), the Offline cue can lag until the OS times out the socket. Edits are never lost either way, because they're kept on the device and resent by the handshake. A small app-level heartbeat is a candidate for the next phase.
+- **D-020: web test runs end with a 10-second wait.** Vite's own browser connections outlive the test server's teardown, so Vitest waits out its timeout. The run still exits 0, and our servers leave nothing open.
 
 - **Spike follow-ups (D-012):**
   - The key editor tests have only run in Chromium; WebKit and Firefox still need running in the editor phase.
@@ -178,6 +192,44 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-020 · 2026-10-22 · Sync phase built: one server, durable log, presence, offline
+
+- **What was built:**
+  - **`apps/sync`** (Node, `ws`, y-protocols):
+    - **Rooms:** one `Room` per episode, loaded on demand from the latest S3 snapshot plus the DynamoDB log tail, and unloaded with a snapshot 30 s after the last writer leaves.
+    - **Ordering:** every update-bearing message is processed in order: append to the edit log, wait for the store to confirm, then apply (which broadcasts), then ack `[3][stored]` (D-019).
+    - **Failed appends:** nothing is applied or acked, and the socket closes with 4500. The client's reconnect handshake resends the update.
+    - **Snapshots:** taken at 1,000 updates, after 2 minutes, and on unload (D-018). The state and its seq are captured together, and the log is truncated below that seq only after S3 confirms.
+    - **Edit log layout:** DynamoDB items keyed `docId` plus a zero-padded `seq.chunk` sort key, so updates over the 400 KB item limit are stored as chunks. On load, a chunk group left incomplete by a crash is skipped and its seq is never reused. Every write is conditional (`attribute_not_exists`), which is where the epoch fence goes in the scaled-service phase.
+    - **Auth:** dev tokens only with `WR_DEV_AUTH=1`; everything else is refused until Cognito exists.
+  - **`packages/shared`:** `PROTOCOL.md`, the protocol constants and close codes, the dev token, and **`SyncClient`**. The client handles the handshake resend (no separate queue), exponential backoff with full jitter, the sent/stored counts, the Offline/Syncing cue, and presence.
+  - **`apps/web`:**
+    - The episode's Y.Doc is kept on the device with y-indexeddb (D-018). It loads instantly, survives a closed tab while offline, and replaces the D-014 dev store, which is deleted.
+    - Co-writers' avatars in the toolbar and "Editing now · …" in the Drafts tab.
+    - 2px carets and selection tints in avatar colors, with the caret using the pale color on dark pages. The name shows on hover, and for 1.5 s when a writer starts typing again after a pause.
+    - The quiet "Offline" / "Syncing…" cue.
+    - Viewport anchoring for remote edits (P4).
+    - Per-user undo is unchanged: the Yjs UndoManager tracks only local origins, and a test confirms it.
+- **Tests (all passing):**
+  - **Node, 10 tests:** two-writer convergence; no broadcast or ack before the append finishes; a failed append that's resent and not lost; 4401 for a bad token; offline merge of 400 edits; kill-and-restart mid-typing with zero lost edits (with an assertion that the crash really lands mid-typing); duplicates (the same update three times plus a full resend, all acked 1-4, text appears once, log replay harmless); snapshots with truncation and restart; idle and time-based snapshots; presence relay and removal.
+  - **Browser, 5 new tests:** two apps co-write a scene live, with each other's avatar and caret; per-user undo across writers; the server killed mid-typing loses nothing; offline edits survive closing the tab and merge on restart; both writers edit while the server is down, then merge.
+  - **Written but not yet run:** the storage-backed tests (see Open issues).
+- **Found while building:**
+  1. y-prosemirror queues cursor updates for the next tick, and one can arrive after the editor closes. The editor now ignores dispatches once destroyed.
+  2. Yjs anchors a cursor to the character after it, so a writer's cursor doesn't move in Yjs terms while they type. The "name flashes when they start typing" behavior is therefore driven by remote transactions (whose clock advanced), not by cursor changes.
+  3. A co-writer's caret label lives inside the line's DOM, so tests read line text without widgets.
+  4. Web test files must run one at a time, because real key presses go to whichever frame has focus.
+- **Choices made while building, for Arnav to confirm:**
+  - (a) Toolbar avatars show co-writers only, and the Drafts tab lists "You" first.
+  - (b) "Syncing…" shows only during the reconnect handshake, or after an edit has been unacknowledged for 1.5 s.
+  - (c) A brand-new episode gets one empty action line once the server confirms it's empty. If two writers open the same brand-new episode at the same instant, it can start with two empty lines.
+  - (d) The dev-only `WR_STORAGE=memory` server mode.
+  - (e) `SyncClient` lives in `packages/shared`, so the load-test harness can reuse it.
+  - (f) Server timings: a 30 s WebSocket ping for half-open sockets, and room unload 30 s after the last writer leaves.
+  - (g) The local copy is keyed per episode per browser profile, so two `?as=` identities in the same browser share it. That's harmless, because Yjs merges, but it's worth knowing when testing.
+- **What changes for writers:** they co-write live, see who's here and where they're typing, keep writing through outages and closed tabs, and never lose an edit that the server acknowledged, or one it didn't.
+- **Status:** built and tested; awaiting Arnav's review, the confirmation of (a)-(g), and the storage-backed test run once OrbStack is installed.
 
 ### D-019 · 2026-10-22 · Ack format amended: count stored updates (supersedes the ack format in D-018)
 

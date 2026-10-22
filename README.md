@@ -4,7 +4,7 @@ A real-time collaborative screenwriting tool built like a TV writers' room (work
 
 The systems centerpiece is a horizontally scaled sync service: one home server per script, chosen by consistent hashing; ownership leases with fencing tokens; a durable edit log; and failover with zero lost edits, measured by a load-test harness.
 
-**Status:** editor core and the static Highland UI shell: one writer, local only, no server yet. See `docs/SPEC.md` for the full specification and `docs/decision-log.md` for every decision and why it was made.
+**Status:** real-time co-writing through one sync server: live edits, presence, offline editing that merges, and a durable edit log with snapshots. See `docs/SPEC.md` for the full specification and `docs/decision-log.md` for every decision and why it was made.
 
 ## Repo layout
 
@@ -34,8 +34,9 @@ Requirements: Node 24.12 (see `.node-version`), corepack (ships with Node), and 
 corepack enable          # once per machine; provides the pinned pnpm version
 pnpm install
 cp .env.example .env     # local-only settings for the services below
-pnpm services:up         # Postgres :5432, DynamoDB Local :8000, SeaweedFS S3 :8333
-pnpm dev:web             # the script editor at http://localhost:5173
+pnpm services:up         # Postgres :5432, DynamoDB Local :8000, SeaweedFS S3 :8333 (needs OrbStack or Docker)
+pnpm --filter @wr/sync dev   # the sync server on :4000
+pnpm dev:web             # the script editor on :5173
 ```
 
 If `corepack enable` fails with `EACCES: permission denied` (it tries to write to `/usr/local/bin`), install the shims into your home folder instead:
@@ -46,9 +47,11 @@ corepack enable --install-directory ~/.local/bin
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 ```
 
-Open the app with `?reset` (`http://localhost:5173/?reset`) to start from a blank script. Until the sync server exists, the script is saved only in this browser's IndexedDB. That temporary store lives in `apps/web/src/editor/devStore.ts`.
+**Co-writing locally:** open `http://localhost:5173/?as=Maya` in one browser window and `http://localhost:5173/?as=Sam` in another. `?ep=pilot` picks an episode (the default is `dev-episode`). The names come from a **development auth stub**: unsigned tokens, which the server accepts only with `WR_DEV_AUTH=1`.
 
-The web integration tests run in real Chromium. Install it once with `pnpm --filter @wr/web exec playwright install chromium`.
+**Without containers:** `WR_STORAGE=memory pnpm --filter @wr/sync dev` keeps everything in the server's memory. That's for development only; nothing survives a restart.
+
+**Tests:** `pnpm test` runs everything that needs no containers. The web integration tests run in real Chromium; install it once with `pnpm --filter @wr/web exec playwright install chromium`. With the services up, `pnpm --filter @wr/sync test:services` runs the DynamoDB and S3 storage tests and a crash test that kills the server process with SIGKILL mid-typing.
 
 ## Scripts
 

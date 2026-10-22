@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-019) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-020) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -88,4 +88,9 @@ REPO WORKING NOTES
 - After every commit, push `main` to GitHub (D-015). Never force-push or touch other branches.
 - apps/web integration tests run in real Chromium (Vitest browser mode with Playwright, D-015); install it once with `pnpm --filter @wr/web exec playwright install chromium`. Package tests run in plain Node.
 - Margin overlays are positioned with `topInPage()` (apps/web/src/editor/marginKeys.ts), never `offsetTop`: ProseMirror's stylesheet makes the editor the lines' offset parent.
-- `apps/web/src/editor/devStore.ts` is temporary (D-014 item 8). Delete it when the editor connects to apps/sync.
+- **Sync (D-018, D-019, D-020):** the wire protocol is `packages/shared/PROTOCOL.md`. `SyncClient` lives in `packages/shared/src/client.ts` (used by web, the tests and later the load-test harness). The server is `apps/sync` (`room.ts` enforces append → apply → broadcast → ack, one message at a time).
+  - Never acknowledge or broadcast an update before the log append resolves.
+  - Resend is the Yjs handshake, not a queue.
+  - Edit-log items are chunked under 400 KB.
+- The browser keeps each episode in IndexedDB (y-indexeddb) and connects with `?as=Name&ep=id` (dev auth stub). Web tests use a real sync server from `apps/web/test/syncServer.ts`, with a control endpoint for kill, restart and drop.
+- Web test files run one at a time (`fileParallelism: false`): real key presses go to the focused frame.
