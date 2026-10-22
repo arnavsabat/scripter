@@ -171,6 +171,15 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-017 · 2026-10-22 · Empty character cues stay unflagged (D-014 reaffirmed)
+
+- **What happened:** while testing, Arnav deleted the dialogue under a cue and expected a warning. Under D-014's rule, only dialogue or parentheticals with no cue are flagged, so an empty cue gets none. The warning itself was verified working in Chromium and WebKit.
+- **Options considered:** (a) also flag cues with no lines, once the cursor leaves the line; (b) flag them immediately; (c) keep the current rule.
+- **Decision:** (c), keep the rule. D-014 item 4 stands.
+- **What changes for writers:** nothing. A cue left with no dialogue isn't marked; the writer can see it on the page.
+- **Rejected:** (a) and (b), more triangles for a case writers can already see on the page.
+- **Status:** Arnav's call.
+
 ### D-016 · 2026-10-22 · Editor phase built: schema package and Highland UI shell
 
 - **What was built:**
