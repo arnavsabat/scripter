@@ -3,5 +3,3 @@ packages:
   - packages/*
   - tools/*
   - infra
-  # Throwaway spike (D-010, D-011). Remove this line when spike/ is deleted.
-  - spike

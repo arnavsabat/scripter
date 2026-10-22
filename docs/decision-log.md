@@ -28,15 +28,23 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **Revision colors:** all out of v1. That means no page colors, no margin asterisks after sends, and no snapshot color tags. The prototype's "BLUE" snapshot tag is not built (D-009).
 - **Spike binding:** the stable line, `yjs` 13.6.33 with `y-prosemirror` 1.3.7 (D-010).
 - **Spike harness:** all 8 tests run in real headless Chromium (Vitest browser mode with Playwright), plus a two-editor demo page (D-011).
+- **Spike outcome (D-013):** Yjs 13.6 + y-prosemirror 1.3.7. The element type is an attribute on one `block` node. Split degradation is accepted for v1. Fix-ups after remote changes are deferred and deterministic. The viewport is anchored to the cursor's block. Every block type is protected from undo deletion, and every decoration is recomputed from the document. `spike/` is deleted; `docs/spike-report.md` stays.
+- **Editor details (D-014):**
+  - Esc opens the element menu in the left margin.
+  - Two blank lines before scene headings.
+  - Formatting warnings are a muted-red triangle in the margin, for orphan dialogue and parentheticals.
+  - FD-style key rules fill the gaps in 4.2.
+  - Uppercase elements are shown in caps but stored as typed.
+  - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
+- **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
 
 ## Proposed (awaiting Arnav)
 
-- **D-012: the spike's outcome** (full evidence in `docs/spike-report.md`). Go with Yjs + y-prosemirror. Loro and prosemirror-collab aren't needed, so the offline promise stands. Four decisions:
-  - **P1:** store the element type as an attribute on one `block` node, not as separate node types. Recommended, because separate node types lost co-writers' text in tests 3 and 4.
-  - **P2:** accept test 2's split degradation for v1. Nothing is lost; a co-writer's words can land on the other half of the line.
-  - **P3:** after a remote change, run document fix-ups as a deferred local transaction, made deterministic.
-  - **P4:** anchor the viewport to the cursor's block.
-  - Also two required settings (protect every block type from undo deletion; recompute every decoration from the document) and a proposed performance budget (p95 keystroke at or under 16 ms on 110 pages).
+- **Performance budget (from D-012):** a regression test failing if the p95 local keystroke or remote update exceeds 16 ms on a 110-page script. It's added with the editor package's performance test.
+- **Small choices made while building the editor shell (D-014, items 9-11):**
+  - Structural actions get their own undo step.
+  - Scene names in the navigator are derived from headings, as in the prototype ("INT. KITCHEN - NIGHT" shows as "Kitchen – Night").
+  - Placeholder toasts for controls whose features come later.
 
 ## Open issues
 
@@ -55,15 +63,15 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 Spike and Phase 1:
 
-1. The Enter/Tab state machine: confirming the defaults (SPEC 4.2), plus the cases the spec doesn't cover: Enter on an empty block, Tab on a non-empty Action or Character, Shift+Tab, Backspace at the start of a block, and whether Enter in a Parenthetical closes the parentheses.
-2. Element menu: its look and when it appears (SPEC 4.3).
+1. The Enter/Tab rules: Arnav confirms or adjusts them after trying the editor (the gaps were filled in D-014).
+2. ~~Element menu~~: decided in D-014.
 3. Remote cursor and selection style (SPEC 4.8).
 4. Lease renew and expiry timings, the heartbeat interval, and the membership timeout (SPEC 5.4).
 5. Number of virtual nodes per server, and the hash function.
 6. How the sync servers forward connections to each other internally: a raw WebSocket proxy or our own framed protocol between servers.
 7. Snapshot compaction trigger (every N updates, every T seconds, or on idle) and the log truncation policy (SPEC 5.4).
 8. Client-side durability for offline work: whether unacknowledged updates survive a tab close or reload (IndexedDB), or only a dropped connection (in memory) (SPEC 4.9, 5.4).
-9. Visual style of the formatting warning and its one-click fix (SPEC 4.5).
+9. ~~Formatting warning style~~: decided in D-014.
 10. How TypeScript runs on Node in dev and production: tsx, Node 24's built-in type stripping, or compiling with tsc or esbuild (D-006).
 11. Load-test targets and method: concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
 12. Autocomplete behavior and look (SPEC 4.4; first on the cut list after the sync cuts).
@@ -74,7 +82,7 @@ Spike and Phase 1:
 
 Phase 2:
 
-17. Default spacing before scene headings: one or two blank lines (SPEC 3.8).
+17. ~~Spacing before scene headings~~: decided in D-014 (two blank lines).
 18. Mobile and narrow-screen behavior (SPEC 3.8: raise when it comes up).
 19. The sign-in screen design (SPEC 5.6: Highland style, not yet mocked).
 20. Email delivery for one-time codes and invites (Cognito's built-in email or Amazon SES), and the invite link flow.
@@ -121,6 +129,20 @@ Rejected since the log moved into the repo:
 - The `@y/prosemirror` 2.0 rewrite for the spike (D-010, Arnav's call): it's a pre-release on the Yjs 14 beta, so its API could change mid-build and the spike's results might not hold at its final release.
 - A jsdom-only spike, or jsdom plus separate Playwright scripts (D-011, Arnav's call): jsdom can't lay out a page, so it can't prove cursor and viewport stability (test 5) or real typing performance (test 7), and two setups would be more to explain.
 
+- One ProseMirror node type per element (D-013, Arnav's call): changing a line's type while a co-writer types in it silently deleted their words in the spike.
+- A smarter split that keeps the original element for one half (D-013): 1-2 days of custom binding work that only moves the degradation to the other half of the line.
+- Letting one elected client, or the server, repair duplicate IDs (D-013): more moving parts, and it fails when that client is offline. A deterministic local repair needs neither.
+- The browser's built-in scroll anchoring alone (D-013): your line still jumped about 32 px whenever a page break reflowed.
+- An element bar floating above the line (D-014, Arnav's call): it covers the line above while it's open.
+- A type label that shows in the margin (D-014): one more moving thing beside the writing.
+- One blank line before scene headings (D-014): it departs from the prototype, and scene starts stand out less.
+- A dotted underline or a ghost "CHARACTER?" cue for warnings (D-014): the first marks the writing itself; the second takes up a line and shifts page breaks.
+- Only the SPEC key rules, or Enter on an empty line opening the menu (D-014): writers would need the menu much more often.
+- Converting uppercase elements' text as you type (D-014): it turns every type change into a text rewrite, which can tangle with a co-writer typing in that line.
+- Also warning about a cue with no lines (D-014): it's noisier, flagging a cue you've just typed.
+- jsdom, or no web tests (D-015): jsdom can't measure layout, so it can't check the no-rewrap promise; no tests would leave undo-per-action unguarded.
+- Pushing only at phase ends, or asking each time (D-015): GitHub would lag behind the real work.
+
 Earlier rejections, with reasons from the writer's point of view, are in the imported log below (section "Rejected options and why").
 
 ## Known risks
@@ -140,6 +162,53 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-015 · 2026-10-22 · Workflow: push after every commit; web tests in real Chromium
+
+- **Decision:** (1) after every commit, Claude pushes `main` to GitHub, never force-pushing and never touching other branches. (2) apps/web integration tests use Vitest browser mode driving real headless Chromium through Playwright, the setup proven in the spike. Its dev dependencies (`@vitest/browser-playwright`, `playwright`) move from `spike/` to `apps/web`.
+- **Options considered:** for pushing, after every commit, at phase ends only, or ask each time. For web tests, real Chromium, jsdom, or none yet.
+- **Tradeoffs:** pushing every commit makes GitHub mirror the laptop, which is good for backup and shows steady progress. Real Chromium starts slower (about 3 s) but measures real layout and key handling.
+- **What changes for writers:** nothing. **For the system:** layout promises such as "collapse never rewraps a line" and "undo is one step per action" are guarded by automated tests.
+- **Status:** Arnav's call.
+
+### D-014 · 2026-10-22 · Editor details: element menu, spacing, warnings, keys, uppercase, dev persistence
+
+- **Decisions (Arnav's calls, 1-8):**
+  1. **Element menu (SPEC 4.3):** Esc opens it when nothing else is open, as a vertical menu in the empty left margin beside the cursor's line, in the menu style. A letter (S A C P D H T) switches the type and closes it; the arrow keys and Enter also work; Esc closes it. Rejected: a one-row bar above the line (it covers the line above), and a margin type label (one more moving thing beside the writing).
+  2. **Spacing before scene headings (SPEC 3.8):** two blank lines, matching the prototype. Rejected: one blank line.
+  3. **Formatting warnings (SPEC 4.5):** a small hollow triangle in muted red in the left margin, with a popover offering "Add character cue" and "Make this action". Rejected: a dotted underline (it marks the writing) and a ghost cue (it takes a line and shifts page breaks).
+  4. **Warning rule:** a dialogue or parenthetical with no character cue above it, the start of a dialogue run that doesn't begin with a cue. Rejected for now: also flagging a cue with no lines.
+  5. **Key gaps (SPEC 4.2), FD-style:**
+     - Enter on an empty line changes it in place: Action → Scene Heading; Character, Dialogue, Scene Heading, Transition and Shot → Action; Parenthetical → Dialogue.
+     - Tab: Parenthetical → Dialogue; empty Transition → Scene Heading; anywhere else Tab does nothing.
+     - Shift+Tab steps back: Character → Action, Parenthetical → Dialogue, Transition → Character.
+     - A new parenthetical starts as "( )" with the cursor inside.
+     - Backspace is standard: it joins with the line above, and removes an empty line.
+
+     Shot is reachable through the element menu. Rejected: SPEC rules only (more menu use), and Enter on an empty line opening the menu (an extra step in every scene).
+  6. **Uppercase:** scene headings, characters, shots and transitions are shown in capitals through CSS (and later in pagination and PDF), while the stored text keeps the writer's casing. Rejected: converting as you type, because type changes would become text rewrites, which the spike showed are unsafe with co-writers.
+  7. **Phase naming:** Arnav's phase prompts call this "phase 2". It's the editor-core part of SPEC Part 6's Phase 1 (the sync service follows). The log uses "editor phase" for it.
+  8. **Dev-only persistence:** a small hand-written IndexedDB store of the Y.Doc's state, following Arnav's example in the phase prompt. There's no new library. It's clearly marked temporary, to be replaced by the sync server. Not chosen: `y-indexeddb`, a new dependency that would prejudge open decision 8 (offline durability across reloads).
+- **Claude's choices while building, awaiting Arnav (9-11):**
+  9. **Structural actions get their own undo step.** Enter, Tab, Shift+Tab, menu picks, warning fixes and scene-combine undo each close the current undo group before and after. Otherwise Yjs's 500 ms grouping would merge a quick Enter with the typing around it, breaking "undo is one step per action". Typing runs still group as usual.
+  10. **Navigator names come from headings,** as in the prototype ("INT. KITCHEN – MORNING" shows as "Kitchen – Morning"). The INT./EXT. prefix is dropped and the words are title-cased; an empty heading shows "Untitled scene".
+  11. **Placeholder controls** (back, Share's items, + New what-if, + Snapshot, the draft switcher) show a short toast saying when the feature arrives, as the prototype does for unwired items.
+- **What changes for writers:** the whole scene can be written from the keyboard: Enter and Tab for the common flow, and Esc for the element menu (the only route to Shot). Warnings appear only after merges and never cover text. Capitals look right without changing what you typed.
+- **Status:** 1-8 are Arnav's calls; 9-11 are Claude's proposals, awaiting Arnav.
+
+### D-013 · 2026-10-22 · Spike approved: P1-P4 adopted, spike deleted
+
+- **Decision:** Arnav approved all four spike proposals from D-012, as recommended:
+  - **P1:** the element type is an attribute on one `block` node.
+  - **P2:** split degradation is accepted for v1.
+  - **P3:** fix-ups after remote changes run as a deferred, deterministic local transaction.
+  - **P4:** the viewport is anchored to the cursor's block.
+
+  The two required settings are adopted with them: protect every block type from undo deletion, and recompute every decoration from the document. SPEC 4.1 and 4.6 are updated to say so. `spike/` is deleted (its line in `pnpm-workspace.yaml` and its ESLint entry go too). `docs/spike-report.md` stays as the record, and the spike code remains in git history (commit 7138ce8).
+- **Options and tradeoffs:** see D-012 and the report.
+- **What changes for writers:** type changes, offline merges and co-writers' edits never lose text; your view holds still while others edit above you.
+- **Still proposed:** the performance budget from D-012 (see Proposed).
+- **Status:** Arnav's call.
 
 ### D-012 · 2026-10-20 · Spike outcome: Yjs passes, with four design changes
 

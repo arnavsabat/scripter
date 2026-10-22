@@ -9,6 +9,5 @@ cdk.out/
 .DS_Store
 .vite/
 
-# Throwaway spike artifacts (D-011)
+# Vitest browser-mode attachments (failure screenshots)
 .vitest/
-spike/evidence/demo-build/

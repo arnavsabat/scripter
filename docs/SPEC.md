@@ -86,6 +86,8 @@ Presence avatar pairs (bg/fg): #C9D8EE/#1F3F6B, #E2D4EC/#4A2A63, #D9E6D3/#2E4A25
   - Dialogue starts at 2.5 in, width 3.5 in.
   - Transitions are uppercase and right-aligned to 7.5 in.
 - One blank line separates elements. Parentheticals and dialogue sit directly under their character cue. Present the default spacing before scene headings (one or two blank lines) as a decision.
+  - Decided (D-014): two blank lines before scene headings, matching the prototype.
+  - Decided (D-014): the uppercase elements are shown in capitals (CSS, and later pagination and PDF), while the stored text keeps the writer's casing, so a type change never rewrites text.
 - Page numbers sit at top right, 0.5 in from the top, in the format "12."; page 1 has no number. Pages in page view are separated by a gap showing the desk color.
 - If the page can't fit beside open panels, the left sidebar collapses automatically when Compare opens (and returns when Compare closes). Otherwise, wide content scrolls horizontally inside the script area. v1 is desktop-first; raise mobile as a decision when it comes up.
 
@@ -129,24 +131,34 @@ Presence avatar pairs (bg/fg): #C9D8EE/#1F3F6B, #E2D4EC/#4A2A63, #D9E6D3/#2E4A25
 PART 4. EDITOR BEHAVIOR
 =====================================================
 4.1 Schema. ProseMirror with a flat block schema: the document is a list of typed blocks with no nesting. Types: scene_heading, action, character, parenthetical, dialogue, transition, shot. The schema is permissive about order: any block can follow any other. Every scene heading carries a stable scene ID attribute, and every block has a stable block ID.
+- Decided (D-013, from the spike): the element type is stored as a `type` attribute on a single `block` node, not as separate ProseMirror node types. With separate node types, a type change recreates the Yjs element and silently loses a co-writer's concurrent typing.
 
 4.2 Enter/Tab state machine (defaults; confirm with me in the editor phase).
 - Enter after Scene Heading goes to Action. After Action: Action. After Character: Dialogue. After Parenthetical: Dialogue. After Dialogue: Action. After Transition: Scene Heading. After Shot: Action.
 - Tab on an empty Action goes to Character. Tab in Dialogue goes to Parenthetical. Tab on an empty Character goes to Transition.
 - Every type switch is a single transaction (bind Enter and Tab with higher precedence than the defaults), so one Ctrl+Z undoes it.
+- Decided (D-014), filling the gaps:
+  - Enter on an empty line changes that line in place: Action → Scene Heading; Character, Dialogue, Scene Heading, Transition and Shot → Action; Parenthetical → Dialogue.
+  - More Tab rules: Parenthetical → Dialogue; empty Transition → Scene Heading. Tab anywhere else does nothing and never leaves the script.
+  - Shift+Tab steps back: Character → Action, Parenthetical → Dialogue, Transition → Character.
+  - A new parenthetical starts as "()" with the cursor inside.
+  - Backspace at the start of a line joins it with the line above; on an empty line it removes the line.
 
 4.3 Element menu (designed but not yet mocked; bring me Highland-style options before building).
 - A minimal floating bar that appears only when needed, never permanently. It lists Scene (S), Action (A), Character (C), Parens (P), Dialogue (D), Shot (H) and Transition (T), with single-key shortcuts while it's open and a check mark on the current type.
 - Use the menu style tokens and 13 px items with 12 px muted shortcut letters. Propose when it appears (for example, on Esc or a shortcut).
+- Decided (D-014): Esc opens it when nothing else is open, as a vertical menu in the empty left margin beside the cursor's line. A letter switches the type and closes the menu; Esc closes it.
 
 4.4 Autocomplete for character names and scene headings (INT./EXT., known locations, times of day). It's on the cut list if Phase 1 slips.
 
 4.5 Formatting enforcement: a permissive schema with visible fixes. Formatting is guaranteed while typing. If simultaneous edits or an offline merge break a rule (for example, dialogue with no character), mark the spot inline with a small warning and a one-click fix: insert a character cue, or convert the line to action. Never silently drop text.
+- Decided (D-014): the warning is a small hollow triangle in muted red in the left margin beside the line. Clicking it opens a menu-style popover with "Add character cue" and "Make this action". The rule checked in v1 is a dialogue or parenthetical with no character cue above it.
 
 4.6 Scene identity.
 - Deleting a scene heading reads as "that scene removed, the previous scene changed" and shows the notice "Scenes 14 and 15 combined · Undo".
 - Typing a new heading mid-scene reads as "scene changed, new scene added".
 - An appendTransaction plugin keeps scene and block IDs unique through paste and split.
+- Decided (D-013, from the spike): after a co-writer's change arrives, the ID repair runs as a separate, deferred local transaction rather than in appendTransaction, because y-prosemirror never syncs transactions appended to a remote change. The repair is deterministic, so every client picks the same new ID.
 
 4.7 Undo. Per-user undo through the Yjs UndoManager tracking local origins only, so undo never reverts someone else's edit.
 

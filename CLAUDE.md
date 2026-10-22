@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-012) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-015) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -40,17 +40,28 @@ PARTS 2-5, CONDENSED (full text: docs/SPEC.md)
 - **Toolbar:** 56 px, bg color, 1 px line2 bottom border. Script screens: back, sidebar toggle, title, draft switcher ("Main ▾" / "Main › Name ▾"); on the right, avatars (24 px, overlapping by 6), a divider, [Changes, Review all inside what-ifs only], and Share last. Home: "Home"; + New script, theme toggle, account avatar. Every icon has a hover label and aria-label. **One control per action.**
 - **Sidebar:** 300 px, side background. Scenes | Drafts tabs. Scenes rows show the sel background for the cursor's scene, plus dots or "Sent ✓" in what-ifs, and a legend. The Drafts tab has Main, + New what-if, WHAT-IFS, and SNAPSHOTS with + Snapshot.
 - **Collapse = page view:** width 300 to 0 over 240 ms. The desk color spreads, and the page shadow and page numbers fade in. Open view is white on white. Text geometry is identical in both views (nothing rewraps). Scroll stays anchored to the cursor's scene; the toolbar never changes.
-- **Page geometry (D-003):** 96 px/in; US Letter 816x1056; Courier Prime 16 px/16 px; margins L 1.5 in, R/T/B 1 in. Heading, action and shot at 1.5 in (6 in wide); character at 3.7 in; parenthetical at 3.1 in (2.4 in wide); dialogue at 2.5 in (3.5 in wide); transitions right-aligned to 7.5 in. Headings, shots, characters and transitions are uppercase. One blank line between elements. Page numbers "12." at top right, 0.5 in from the top; none on page 1.
+- **Page geometry (D-003):** two blank lines before scene headings (D-014); 96 px/in; US Letter 816x1056; Courier Prime 16 px/16 px; margins L 1.5 in, R/T/B 1 in. Heading, action and shot at 1.5 in (6 in wide); character at 3.7 in; parenthetical at 3.1 in (2.4 in wide); dialogue at 2.5 in (3.5 in wide); transitions right-aligned to 7.5 in. Headings, shots, characters and transitions are uppercase. One blank line between elements. Page numbers "12." at top right, 0.5 in from the top; none on page 1.
 - **What-if UI, with nothing over the text:** 10 px margin dots 36 px left of the heading (accent = differs; amber = main changed too); a margin popover (Send to main ⌘↵, Compare ⌘⇧↵). Send = an ordinary edit into main, with a restore point first (shared across sends within a few minutes), a heading pulse, "Sent ✓", and a toast with Undo (reverting only the touched scenes). Amber scenes open Compare first. Compare = a 340 px right panel showing main's version, which follows the cursor, with "Send mine to main". The Changes toggle controls ins/del highlights. Review all = a dropdown checklist with "Send N scenes". Menus and toasts follow the shared styles. Esc closes the topmost thing first.
 - **Home:** RECENT / SERIES / INVITATIONS sidebar; a 760 px centered episode list. Opening an episode is a crossfade handoff (220 ms), not a page load. The theme toggle follows the system until overridden (`data-theme` plus localStorage).
 - **A11y:** aria-labels, visible focus, keyboard-navigable menus, 4.5:1 contrast, `prefers-reduced-motion` disables all motion.
 
 ## Part 4. Editor
 
-- A flat ProseMirror schema: `scene_heading, action, character, parenthetical, dialogue, transition, shot`. Any order is allowed. Stable block IDs on every block, and a scene ID on each heading, kept unique by an appendTransaction plugin.
-- Enter/Tab state machine defaults are in SPEC 4.2 (to be confirmed in the editor phase). Each type switch is one transaction, so it's one undo.
-- Element menu: a minimal floating bar with single-key shortcuts (S A C P D H T). Bring Highland-style options before building it.
-- Autocomplete for character names and headings (cuttable). Formatting breaks from merges are shown inline with a one-click fix; text is never dropped. Scene identity rules: deleting a heading combines scenes (with an Undo notice). Per-user Yjs UndoManager (local origins only). Presence: avatars plus remote cursors (propose a style). Offline merges on reconnect.
+- A flat ProseMirror schema: **one `block` node with a `type` attribute** (`scene_heading, action, character, parenthetical, dialogue, transition, shot`; D-013). Any order is allowed. Stable block IDs on every block, and a scene ID on each heading.
+- **Three rules for all editor code, from the spike (D-012, D-013):**
+  1. Never append or auto-fix in the same dispatch as a remote change. y-prosemirror drops it, and clients diverge. Run it as a separate, deferred, deterministic local transaction.
+  2. Recompute every decoration from the document. Never map positions through remote changes, because y-prosemirror replaces the whole document on each one. Key position-based features by block ID.
+  3. Protect every block type in the Yjs undo manager, and anchor the viewport to the cursor's block on remote updates.
+- **Enter/Tab:**
+  - Enter: SPEC 4.2 defaults. On an empty line, Enter changes that line in place (Action → Scene Heading; Character, Dialogue, Scene Heading, Transition and Shot → Action; Parenthetical → Dialogue).
+  - Tab: empty Action → Character; Dialogue → Parenthetical; empty Character → Transition; Parenthetical → Dialogue; empty Transition → Scene Heading. Tab anywhere else does nothing.
+  - Shift+Tab steps back. A new parenthetical starts as "( )".
+  - Each structural action is one transaction and one undo step (D-014).
+- **Element menu:** Esc (when nothing else is open) opens a vertical menu in the left margin beside the cursor's line. S A C P D H T switch the type; Esc closes it.
+- **Uppercase** (headings, characters, shots, transitions) is display-only; the text is stored as typed.
+- **Formatting warnings:** a muted-red hollow triangle in the margin for orphan dialogue or parentheticals, with "Add character cue" / "Make this action". Text is never dropped.
+- **Scene identity:** deleting a heading (or changing its type) combines the scene with the previous one and shows "Scenes N and N+1 combined · Undo".
+- Per-user Yjs UndoManager (local origins only). Presence: avatars plus remote cursors (style still to propose). Offline merges on reconnect.
 
 ## Part 5. Architecture
 
@@ -74,3 +85,5 @@ REPO WORKING NOTES
 - `docs/` and this file are excluded from Prettier. Never reformat the spec, the log or the prototype.
 - Log entries are numbered D-001, D-002, …; the newest goes at the top of "Log entries". Update the current-state sections at the same time.
 - Commit messages end with the attribution line given in the session's system reminder.
+- After every commit, push `main` to GitHub (D-015). Never force-push or touch other branches.
+- apps/web integration tests run in real Chromium (Vitest browser mode with Playwright, D-015); packages tests run in plain Node.
