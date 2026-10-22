@@ -1,0 +1,350 @@
+/*
+ * App chrome. Values are taken from the prototype (docs/prototype/writers-room-prototype.html),
+ * the visual source of truth; colors come only from the tokens in @wr/shared/tokens.css.
+ */
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+  border-radius: 6px;
+}
+
+.app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ---- Toolbar (SPEC 3.5) ---- */
+.toolbar {
+  height: 56px;
+  flex-shrink: 0;
+  position: relative;
+  background: var(--bg);
+  border-bottom: 1px solid var(--line2);
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px 0 12px;
+}
+.title {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.grp {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  position: relative;
+}
+.lgrp {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  min-width: 0;
+}
+.ib {
+  width: 32px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: var(--icon);
+}
+.ib:hover {
+  background: var(--hover);
+}
+.ib.on {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+.sw {
+  font-size: 13px;
+  color: var(--icon);
+  white-space: nowrap;
+  padding: 4px 2px;
+}
+.avatars {
+  display: flex;
+  margin-right: 6px;
+}
+.av {
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--bg);
+}
+.av + .av {
+  margin-left: -6px;
+}
+.av-1 {
+  background: var(--avatar-1-bg);
+  color: var(--avatar-1-fg);
+}
+.av-2 {
+  background: var(--avatar-2-bg);
+  color: var(--avatar-2-fg);
+}
+.av-3 {
+  background: var(--avatar-3-bg);
+  color: var(--avatar-3-fg);
+}
+.dv {
+  width: 1px;
+  height: 22px;
+  background: var(--line);
+  margin: 0 8px;
+}
+
+/* ---- Text actions (SPEC 3.4): bold on click, with the bold width reserved in advance ---- */
+.ta {
+  display: inline-grid;
+  font-weight: 400;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+}
+.ta::after {
+  content: attr(data-t);
+  font-weight: 600;
+  height: 0;
+  visibility: hidden;
+  overflow: hidden;
+}
+.ta.flash,
+.ta.hold {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* ---- Layout ---- */
+.body {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  position: relative;
+}
+.left {
+  width: 300px;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--side);
+  position: relative;
+  transition: width 0.24s ease;
+}
+.left .in {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 300px;
+  border-right: 1px solid var(--line);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  transition: opacity 0.24s ease;
+}
+.left-closed .left {
+  width: 0;
+}
+/* SPEC 3.7: the sidebar's contents fade as it collapses. */
+.left-closed .left .in {
+  opacity: 0;
+}
+.center {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  background: var(--bg);
+  transition: background-color 0.24s ease;
+}
+.left-closed .center {
+  background: var(--desk);
+}
+.center .in {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+}
+
+/* ---- Sidebar (SPEC 3.6) ---- */
+.tabs {
+  display: flex;
+  gap: 20px;
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid var(--line);
+}
+.tab {
+  padding-bottom: 8px;
+  margin-bottom: -11px;
+  border-bottom: 2px solid transparent;
+}
+.tab.on {
+  color: var(--text);
+  font-weight: 600;
+  border-color: var(--accent);
+}
+.list {
+  padding: 10px 8px 0;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 500;
+}
+.row:hover {
+  background: var(--hover);
+}
+.row.sel {
+  background: var(--sel);
+}
+.row.big > span {
+  display: flex;
+  flex-direction: column;
+}
+small {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 2px;
+}
+.lab {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  padding: 16px 12px 6px;
+}
+.lab.r {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.lab .ta {
+  letter-spacing: 0;
+}
+.act {
+  padding: 8px 12px;
+}
+
+/* ---- Menus and popovers (SPEC 3.9) ---- */
+.menu {
+  position: absolute;
+  z-index: 20;
+  padding: 4px;
+  background: var(--menu);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+  font-family: var(--font-ui);
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--text);
+  box-sizing: border-box;
+}
+.menu.below {
+  top: 36px;
+  min-width: 200px;
+}
+.mi {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  gap: 12px;
+}
+.mi:hover,
+.mi.hl {
+  background: var(--hover);
+}
+.mi:focus-visible {
+  outline: none;
+  background: var(--hover);
+}
+.mi span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* ---- Toast (SPEC 3.9) ---- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(28px + env(safe-area-inset-bottom, 0px));
+  transform: translate(-50%, 12px);
+  opacity: 0;
+  pointer-events: none;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: var(--toast);
+  color: var(--toast-fg);
+  font-size: 13px;
+  white-space: nowrap;
+  z-index: 50;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+}
+.toast.show {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+.toast button {
+  color: var(--toast-link);
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Anchors a menu under its trigger while spanning the toolbar group's full height (so the
+   menu's top: 36px lands where the prototype puts it). */
+.anchor {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}

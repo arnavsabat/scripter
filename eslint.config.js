@@ -18,6 +18,7 @@ export default defineConfig(
             '*.js',
             '*.ts',
             'apps/web/vite.config.ts',
+            'apps/web/vitest.config.ts',
             'spike/vitest.config.ts',
           ],
         },

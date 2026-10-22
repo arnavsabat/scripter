@@ -1,0 +1,125 @@
+/*
+ * The script page: true screenplay geometry at 96 CSS px per inch (SPEC 3.8, D-003).
+ * US Letter 816 x 1056; Courier Prime 12 pt = 16 px on a 16 px line (6 lines and 10 characters
+ * per inch); margins 1.5 in left, 1 in on the other sides. The geometry is identical with the
+ * sidebar open or collapsed, so no line ever rewraps (SPEC 3.7).
+ */
+
+.desk {
+  min-width: max-content;
+  display: flex;
+  justify-content: center;
+  padding: 40px 24px 80px;
+}
+.page {
+  position: relative;
+  width: 816px;
+  min-height: 1056px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  padding: 96px 96px 96px 144px;
+  background: var(--page);
+  color: var(--ink);
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  transition: box-shadow 0.24s ease;
+}
+/* Page view: the page's shadow appears as the desk color spreads around it (SPEC 3.7). */
+.left-closed .page {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.12),
+    0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.script {
+  font-family: var(--font-script);
+  font-size: 16px;
+  line-height: 16px;
+  outline: none;
+  caret-color: var(--ink);
+  min-height: 864px; /* the 9 in of text area on a page, so clicking anywhere on it focuses */
+}
+
+/* Elements. One blank line (16 px) separates elements; positions are from the page's left edge. */
+.el {
+  position: relative;
+  margin: 16px 0 0;
+  min-height: 16px;
+}
+.script > .el:first-child {
+  margin-top: 0;
+}
+.el[data-type='scene_heading'] {
+  margin-top: 32px; /* two blank lines before scene headings (D-014) */
+}
+.el[data-type='scene_heading'],
+.el[data-type='shot'],
+.el[data-type='character'],
+.el[data-type='transition'] {
+  text-transform: uppercase; /* shown in caps, stored as typed (D-014) */
+}
+.el {
+  --indent: 0px; /* distance from the 1.5 in text column, used to keep margin marks in the margin */
+  margin-left: var(--indent);
+}
+.el[data-type='character'] {
+  --indent: 211.2px; /* starts at 3.7 in */
+}
+.el[data-type='parenthetical'] {
+  --indent: 153.6px; /* starts at 3.1 in */
+  width: 230.4px; /* 2.4 in */
+}
+.el[data-type='dialogue'] {
+  --indent: 96px; /* starts at 2.5 in */
+  width: 336px; /* 3.5 in */
+}
+/* Parentheticals and dialogue sit directly under their cue, and under each other. */
+.el[data-type='character'] + .el[data-type='parenthetical'],
+.el[data-type='character'] + .el[data-type='dialogue'],
+.el[data-type='parenthetical'] + .el[data-type='dialogue'],
+.el[data-type='dialogue'] + .el[data-type='parenthetical'],
+.el[data-type='parenthetical'] + .el[data-type='parenthetical'],
+.el[data-type='dialogue'] + .el[data-type='dialogue'] {
+  margin-top: 0;
+}
+.el[data-type='transition'] {
+  text-align: right; /* right edge at 7.5 in */
+}
+
+/* Formatting warning: a hollow muted-red triangle in the margin, 36 px left of the text (D-014). */
+.warn {
+  position: absolute;
+  left: calc(
+    -1 * var(--indent) - 38px
+  ); /* same box as the what-if margin dots, 36 px left of the text */
+  top: 1px;
+  width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--del-fg);
+  border-radius: 3px;
+}
+.warn:hover {
+  background: var(--hover);
+}
+
+/* Popovers that live in the margin, positioned against the page (prototype .pop). */
+.pop {
+  width: 170px;
+}
+/* The element menu sits entirely inside the 1.5 in left margin (D-014). */
+.elmenu {
+  left: 4px;
+  width: 132px;
+}
+.elmenu .mi {
+  gap: 6px;
+}
+.elmenu .ck {
+  display: inline-block;
+  width: 12px;
+  margin-right: 4px;
+  text-align: center;
+  color: var(--text);
+}

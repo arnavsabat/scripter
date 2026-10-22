@@ -50,9 +50,10 @@ export interface Combine {
 }
 
 /**
- * Scenes whose heading disappeared while some of their body survived: they were folded into
- * the previous scene. A scene deleted with its body, or the first scene losing its heading
- * (nothing to fold into), isn't reported.
+ * Scenes whose heading disappeared while some of their lines survived (including the heading
+ * line itself, when it was changed into another type): they were folded into the previous
+ * scene. A scene deleted outright, or the first scene losing its heading (nothing to fold
+ * into), isn't reported.
  */
 export function detectCombines(before: Node, after: Node): Combine[] {
   const headingsAfter = new Set(scenesOf(after).map((s) => s.sceneId));
@@ -61,7 +62,7 @@ export function detectCombines(before: Node, after: Node): Combine[] {
   const combines: Combine[] = [];
   for (const scene of scenesOf(before)) {
     if (scene.number === 1 || headingsAfter.has(scene.sceneId)) continue;
-    if (scene.blockIds.slice(1).some((id) => idsAfter.has(id)))
+    if (scene.blockIds.some((id) => idsAfter.has(id)))
       combines.push({ first: scene.number - 1, second: scene.number });
   }
   return combines;

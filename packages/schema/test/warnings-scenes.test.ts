@@ -99,6 +99,18 @@ describe('scene identity (SPEC 4.6)', () => {
     expect(detectCombines(s.doc, after.doc)).toEqual([{ first: 2, second: 3 }]);
   });
 
+  it('changing a heading-only scene into action combines too', () => {
+    const s = state([
+      { type: 'scene_heading', text: 'INT. KITCHEN - NIGHT', id: 'h1', sceneId: 's1' },
+      { type: 'scene_heading', text: 'EXT. HARBOR - DAWN', id: 'h2', sceneId: 's2' },
+    ]);
+    const h2 = scenesOf(s.doc)[1]!;
+    const after = s.apply(
+      s.tr.setNodeMarkup(h2.pos, undefined, { id: 'h2', type: 'action', sceneId: null }),
+    );
+    expect(detectCombines(s.doc, after.doc)).toEqual([{ first: 1, second: 2 }]);
+  });
+
   it('deleting a whole scene, or the first heading, is not a combine', () => {
     const s = script();
     const h2 = scenesOf(s.doc)[1]!;
