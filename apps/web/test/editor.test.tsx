@@ -1,7 +1,6 @@
 // Integration tests for the editor shell, in real Chromium with real key presses (D-015).
 import { afterEach, describe, expect, it } from 'vitest';
 import { userEvent } from 'vitest/browser';
-import { devIndexedDbStore, memoryStore, resetDevStore } from '../src/editor/devStore';
 import {
   clickEndOf,
   frame,
@@ -11,11 +10,11 @@ import {
   sleep,
   type,
   undo,
-  unmount,
+  unmountAll,
   until,
 } from './helpers';
 
-afterEach(unmount);
+afterEach(unmountAll);
 
 describe('undo is one step per action', () => {
   it('walks back through a fast-typed scene one action at a time', async () => {
@@ -245,26 +244,5 @@ describe('scene navigator (SPEC 3.6)', () => {
     await userEvent.click(rows()[0]!);
     await until(() => rows()[0]!.classList.contains('sel'));
     expect(rows()[1]!.classList.contains('sel')).toBe(false);
-  });
-});
-
-describe('dev persistence (temporary, D-014 item 8)', () => {
-  it('saves after typing and restores on the next load', async () => {
-    const store = memoryStore();
-    await mount(store);
-    await press('{Enter}');
-    await type('int. lighthouse - day');
-    await until(() => store.saved !== null, 2000);
-    unmount();
-    await mount(store);
-    expect(lines()).toEqual(['scene_heading: int. lighthouse - day']);
-  });
-
-  it('round-trips through the real IndexedDB store', async () => {
-    await resetDevStore();
-    expect(await devIndexedDbStore.load()).toBeNull();
-    await devIndexedDbStore.save(new Uint8Array([1, 2, 3]));
-    expect([...((await devIndexedDbStore.load()) ?? [])]).toEqual([1, 2, 3]);
-    await resetDevStore();
   });
 });

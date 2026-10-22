@@ -1,6 +1,7 @@
 // The left sidebar (SPEC 3.6): Scenes | Drafts. Scenes is a live list from the document; the
 // selected row follows the cursor; clicking a row scrolls smoothly to that scene's heading.
 // Drafts is a placeholder until what-ifs and snapshots arrive.
+import type { PresenceUser } from '../editor/presence';
 import type { SceneRow } from '../editor/useScriptEditor';
 import { TextAction } from './TextAction';
 import { useToast } from './Toast';
@@ -13,6 +14,7 @@ interface Props {
   scenes: SceneRow[];
   currentSceneId: string | null;
   onJump: (sceneId: string) => void;
+  others: PresenceUser[];
 }
 
 const TABS: [SidebarTab, string][] = [
@@ -20,7 +22,7 @@ const TABS: [SidebarTab, string][] = [
   ['drafts', 'Drafts'],
 ];
 
-export function Sidebar({ tab, onTab, scenes, currentSceneId, onJump }: Props) {
+export function Sidebar({ tab, onTab, scenes, currentSceneId, onJump, others }: Props) {
   const toast = useToast();
   return (
     <aside className="left" aria-label="Script navigator">
@@ -60,7 +62,7 @@ export function Sidebar({ tab, onTab, scenes, currentSceneId, onJump }: Props) {
               <button type="button" className="row big sel">
                 <span>
                   <span style={{ fontWeight: 600 }}>Main</span>
-                  <small>Editing now · You</small>
+                  <small>Editing now · {['You', ...others.map((u) => u.name)].join(', ')}</small>
                 </span>
               </button>
               <div className="act">

@@ -123,3 +123,83 @@
   text-align: center;
   color: var(--text);
 }
+
+/* Co-writers' carets and selections (SPEC 4.8, D-018 item 5). The caret uses the avatar's
+   dark color on light pages and its pale color on dark ones, so it's always visible. */
+.rc-0 {
+  --rc: var(--avatar-1-fg);
+  --rc-pale: var(--avatar-1-bg);
+}
+.rc-1 {
+  --rc: var(--avatar-2-fg);
+  --rc-pale: var(--avatar-2-bg);
+}
+.rc-2 {
+  --rc: var(--avatar-3-fg);
+  --rc-pale: var(--avatar-3-bg);
+}
+.script {
+  --rs-strength: 70%; /* selection tint: strong on light pages, faint on dark ones */
+}
+.rs-0 {
+  background: color-mix(in srgb, var(--avatar-1-bg) var(--rs-strength), transparent);
+}
+.rs-1 {
+  background: color-mix(in srgb, var(--avatar-2-bg) var(--rs-strength), transparent);
+}
+.rs-2 {
+  background: color-mix(in srgb, var(--avatar-3-bg) var(--rs-strength), transparent);
+}
+.rc {
+  position: relative;
+  margin: 0 -1px;
+  border-left: 2px solid var(--rc);
+  pointer-events: auto;
+}
+/* A wider, invisible hover target than the 2px line itself. */
+.rc::before {
+  content: '';
+  position: absolute;
+  inset: 0 -4px;
+}
+.rc-name {
+  position: absolute;
+  bottom: 100%;
+  left: -2px;
+  margin-bottom: 1px;
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: var(--rc);
+  color: var(--rc-pale);
+  font: 600 11px/14px var(--font-ui);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+.rc:hover .rc-name,
+.rc.show .rc-name {
+  opacity: 1;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .rc {
+    border-left-color: var(--rc-pale);
+  }
+  :root:not([data-theme='light']) .rc-name {
+    background: var(--rc-pale);
+    color: var(--rc);
+  }
+  :root:not([data-theme='light']) .script {
+    --rs-strength: 30%;
+  }
+}
+:root[data-theme='dark'] .script {
+  --rs-strength: 30%;
+}
+:root[data-theme='dark'] .rc {
+  border-left-color: var(--rc-pale);
+}
+:root[data-theme='dark'] .rc-name {
+  background: var(--rc-pale);
+  color: var(--rc);
+}

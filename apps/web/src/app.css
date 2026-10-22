@@ -348,3 +348,11 @@ small {
   display: flex;
   align-items: center;
 }
+
+/* Offline / syncing cue (D-018 item 6): quiet text after the draft switcher. */
+.cue {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+  cursor: default;
+}

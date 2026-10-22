@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Custom Node WebSocket sync server on y-protocols (home servers, leases, edit log).",
   "exports": {
-    ".": "./src/server.ts"
+    ".": "./src/server.ts",
+    "./memory": "./src/storage/memory.ts"
   },
   "scripts": {
     "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",

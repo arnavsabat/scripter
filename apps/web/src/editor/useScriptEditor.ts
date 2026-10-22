@@ -1,13 +1,23 @@
-// Owns the editor's lifetime: loads the script, creates the editor, autosaves, and exposes the
-// scene list and the cursor's scene to the sidebar.
+// Owns one open episode: the Y.Doc, its copy on this device (y-indexeddb, D-018 item 4), the
+// editor, the connection to apps/sync, and presence. Exposes what the toolbar and sidebar show.
+import { SyncClient, type Cue, type SocketLike } from '@wr/shared';
 import { sceneAt, sceneName, scenesOf, type Combine } from '@wr/schema';
 import { TextSelection } from 'prosemirror-state';
 import type { EditorView } from 'prosemirror-view';
 import { useCallback, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { undo } from 'y-prosemirror';
+import { IndexeddbPersistence } from 'y-indexeddb';
+import { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
-import { createEditor, seedNewScript, type EditorHooks, type ScriptEditor } from './createEditor';
-import { autosave, type ScriptStore } from './devStore';
+import type { Session } from '../session';
+import {
+  FRAGMENT,
+  createEditor,
+  seedNewScript,
+  type EditorHooks,
+  type ScriptEditor,
+} from './createEditor';
+import { othersPresent, presenceUser, type PresenceUser } from './presence';
 
 export interface SceneRow {
   sceneId: string;
@@ -23,14 +33,18 @@ export interface ScriptEditorHandlers {
 
 const sameRows = (a: SceneRow[], b: SceneRow[]) =>
   a.length === b.length && a.every((r, i) => r.sceneId === b[i]!.sceneId && r.name === b[i]!.name);
+const sameUsers = (a: PresenceUser[], b: PresenceUser[]) =>
+  a.length === b.length && a.every((u, i) => u.userId === b[i]!.userId && u.name === b[i]!.name);
 
 const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export function useScriptEditor(store: ScriptStore, handlers: ScriptEditorHandlers) {
+export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [editor, setEditor] = useState<ScriptEditor | null>(null);
   const [scenes, setScenes] = useState<SceneRow[]>([]);
   const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
+  const [others, setOthers] = useState<PresenceUser[]>([]);
+  const [cue, setCue] = useState<Cue>(null);
 
   // Effect Events always see the latest handlers without re-creating the editor.
   const onCombine = useEffectEvent(handlers.onCombine);
@@ -41,8 +55,12 @@ export function useScriptEditor(store: ScriptStore, handlers: ScriptEditorHandle
   useEffect(() => {
     let cancelled = false;
     let created: ScriptEditor | null = null;
-    let stopSaving: (() => void) | undefined;
+    let client: SyncClient | null = null;
+    const cleanups: (() => void)[] = [];
     const ydoc = new Y.Doc();
+    const awareness = new Awareness(ydoc);
+    awareness.setLocalStateField('user', presenceUser(session.identity));
+    const local = new IndexeddbPersistence(`wr-${session.docId}`, ydoc);
 
     const sync = (view: EditorView, docChanged: boolean) => {
       const list = scenesOf(view.state.doc);
@@ -52,18 +70,56 @@ export function useScriptEditor(store: ScriptStore, handlers: ScriptEditorHandle
       onChange(view, docChanged);
     };
 
-    void store.load().then((saved) => {
+    // 1. This device's copy first, so the script (and any unsynced offline work) shows at once.
+    void local.whenSynced.then(() => {
       if (cancelled || !mountRef.current) return;
-      if (saved) Y.applyUpdate(ydoc, saved);
-      else seedNewScript(ydoc);
-      const ed = createEditor(mountRef.current, ydoc, {
+      const ed = createEditor(mountRef.current, ydoc, awareness, {
         onChange: sync,
         onCombine: (c) => onCombine(c, () => undo(ed.view.state)),
         onWarning: (id, anchor) => onWarning(id, anchor),
         onKeyDown: (view, event) => onKeyDown(view, event),
       });
       created = ed;
-      stopSaving = autosave(ydoc, store);
+
+      // 2. Then the server: the handshake sends what it lacks and brings what we lack.
+      client = new SyncClient({
+        serverUrl: session.serverUrl,
+        docId: session.docId,
+        token: session.token,
+        doc: ydoc,
+        awareness,
+        socket: (url) => new WebSocket(url) as unknown as SocketLike,
+      });
+      const c = client;
+      let seeded = false;
+      cleanups.push(
+        c.onChange(() => {
+          setCue(c.cue);
+          // A brand-new episode: once the server has confirmed it's empty, start with one action line.
+          if (!seeded && c.caughtUp && ydoc.getXmlFragment(FRAGMENT).length === 0) {
+            seeded = true;
+            seedNewScript(ydoc);
+          }
+        }),
+      );
+      const people = () =>
+        setOthers((prev) => {
+          const next = othersPresent(awareness, session.identity);
+          return sameUsers(prev, next) ? prev : next;
+        });
+      awareness.on('change', people);
+      cleanups.push(() => awareness.off('change', people));
+
+      // The browser knows about network changes before a WebSocket does.
+      const online = () => c.reconnectNow();
+      const offline = () => c.dropConnection();
+      window.addEventListener('online', online);
+      window.addEventListener('offline', offline);
+      cleanups.push(() => {
+        window.removeEventListener('online', online);
+        window.removeEventListener('offline', offline);
+      });
+
       sync(ed.view, false);
       ed.view.focus();
       setEditor(ed);
@@ -71,11 +127,14 @@ export function useScriptEditor(store: ScriptStore, handlers: ScriptEditorHandle
 
     return () => {
       cancelled = true;
-      stopSaving?.();
+      for (const f of cleanups) f();
+      client?.destroy();
       created?.destroy();
+      void local.destroy();
+      awareness.destroy();
       ydoc.destroy();
     };
-  }, [store]);
+  }, [session]);
 
   /** Scrolls smoothly to a scene's heading and puts the cursor there (SPEC 3.6). */
   const jumpTo = useCallback(
@@ -95,5 +154,5 @@ export function useScriptEditor(store: ScriptStore, handlers: ScriptEditorHandle
     [editor],
   );
 
-  return { mountRef, editor, scenes, currentSceneId, jumpTo };
+  return { mountRef, editor, scenes, currentSceneId, others, cue, jumpTo };
 }

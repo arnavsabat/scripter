@@ -3,10 +3,10 @@ import { useCallback, useState } from 'react';
 import { Sidebar, type SidebarTab } from './components/Sidebar';
 import { ToastProvider, useToast } from './components/Toast';
 import { Toolbar } from './components/Toolbar';
-import type { ScriptStore } from './editor/devStore';
 import { handleMarginKey, topInPage } from './editor/marginKeys';
 import { ScriptPage } from './editor/ScriptPage';
 import { useScriptEditor } from './editor/useScriptEditor';
+import type { Session } from './session';
 import './app.css';
 import './script.css';
 
@@ -18,21 +18,21 @@ export type Overlay =
   | { kind: 'element'; top: number; highlighted: number }
   | { kind: 'warning'; blockId: string; top: number };
 
-export function App({ store }: { store: ScriptStore }) {
+export function App({ session }: { session: Session }) {
   return (
     <ToastProvider>
-      <ScriptScreen store={store} />
+      <ScriptScreen session={session} />
     </ToastProvider>
   );
 }
 
-function ScriptScreen({ store }: { store: ScriptStore }) {
+function ScriptScreen({ session }: { session: Session }) {
   const toast = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [tab, setTab] = useState<SidebarTab>('scenes');
   const [overlay, setOverlayState] = useState<Overlay>(null);
   const setOverlay = useCallback((o: Overlay) => setOverlayState(o), []);
-  const handle = useScriptEditor(store, {
+  const handle = useScriptEditor(session, {
     onCombine: (c, undo) => toast.show(`Scenes ${c.first} and ${c.second} combined`, undo),
     onKeyDown: (view, e) => handleMarginKey(view, e, overlay, setOverlay),
     onWarning: (blockId, anchor) => {
@@ -57,9 +57,12 @@ function ScriptScreen({ store }: { store: ScriptStore }) {
         }}
         overlay={overlay}
         setOverlay={setOverlay}
+        others={handle.others}
+        cue={handle.cue}
       />
       <div className="body">
         <Sidebar
+          others={handle.others}
           tab={tab}
           onTab={setTab}
           scenes={handle.scenes}

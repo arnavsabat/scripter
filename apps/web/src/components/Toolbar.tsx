@@ -1,6 +1,9 @@
 // The script-screen toolbar (SPEC 3.5): back, sidebar toggle, title, draft switcher on the left;
 // presence, divider and Share on the right. Every icon has a hover label and an aria-label.
+import type { Cue } from '@wr/shared';
 import type { Overlay } from '../App';
+import type { PresenceUser } from '../editor/presence';
+import { initials } from '../session';
 import { Icon } from './Icons';
 import { Menu } from './Menu';
 import { useToast } from './Toast';
@@ -11,12 +14,23 @@ interface Props {
   onToggleSidebar: () => void;
   overlay: Overlay;
   setOverlay: (o: Overlay) => void;
+  /** Co-writers in this episode right now (SPEC 3.5 presence avatars). */
+  others: PresenceUser[];
+  cue: Cue;
 }
 
-/** Development stand-in for the signed-in writer (accounts arrive in a later phase). */
-const ME = { initials: 'AR', name: 'You' };
+const CUE_TEXT = { offline: 'Offline', syncing: 'Syncing…' } as const;
+const CUE_HINT = 'Your edits are saved on this device and will merge when you reconnect.';
 
-export function Toolbar({ title, sidebarOpen, onToggleSidebar, overlay, setOverlay }: Props) {
+export function Toolbar({
+  title,
+  sidebarOpen,
+  onToggleSidebar,
+  overlay,
+  setOverlay,
+  others,
+  cue,
+}: Props) {
   const toast = useToast();
   const close = () => setOverlay(null);
   const toggle = (kind: 'draft' | 'share') => setOverlay(overlay?.kind === kind ? null : { kind });
@@ -64,12 +78,24 @@ export function Toolbar({ title, sidebarOpen, onToggleSidebar, overlay, setOverl
             />
           )}
         </span>
+        {cue && (
+          <span className="cue" title={CUE_HINT} role="status">
+            {CUE_TEXT[cue]}
+          </span>
+        )}
       </div>
       <div className="grp">
-        <span className="avatars">
-          <span className="av av-1" title={ME.name} aria-label={ME.name}>
-            {ME.initials}
-          </span>
+        <span className="avatars" aria-label="Writing now">
+          {others.map((u) => (
+            <span
+              key={u.userId}
+              className={`av av-${(u.color % 3) + 1}`}
+              title={u.name}
+              aria-label={u.name}
+            >
+              {initials(u.name)}
+            </span>
+          ))}
         </span>
         <span className="dv" aria-hidden="true" />
         <button

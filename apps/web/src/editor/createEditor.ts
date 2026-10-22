@@ -21,12 +21,15 @@ import {
   prosemirrorToYXmlFragment,
   redo,
   undo,
+  yCursorPlugin,
   ySyncPlugin,
   ySyncPluginKey,
   yUndoPlugin,
   yUndoPluginKey,
 } from 'y-prosemirror';
+import type { Awareness } from 'y-protocols/awareness';
 import type * as Y from 'yjs';
+import { caretStyle } from './presence';
 import { warningsPlugin } from './warningsPlugin';
 
 export const FRAGMENT = 'script';
@@ -60,9 +63,42 @@ export interface ScriptEditor {
   destroy(): void;
 }
 
-export function createEditor(mount: HTMLElement, ydoc: Y.Doc, hooks: EditorHooks): ScriptEditor {
+/**
+ * Spike finding P4 (D-013): when a co-writer's edit lands, keep what you're looking at still.
+ * Before the change, remember the block the cursor is in (if it's on screen; otherwise the
+ * first visible block) and where it sits; afterwards, scroll so it's back in the same place.
+ */
+function anchorViewport(view: EditorView) {
+  const scroller = view.dom.closest('.in');
+  if (!(scroller instanceof HTMLElement)) return () => {};
+  const top = (el: Element) =>
+    el.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
+  const visible = (el: Element) =>
+    top(el) + el.getBoundingClientRect().height > 0 && top(el) < scroller.clientHeight;
+  const $head = view.state.selection.$head;
+  const cursorBlock = $head.depth > 0 ? view.nodeDOM($head.before(1)) : null;
+  const anchor =
+    cursorBlock instanceof Element && visible(cursorBlock)
+      ? cursorBlock
+      : ([...view.dom.querySelectorAll('.el')].find(visible) ?? null);
+  if (!anchor) return () => {};
+  const id = anchor.getAttribute('data-id');
+  const before = top(anchor);
+  return () => {
+    const after = id ? view.dom.querySelector(`.el[data-id="${CSS.escape(id)}"]`) : null;
+    if (after) scroller.scrollTop += top(after) - before;
+  };
+}
+
+export function createEditor(
+  mount: HTMLElement,
+  ydoc: Y.Doc,
+  awareness: Awareness,
+  hooks: EditorHooks,
+): ScriptEditor {
   const plugins = [
     ySyncPlugin(ydoc.getXmlFragment(FRAGMENT)),
+    yCursorPlugin(awareness, caretStyle(ydoc)),
     // Spike finding F4: protect every block from deletion by undo, so undoing your own split
     // never deletes a co-writer's text typed into the new line.
     yUndoPlugin({ protectedNodes: new Set(['block']) }),
@@ -87,12 +123,18 @@ export function createEditor(mount: HTMLElement, ydoc: Y.Doc, hooks: EditorHooks
     handleKeyDown: (v, event) => hooks.onKeyDown(v, event),
     // `this` rather than `view`: y-prosemirror dispatches during the EditorView constructor.
     dispatchTransaction(this: EditorView, tr) {
+      // y-prosemirror queues some dispatches for the next tick (cursor updates); one can arrive
+      // after the editor has been closed.
+      if (this.isDestroyed) return;
       const before = this.state;
       // One undo step per structural action (D-014, item 9): close the current undo group
       // before and after, so Yjs's 500 ms grouping can't merge it with the typing around it.
       const structural = tr.getMeta(STRUCTURAL) === true;
       if (structural) late.undoManager?.stopCapturing();
+      const restore =
+        isRemote(tr) && tr.docChanged && this.dom.isConnected ? anchorViewport(this) : null;
       this.updateState(before.apply(tr));
+      restore?.();
       if (structural) late.undoManager?.stopCapturing();
       if (tr.docChanged && !isRemote(tr)) {
         const [combine] = detectCombines(before.doc, this.state.doc);

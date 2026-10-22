@@ -287,6 +287,9 @@ importers:
       '@vitest/browser-playwright':
         specifier: 5.0.5
         version: 5.0.5(playwright@1.64.1)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15))(vitest@5.0.5)
+      '@wr/sync':
+        specifier: workspace:*
+        version: link:../sync
       playwright:
         specifier: 1.64.1
         version: 1.64.1
