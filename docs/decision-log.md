@@ -37,6 +37,14 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Sync phase (D-018, D-019):**
+  - Local services run in OrbStack with the existing docker compose.
+  - The ack says "I've durably stored N of your update messages on this connection".
+  - Snapshots happen at 1,000 updates, or 2 minutes after the last one if anything changed, plus when the last writer leaves.
+  - Unsynced edits are kept on the device with y-indexeddb.
+  - Remote carets are thin, with the name on hover; the offline cue is quiet text after the switcher.
+  - The server uses `ws`, AWS SDK v3 and `tsx`.
+  - The dev identity comes from `?as=Name` (and `?ep=` picks the episode).
 - **Editor phase built (D-016), awaiting Arnav's review:**
   - `packages/schema` (schema, state machine, IDs, warnings, scenes; 64 Node tests).
   - The `apps/web` script screen (toolbar, sidebar, page view, element menu, warnings, combine toast, dev persistence; 12 Chromium tests).
@@ -72,14 +80,14 @@ Spike and Phase 1:
 
 1. The Enter/Tab rules: Arnav confirms or adjusts them after trying the editor (the gaps were filled in D-014).
 2. ~~Element menu~~: decided in D-014.
-3. Remote cursor and selection style (SPEC 4.8).
+3. ~~Remote cursor and selection style~~: decided in D-018.
 4. Lease renew and expiry timings, the heartbeat interval, and the membership timeout (SPEC 5.4).
 5. Number of virtual nodes per server, and the hash function.
 6. How the sync servers forward connections to each other internally: a raw WebSocket proxy or our own framed protocol between servers.
-7. Snapshot compaction trigger (every N updates, every T seconds, or on idle) and the log truncation policy (SPEC 5.4).
-8. Client-side durability for offline work: whether unacknowledged updates survive a tab close or reload (IndexedDB), or only a dropped connection (in memory) (SPEC 4.9, 5.4).
+7. ~~Snapshot compaction trigger~~: decided in D-018.
+8. ~~Client-side durability for offline work~~: decided in D-018 (kept on the device with y-indexeddb).
 9. ~~Formatting warning style~~: decided in D-014.
-10. How TypeScript runs on Node in dev and production: tsx, Node 24's built-in type stripping, or compiling with tsc or esbuild (D-006).
+10. How TypeScript runs on Node: dev uses `tsx` (D-018). Production bundling is decided with the first deploy.
 11. Load-test targets and method: concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
 12. Autocomplete behavior and look (SPEC 4.4; first on the cut list after the sync cuts).
 13. AWS region (for example, ca-central-1 for Toronto users or us-east-1 for cost and service availability).
@@ -170,6 +178,29 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-019 · 2026-10-22 · Ack format amended: count stored updates (supersedes the ack format in D-018)
+
+- **What happened:** while designing D-018's ack ("durable up to clock N for client X"), Claude found that Yjs deletions don't advance a writer's clock: a Backspace produces a delete set, not new numbered items. So a clock-based ack can't confirm that a pending deletion is durable. No edit could be lost either way, because the reconnect handshake always resends the whole delete set. But the status cue could report "saved" a few milliseconds early.
+- **Options considered:** (a) count stored updates; (b) a count plus client ID and clock; (c) keep the clock-only ack and accept the blind spot.
+- **Decision:** (a). The ack is `[3][stored: varUint]`, the running count of this connection's update-bearing messages (sync step 2 and update) that are now in the DynamoDB log. The server sends exactly one ack per such message, in order, after the append succeeds. The client's unsaved work is sent minus stored. The counts reset on each new connection, and the Yjs handshake resends whatever the server lacks. Documented in `packages/shared/PROTOCOL.md`.
+- **Tradeoffs:** (a) is the simplest and covers typing and deletions alike, but it says nothing across reconnects, which nothing needs. (b) adds a per-writer durable marker that has no current use. (c) gives a slightly dishonest status cue.
+- **What changes for writers:** "Syncing…" disappears exactly when everything they did, including deletions, is safely stored.
+- **Status:** Arnav's call.
+
+### D-018 · 2026-10-22 · Sync phase decisions
+
+- **Decisions (all Arnav's calls):**
+  1. **Local services:** Arnav installs OrbStack, and `pnpm services:up` runs the existing `docker-compose.yml` (SPEC 5.1). Rejected: Docker Desktop (heavier, same result); running natively with the DynamoDB Local jar and Homebrew SeaweedFS (departs from SPEC 5.1 and from how CI and AWS will run).
+  2. **Ack format:** "saved up to clock N per writer". *Superseded by D-019* the same day: the count of stored updates.
+  3. **Snapshot frequency:** snapshot when the log tail reaches 1,000 updates, or 2 minutes after the last snapshot if anything changed, and once more when the last writer leaves. After the snapshot lands in S3, the log below it is truncated. Rejected: every 200 updates (several snapshots a minute in a busy room), and every 10 minutes (a long replay on restart, stretching the failover pause).
+  4. **Offline durability (open decision 8):** unsynced edits are kept in the browser's IndexedDB with `y-indexeddb`, the official Yjs add-on, so they survive a closed tab or a dead laptop and merge on reconnect. Rejected: our own store (we'd own its compaction and edge cases), and memory only (a closed tab would lose an offline session).
+  5. **Remote carets (SPEC 4.8):** a 2px caret in the co-writer's avatar color and a soft tint of the same color for their selection. Their first name shows in an 11px label above the caret on hover, and for about 1.5 s when they start typing after a pause. Rejected: an always-visible initials flag (clutter in the text), and margin dots only (you can't see where in the line they are).
+  6. **Offline cue:** 12px muted "Offline" text right after the draft switcher, with the hover label "Your edits are saved on this device and will merge when you reconnect." It reads "Syncing…" while catching up, and nothing shows while online. Rejected: dimming your own avatar (too easy to miss), and toasts only (nothing persistent while offline).
+  7. **Server tooling:** `ws` (Node has no built-in WebSocket server), the AWS SDK v3 DynamoDB and S3 clients, and `tsx` to run TypeScript in dev. Rejected: Node's built-in type stripping (every import would need a `.ts` extension, and enums would be off-limits), and compiling with tsc (a slower loop).
+  8. **Dev auth stub (SPEC 5.6):** `?as=Maya` in the URL picks the writer. The stub issues an unsigned token clearly marked DEV, and the server accepts DEV tokens only when started in dev mode. `?ep=` picks the episode (default `dev-episode`). Rejected: a name prompt (a dev-only screen to build and then delete).
+- **What changes for writers:** they co-write live and see each other's carets. They can keep writing offline, with edits saved on the device and merged on reconnect, and a quiet cue shows while they're offline or syncing.
+- **Status:** Arnav's call.
 
 ### D-017 · 2026-10-22 · Empty character cues stay unflagged (D-014 reaffirmed)
 
