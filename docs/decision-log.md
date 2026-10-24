@@ -37,6 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Invite row controls (D-027):** in the Members invite row, the role picker and "Invite" look like the email field beside them: 30 px, a 1 px `--line` border, 6 px radius, `--bg` fill, 13 px text-color. The role picker is the app's own "Writer ▾" opening the shared menu, not a native select. "Invite" isn't blue.
 - **Home header text actions hover (D-026):** "+ New episode" and "Members" get the sidebar rows' hover background (`--hover`, 6 px radius), with the padding offset by an equal negative margin so nothing moves. They still bold on click like every text action.
 - **Cluster phase built (D-023) and its choices confirmed (D-024, D-025):** membership, the hash ring, forwarding, fenced leases and snapshots, failover, graceful rebalancing, three nodes in docker compose, and a chaos suite with zero lost edits. The design reference is `docs/sync-cluster.md`.
 - **Cluster phase (D-022):**
@@ -201,6 +202,19 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-027 · 2026-10-24 · The invite row's role picker and "Invite" look like the email field
+
+- **Context:** in the Members mockups (`docs/mockups/accounts-phase.html`), Arnav found two things off in the invite row: the browser's native role select, whose system arrow doesn't match the app, and the solid blue "Invite" button.
+- **Decision (Arnav's call):**
+  - "Invite" takes the email field's look: 30 px tall, a 1 px `--line` border, 6 px radius, `--bg` fill, 13 px text-color, regular weight. Hover layers `--hover` over the fill, and keyboard focus gets the field's accent border and `--blue-ring`.
+  - The role picker gets the same field look and becomes the app's own control: "Writer" plus a small muted "▾", opening the shared menu (Writer ✓ / Viewer), like the role controls in the member list. In the panel's footer, the menu opens upward, so it's never cut off.
+  - The same applies to the invite row at the top of the in-place Members variant.
+- **Options considered:** (a) keep the native select and the blue primary button, which is the prototype's `.pb`; (b) give both controls the field's look, with an app-drawn picker (chosen).
+- **Tradeoffs:** SPEC 3.3 reserves blue for primary actions but doesn't require it, so this is allowed, but it means primary actions aren't always blue. The row reads as one quiet unit, which suits a panel the showrunner opens occasionally. Pressing Enter in the email field also sends the invite, so the button doesn't need to stand out.
+- **What changes for writers:** the invite row looks native to the app instead of like a web form. **For the system:** a field-styled button style (`.fbtn`) and a small picker that reuses the shared menu.
+- **Rejected:** (a), because the native arrow and the blue block clashed with the quiet panel.
+- **Status:** Arnav's call. Whether other primary buttons (for example, Compare's "Send mine to main") keep the blue `.pb` is unchanged: they do, per the prototype.
 
 ### D-026 · 2026-10-24 · "+ New episode" and "Members" get a hover background
 

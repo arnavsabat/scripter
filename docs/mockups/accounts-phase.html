@@ -113,7 +113,13 @@ small{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
 .mep .nm{flex:1;display:flex;align-items:baseline;gap:8px}
 .irow{display:flex;gap:8px;align-items:center}
 .irow .field{height:30px;font-size:13px}
-.sel2{height:30px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;padding:0 6px}
+/* Field-styled buttons: the invite row's role picker and Invite look like the email field beside them (Arnav, Oct 24). */
+.fbtn{height:30px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:13px;color:var(--text);white-space:nowrap;flex-shrink:0;box-sizing:border-box}
+.fbtn:hover{background:linear-gradient(var(--hover),var(--hover)),var(--bg)}
+.fbtn:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--blue-ring)}
+.fbtn .car{font-size:10px;color:var(--muted)}
+.pick{position:relative;display:inline-flex}
+.rf .pick .menu{top:auto!important;bottom:34px}
 /* Email */
 .mails{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .mail{background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14px;line-height:1.5}
@@ -234,7 +240,7 @@ small{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
       </div>
       <div class="rf" data-st="sr">
         <label class="fl">Invite to The Long Night</label>
-        <div class="irow"><input class="field" placeholder="Email address"><select class="sel2" aria-label="Role"><option>Writer</option><option>Viewer</option></select><button class="pb">Invite</button></div>
+        <div class="irow"><input class="field" placeholder="Email address"><span class="pick"><button class="fbtn" data-pick aria-haspopup="menu" aria-label="Role for the invitation">Writer<span class="car">▾</span></button><span class="menu" style="right:0;top:34px;min-width:140px;display:none"><button class="mi">Writer<span>✓</span></button><button class="mi">Viewer</button></span></span><button class="fbtn">Invite</button></div>
       </div>
     </div></aside>
   </div>
@@ -253,7 +259,7 @@ small{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
     <div class="center"><div class="home">
       <div class="sh"><span><span class="title">The Long Night</span><small>5 people · you’re the showrunner</small></span><span class="grp" style="gap:16px"><span class="ta hv" data-t="+ New episode">+ New episode</span><span class="ta hv hold" data-t="Members">Members</span></span></div>
       <div class="eps">
-        <div class="mep" data-st="sr"><div class="irow" style="flex:1"><input class="field" placeholder="Invite by email"><select class="sel2" aria-label="Role"><option>Writer</option><option>Viewer</option></select><button class="pb">Invite</button></div></div>
+        <div class="mep" data-st="sr"><div class="irow" style="flex:1"><input class="field" placeholder="Invite by email"><span class="pick"><button class="fbtn" data-pick aria-haspopup="menu" aria-label="Role for the invitation">Writer<span class="car">▾</span></button><span class="menu" style="right:0;top:34px;min-width:140px;display:none"><button class="mi">Writer<span>✓</span></button><button class="mi">Viewer</button></span></span><button class="fbtn">Invite</button></div></div>
         <div class="mep"><span class="av a3">AR</span><span class="nm">Arnav Sabat (you)<small>All episodes</small></span><span class="role">Showrunner</span></div>
         <div class="mep"><span class="av a1">MA</span><span class="nm">Maya Alvarez<small>Ep 1, Ep 3</small></span><span class="role can" data-st="sr">Writer ▾</span><span class="role" data-st="wr">Writer</span>
           <div class="menu" data-st="menu" style="right:6px;top:40px"><button class="mi">Showrunner</button><button class="mi">Writer<span>✓</span></button><button class="mi">Viewer</button><div class="sep"></div><button class="mi">Remove from series</button></div></div>
@@ -346,6 +352,9 @@ document.addEventListener('click',e=>{
   if(v){document.querySelectorAll('.mk button[data-v]').forEach(b=>b.classList.toggle('on',b===v));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id===v.dataset.v));return}
   if(e.target.id==='theme'){const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const dark=cur!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';e.target.textContent=dark?'Light':'Dark';return}
   if(e.target.closest('#maMembers')||e.target.closest('#maClose')){const p=document.getElementById('maPanel');const shut=p.classList.toggle('shut');document.getElementById('maMembers').classList.toggle('hold',!shut);return}
+  const pk=e.target.closest('[data-pick]');document.querySelectorAll('.pick .menu').forEach(m=>{m.style.display=pk&&m.parentElement===pk.parentElement&&m.style.display==='none'?'':'none'});
+  const mi=e.target.closest('.pick .mi');if(mi){const b=mi.closest('.pick').querySelector('[data-pick]');b.firstChild.textContent=mi.firstChild.textContent;mi.parentElement.querySelectorAll('.mi').forEach(x=>{const c=x.querySelector('span');if(c)c.remove()});mi.insertAdjacentHTML('beforeend','<span>✓</span>')}
+  if(pk)return;
   const ta=e.target.closest('.ta:not(.hold)');if(ta){ta.classList.add('flash');setTimeout(()=>ta.classList.remove('flash'),700)}
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('maPanel').classList.add('shut');document.getElementById('maMembers').classList.remove('hold')}});
