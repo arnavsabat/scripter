@@ -150,6 +150,7 @@ Phase 2:
 19. ~~The sign-in screen design~~: decided in D-028 and D-029.
 20. ~~Email delivery~~ and ~~the invite link flow~~: SES on our own domain (D-030); one-time links (D-032).
 21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
+- New (found 2026-10-24, accounts phase): the prototype's blue primary button (`.pb`, white text on `--accent`) fails SPEC 3.11's 4.5:1 contrast in dark mode: white on `#6EA2E6` is about 2.6:1 (light mode, on `#2F6DB5`, is about 5.3:1). It's used for Compare's "Send mine to main". Options to bring Arnav: dark text on the dark-mode accent, a deeper dark-mode accent for filled buttons only, or the inverted-surface style used by sign-in's Continue (D-028).
 - New (D-026; + New script settled in D-035): should the hover background extend to the remaining text actions (Accept, + New what-if, + Snapshot)?
 22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
 23. Fountain and .fdx import edge cases: title pages, notes, boneyard, dual dialogue, and unsupported element types.
