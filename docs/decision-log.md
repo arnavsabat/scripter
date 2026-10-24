@@ -37,6 +37,15 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Cluster phase (D-022):**
+  - Leases renew every 2 s and expire after 6 s; membership heartbeats run on the same schedule.
+  - 256 SHA-1 virtual nodes per server.
+  - A WebSocket pipe per forwarded writer, with the identity signed by a cluster secret.
+  - Writers keep typing through a failover, under a quiet "Reconnecting…" cue.
+  - Every log append is a DynamoDB transaction fenced on the lease epoch. Snapshots are immutable S3 objects plus a fenced pointer item, and the log is truncated only after the pointer moves.
+  - The client picks a random server.
+  - A heartbeat: ping every 5 s, reconnect after 10 s of silence.
+- **Sync phase choices confirmed (D-022):** D-020 items (a)-(g).
 - **Sync phase (D-018, D-019):**
   - Local services run in OrbStack with the existing docker compose.
   - The ack says "I've durably stored N of your update messages on this connection".
@@ -60,12 +69,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Structural actions get their own undo step.
   - Scene names in the navigator are derived from headings, as in the prototype ("INT. KITCHEN - NIGHT" shows as "Kitchen – Night").
   - Placeholder toasts for controls whose features come later.
-- **Choices made while building the sync phase (D-020), awaiting Arnav:**
-  - Toolbar avatars show co-writers only; the Drafts tab says "Editing now · You, Maya".
-  - "Syncing…" appears only while reconnecting, or when an edit has waited more than 1.5 s for its ack, so normal typing never flickers it.
-  - A brand-new episode starts with one empty action line once the server confirms it's empty.
-  - A dev-only `WR_STORAGE=memory` server mode, for running without containers.
-  - `SyncClient` lives in `packages/shared`.
 - **Choices made while building the editor phase (D-016), awaiting Arnav:**
   - The element menu opens with the current type's row aligned with your line, like a native pop-up menu.
   - A heading-only scene turned into action also counts as "combined".
@@ -76,7 +79,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 **Blockers and environment issues**
 
 - ~~D-020: storage-backed tests not yet run~~: resolved in D-021. All 6 pass against DynamoDB Local and SeaweedFS, three runs in a row, including the SIGKILL crash of a real server process.
-- **D-020: no client heartbeat.** The browser notices a dead connection through the WebSocket closing and the browser's offline event. If the network dies silently (a "half-open" socket), the Offline cue can lag until the OS times out the socket. Edits are never lost either way, because they're kept on the device and resent by the handshake. A small app-level heartbeat is a candidate for the next phase.
+- ~~D-020: no client heartbeat~~: decided in D-022 (ping every 5 s, give up after 10 s).
 - **D-020: web test runs end with a 10-second wait.** Vite's own browser connections outlive the test server's teardown, so Vitest waits out its timeout. The run still exits 0, and our servers leave nothing open.
 
 - **Spike follow-ups (D-012):**
@@ -95,9 +98,9 @@ Spike and Phase 1:
 1. The Enter/Tab rules: Arnav confirms or adjusts them after trying the editor (the gaps were filled in D-014).
 2. ~~Element menu~~: decided in D-014.
 3. ~~Remote cursor and selection style~~: decided in D-018.
-4. Lease renew and expiry timings, the heartbeat interval, and the membership timeout (SPEC 5.4).
-5. Number of virtual nodes per server, and the hash function.
-6. How the sync servers forward connections to each other internally: a raw WebSocket proxy or our own framed protocol between servers.
+4. ~~Lease and heartbeat timings~~: decided in D-022.
+5. ~~Virtual nodes and hash~~: decided in D-022.
+6. ~~Forwarding~~: decided in D-022.
 7. ~~Snapshot compaction trigger~~: decided in D-018.
 8. ~~Client-side durability for offline work~~: decided in D-018 (kept on the device with y-indexeddb).
 9. ~~Formatting warning style~~: decided in D-014.
@@ -192,6 +195,29 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-022 · 2026-10-24 · Cluster phase decisions
+
+- **Decisions (all Arnav's calls):**
+  1. **Lease and membership timings:** a home server renews each lease every 2 s, and a lease expires 6 s after its last renewal. Each server heartbeats into the membership table every 2 s, and a server unheard from for 6 s leaves the ring. The failover pause is about 6-8 s worst case. Rejected: renew 1 s / expire 3 s (a 3 s stall makes a healthy server lose its scripts), and 5 s / 15 s (writers wait 15-18 s after a crash).
+  2. **Virtual nodes:** 256 per server, with positions from SHA-1 (Node's built-in crypto, no library). Claude's simulation of 20,000 episodes:
+     - 1 vnode leaves one server up to 124% over its fair share, and a dead server's episodes all land on a single survivor.
+     - 256 vnodes keep every server within about 9-15% of fair share, and spread a dead server's episodes over every survivor.
+     - Only the dead server's episodes move (about 1/N of all episodes).
+
+     Rejected: 128 and 64, which are less even and save nothing at our scale.
+  3. **Forwarding:** a WebSocket pipe per forwarded writer. The entry server opens its own WebSocket to the home server's internal address and passes messages through both ways, untouched. The writer's verified identity travels in a header signed with a shared cluster secret (HMAC). Rejected: one multiplexed link per server pair (our own framing and flow control, plus head-of-line blocking), and a raw TCP splice (the entry server can't close a writer cleanly during a handoff).
+  4. **What writers see during a failover pause:** they keep typing, and nothing blocks. Edits are kept on the device and merge when the new home is up. The cue reads "Reconnecting…" when the browser is online but the server can't be reached, and "Offline" only when the browser itself is offline. Rejected: reusing "Offline" (misleading when the writer's internet is fine), and pausing editing (it obstructs the writing and buys nothing).
+  5. **Fencing:** every edit-log append is one DynamoDB transaction combining "the lease item still names me, with my epoch" and the log write. Snapshots become immutable S3 objects named by epoch and seq. The current snapshot is a pointer item, moved by the same kind of fenced transaction (and only forward), and the log is truncated only after the pointer moves. An outdated owner can't append, can't move the pointer, and so can't truncate.
+     - Why the snapshot part matters: a paused server could otherwise overwrite a newer snapshot after the new owner had truncated the log, and edits would be lost.
+     - Cost: transactional writes bill at 2x.
+     - Rejected: an epoch in every log key with readers filtering (the outdated owner's writes would be acknowledged and then ignored, breaking "acknowledged means durable"), and fencing the log only (it leaves the snapshot overwrite open).
+  6. **Entry point:** the client picks a random server from a configured list on every (re)connect. On AWS the list becomes the one load-balancer address. Rejected: a local HAProxy or nginx container (another service to own), and always server 1 (killing it cuts everyone off).
+  7. **Client heartbeat:** new protocol messages ping (4) and pong (5). The client pings every 5 s, and if nothing at all arrives from the server for 10 s it drops the socket and reconnects. This rescues writers stuck on a frozen server, the split-brain test's case. Rejected: 2 s / 4 s (needless reconnects on slow networks), and no heartbeat (a frozen server could hold writers for minutes).
+  8. **D-020's choices (a)-(g)** are confirmed as Arnav's calls.
+- **Timeline:** Phase 1 is well ahead of the week 5-6 checkpoint. Neither cut-list item (rebalancing, virtual nodes) is needed.
+- **What changes for writers:** a server can crash, freeze or be replaced while they write. They see "Reconnecting…" for a few seconds, keep typing, and lose nothing.
+- **Status:** Arnav's call.
 
 ### D-021 · 2026-10-22 · Local services running; storage-backed tests pass; two fixes
 
