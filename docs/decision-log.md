@@ -37,7 +37,11 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Sign-in screen layout (D-028):** Arnav's template (a centered column: mark, heading, subtitle, "Continue with Google", "or", a filled email field, a high-contrast "Continue", a legal line), drawn in our tokens and type. "Continue" uses the inverted-surface tokens (`--toast` / `--toast-fg`), not blue. Four parts are still open (see Open issues).
+- **Sign-in screen layout (D-028, D-029):** Arnav's template, drawn in our tokens and type.
+  - Top to bottom: the Courier Prime wordmark, heading, subtitle, "Continue with Google", "or", a filled email field, a high-contrast "Continue" and the legal line.
+  - "Continue" uses the inverted-surface tokens (`--toast` / `--toast-fg`), not blue.
+  - No toolbar on this page (a named exception to SPEC 3.5). The template's own sizes apply (a 400 px column, a 28 px heading, 15 px text and 44-46 px controls), as an exception to SPEC 3.3's tiers for this page only.
+  - The legal line links to short Terms and Privacy pages, built in this phase.
 - **Invite row controls (D-027):** in the Members invite row, the role picker and "Invite" look like the email field beside them: 30 px, a 1 px `--line` border, 6 px radius, `--bg` fill, 13 px text-color. The role picker is the app's own "Writer ▾" opening the shared menu, not a native select. "Invite" isn't blue.
 - **Home header text actions hover (D-026):** "+ New episode" and "Members" get the sidebar rows' hover background (`--hover`, 6 px radius), with the padding offset by an equal negative margin so nothing moves. They still bold on click like every text action.
 - **Cluster phase built (D-023) and its choices confirmed (D-024, D-025):** membership, the hash ring, forwarding, fenced leases and snapshots, failover, graceful rebalancing, three nodes in docker compose, and a chaos suite with zero lost edits. The design reference is `docs/sync-cluster.md`.
@@ -120,7 +124,7 @@ Phase 2:
 
 17. ~~Spacing before scene headings~~: decided in D-014 (two blank lines).
 18. Mobile and narrow-screen behavior (SPEC 3.8: raise when it comes up).
-19. ~~The sign-in screen design~~: layout decided in D-028. Still open: the toolbar on sign-in (SPEC 3.5), template sizes versus SPEC 3.3 tiers, the wordmark, and the legal line (needs Terms and Privacy pages).
+19. ~~The sign-in screen design~~: decided in D-028 and D-029.
 20. Email delivery for one-time codes and invites (Cognito's built-in email or Amazon SES), and the invite link flow.
 21. Screens the prototype doesn't mock: Members, + New episode, Invite co-writer…, and the account avatar menu (where sign-out lives).
 - New (D-026): should the hover background extend to every text action (+ New script, Accept, + New what-if, + Snapshot), or stay on the home header's two?
@@ -203,6 +207,31 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-029 · 2026-10-24 · Sign-in: no toolbar, template sizes, wordmark, legal line with real pages
+
+- **Decision (Arnav's call), settling D-028's four open parts:**
+  1. **No toolbar** on the sign-in page, exactly as in the template. This is a named exception to SPEC 3.5 ("every screen"): the page has no actions a toolbar would hold. Every screen after sign-in keeps the toolbar.
+  2. **The template's sizes:** a 400 px column, a 28 px semibold heading, 15 px text and 44-46 px controls. This exception to SPEC 3.3's tiers covers the sign-in steps (and the Terms and Privacy pages' headings) only; the app's chrome keeps the tiers.
+  3. **The Courier Prime wordmark** "WRITERS’ ROOM" fills the template's logo slot, until there's a real logo.
+  4. **The legal line stays,** and its links go to two short static pages built in this phase: Privacy (what's stored: email, name, the scripts themselves, and usage *counts* only, never content, per SPEC 5.9; who can see a script; how to delete an account) and plain-language Terms. Claude drafts both for Arnav's review. They're plain-language drafts, not legal advice, and Arnav should review them before the beta.
+- **Options considered:**
+  - (1) The toolbar per SPEC 3.5.
+  - (2) Strict SPEC 3.3 tiers (a 15 px heading and 34 px controls).
+  - (3) No wordmark.
+  - (4) Dropping the legal line until the beta, or keeping a line without links.
+- **Tradeoffs:**
+  - Two documented exceptions to the spec, limited to one page.
+  - The Terms and Privacy pages add a little scope beyond the phase's list; Arnav approved it.
+  - A legal line that links to real pages is honest now, rather than a to-do for later.
+- **What changes for writers:** the sign-in page is the template, in the app's colors. Before signing in they can read, in plain words, what's stored and who sees their scripts. **For the system:** two static routes (`/terms`, `/privacy`) in apps/web, which need no account.
+- **Rejected:**
+  - The toolbar: an empty bar that repeats the wordmark.
+  - Strict tiers: a small form floating on an empty page.
+  - No wordmark: it loses the template's top anchor.
+  - No legal line: Arnav wants it from the start.
+  - A line without links: not an agreement.
+- **Status:** Arnav's call. The Terms and Privacy text comes to Arnav for review before it ships.
 
 ### D-028 · 2026-10-24 · Sign-in screen: Arnav's template, in our design system
 
