@@ -95,6 +95,16 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **AWS cost levers for the deploy phase (proposed 2026-10-24, decided then):** these keep SPEC 5.5's infrastructure unchanged.
+  - **Estimated cost:** about $40-50 a month on demand in `ca-central-1`. The load balancer (about $18), the small Postgres (about $15), public IPv4 addresses (about $3.65 each) and the container (about $10) make up most of it. This corrects Claude's earlier, too-low "$25-45".
+  - **The levers:**
+    1. Use the AWS paid plan's sign-up credits.
+    2. Before the beta, run the compute only for demos and tests, and tear it down afterwards. DynamoDB, S3, Cognito and a Postgres snapshot are kept.
+    3. Run the always-on container on ARM (Graviton) Fargate Spot, about 70% cheaper. A Spot interruption is a failover the design already survives with zero lost edits.
+    4. Use public subnets with no NAT gateway, which would otherwise add about $35 a month.
+    5. Use the smallest Postgres and task sizes, single availability zone.
+  - Dropping the load balancer would mean running on EC2 instead of Fargate, a spec change, so it isn't proposed.
+  - Exact numbers come from the AWS pricing calculator in the deploy phase.
 - **Performance budget (from D-012):** a regression test failing if the p95 local keystroke or remote update exceeds 16 ms on a 110-page script. It's added with the editor package's performance test.
 - **Small choices made while building the editor shell (D-014, items 9-11):**
   - Structural actions get their own undo step.
