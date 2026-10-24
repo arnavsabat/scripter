@@ -37,6 +37,13 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Home, naming and access cues (D-033):**
+  - **Invitation email:** wording 1, Plain.
+  - **Solo writers:** a one-episode series looks like a plain script (a SCRIPTS sidebar section, "Script · just you", no "Ep 1 ·"). It becomes a series at the 2nd episode, and renaming it renames the hidden series.
+  - **New and renaming:** "+ New script" and "+ New episode" open the new script with its toolbar title selected for typing. Clicking the title renames it again, and the showrunner renames a series by clicking its title in the home header.
+  - **Live status:** the home sync servers record who's connected (refreshed every 10 s, stale after 30 s) and the last-edit time (at most once a minute) in Postgres. Home polls the API every 15 s and whenever the tab regains focus.
+  - **Read-only cue:** a 12 px muted "View only" after the draft switcher.
+  - **Cookies:** `@fastify/cookie`.
 - **Invitations and sharing (D-032):**
   - **Invitation links** are one-time, expire after 14 days and can be cancelled by the showrunner. Opening one and signing in, with any email, accepts it. Pending invitations also show under INVITATIONS for the invited address.
   - **Share › Copy invite link** copies a link to the episode: members land in it, and anyone else is told to ask the showrunner.
@@ -141,9 +148,9 @@ Phase 2:
 18. Mobile and narrow-screen behavior (SPEC 3.8: raise when it comes up).
 19. ~~The sign-in screen design~~: decided in D-028 and D-029.
 20. ~~Email delivery~~ and ~~the invite link flow~~: SES on our own domain (D-030); one-time links (D-032).
-21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). Still open: what + New episode does.
+21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
 - New (D-026): should the hover background extend to every text action (+ New script, Accept, + New what-if, + Snapshot), or stay on the home header's two?
-22. Renaming scripts and episodes.
+22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
 23. Fountain and .fdx import edge cases: title pages, notes, boneyard, dual dialogue, and unsupported element types.
 24. PDF library: pdf-lib is the spec's example, so confirm it. Courier Prime will need to be bundled locally for PDF embedding, alongside the Google Fonts link.
 25. Product name (still a working title).
@@ -223,6 +230,44 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-033 · 2026-10-24 · Invitation email wording, solo writers, naming, live status, "View only", cookie plugin
+
+Items 1 and 2 were answered in the first round of the accounts phase, before D-026, and Claude missed logging them then. They're recorded here.
+
+- **Decisions (Arnav's calls):**
+  1. **Invitation email: wording 1, Plain.** The viewer version reads "Sam Jones invited you to read Fogline."
+     - Subject: "Sam Jones invited you to Fogline".
+     - Body: "Sam Jones invited you to write on **Fogline** in Writers’ Room." and a [Join Fogline] button.
+     - Footer: "This link works for 14 days. If you weren’t expecting this, you can ignore it."
+     - Sent from `Writers’ Room <invites@our domain>` (D-030).
+     - The sign-in code email: subject "Your Writers’ Room code: 123456", body "Enter 123456 to sign in. It expires in a few minutes. If you didn’t ask for it, ignore this email."
+     - Rejected: wording 2, "The room" (a playful subject from an unknown sender looks like marketing), and wording 3, "Role spelled out" (the longest; it explains what a click would show anyway).
+  2. **Solo writers see the series layer only at the 2nd episode** (SPEC Part 2).
+     - A one-episode series looks like a plain script everywhere: a SCRIPTS sidebar section, a header reading "Script · just you" (or "Script · you and Maya"), no "Ep 1 ·" and no "1 episode".
+     - Its series and its episode share one name, and renaming the script renames both.
+     - "+ New episode" turns it into a series: it moves to SERIES, episodes get numbered ("Ep 1 · Night Shift", "Ep 2 · Untitled"), and the meta line reads "2 episodes · you’re the showrunner".
+     - Empty sidebar sections are hidden, and a brand-new account's home shows "No scripts yet. Start one with + New script." (pointing at the existing toolbar control, not a second button).
+     - Rejected: also showing the series layer when a second person joins (a pair co-writing a feature would see series words they don't need), and always showing it (contradicts SPEC Part 2).
+  3. **Creating and renaming:**
+     - "+ New script" creates "Untitled script" (quietly, a one-episode series), and "+ New episode" creates "Ep N · Untitled". Each opens the new script at once through the 220 ms handoff, with the toolbar title selected for typing. Enter saves; Esc keeps the old name.
+     - Afterwards, clicking the toolbar title renames the episode. Its writers and the showrunner can do that.
+     - The showrunner renames a series by clicking its title in the home header.
+     - The title is the only rename control (one control per action).
+     - Rejected: a "Rename…" menu item on each row (a new per-row menu, and a trip back home to name a new script).
+  4. **Live status on Home:**
+     - Each home sync server upserts a presence row per open episode in Postgres (who's connected), refreshed every 10 s and treated as stale after 30 s. It also updates `episodes.edited_at` at most once a minute while edits arrive.
+     - Home fetches its series from the API every 15 s and whenever the tab regains focus.
+     - A row shows "● Maya, Sam · editing now" (the people connected right now) or "Maya, Sam · edited Oct 12" (the episode's assigned writers).
+     - Rejected: a WebSocket subscription from Home (a new protocol message type, plus a sync connection per series shown, to save about 15 s).
+  5. **"View only":** when someone can't edit an episode (a viewer, or a writer not assigned to it), the toolbar shows a 12 px muted "View only" after the draft switcher. The page shows no caret, and typing does nothing. They still appear in the presence avatars and see everyone's cursors live.
+     - Rejected: no cue, where a writer who doesn't know they're unassigned would think the app is broken.
+  6. **`@fastify/cookie`** sets and reads the refresh cookie (D-031). It's Fastify's official plugin, so the security-sensitive cookie parsing and escaping isn't hand-rolled.
+- **What changes for writers:** a new script opens ready to be named. Home shows who's writing right now within about 15 s. Read-only is never mysterious.
+- **For the system:**
+  - A presence table written by the sync servers, plus `episodes.edited_at`.
+  - The episode and series rename endpoints run through `canEdit` for episodes and a showrunner check for series.
+- **Status:** Arnav's call.
 
 ### D-032 · 2026-10-24 · Invitation links, Copy invite link, Invite co-writer…, and the account menu
 
