@@ -119,6 +119,8 @@ del{background:var(--del-bg);color:var(--del-fg)}
 .a2{margin-left:0}.avs .av+.av{margin-left:-6px}
 /* Header text actions get the sidebar rows' hover (D-026) */
 .ta.hv{padding:4px 6px;margin:-4px -6px;border-radius:6px}.ta.hv:hover{background:var(--hover)}
+/* In the toolbar, the hover box matches the 32x28 icon slots beside it (D-036) */
+.ta.hv.tbh{height:28px;box-sizing:border-box;align-content:center;padding:0 8px;margin:0 -8px}
 /* Click-to-rename titles (D-033) */
 .title.rn{cursor:text;border-radius:4px;padding:2px 6px;margin:-2px -6px}.title.rn:hover{background:var(--hover)}
 .ren{font:inherit;font-size:15px;font-weight:600;color:var(--text);background:var(--hover);border:0;border-radius:4px;padding:2px 6px;margin:-2px -6px;outline:none;box-shadow:0 0 0 2px var(--blue-ring);min-width:120px}
@@ -305,7 +307,7 @@ function signOut(invite){$('#toast').classList.remove('show');Object.assign(st,{
 
 // ---------- Home (SPEC 3.10 with D-026, D-030, D-033) ----------
 function tbHome(){if(!D)return '';const l=theme==='dark'?'Switch to light mode':'Switch to dark mode';
-return `<span class="title">Home</span><span class="grp" style="gap:14px"><span class="ta hv" data-t="+ New script" data-act="newscript" tabindex="0">+ New script</span><button class="ib" data-act="theme" title="${l}" aria-label="${l}">${svg(theme==='dark'?'sun':'moon')}</button><span class="acw"><button class="ib" data-act="menu" data-v="acct" title="Account" aria-label="Account" aria-haspopup="menu">${av(ME,true)}</button>${st.menu==='acct'?`<div class="menu" style="right:0;top:36px" role="menu"><div class="mh">${esc(PEOPLE[ME].n)}<small>${esc(st.si.email)}</small></div><div class="sep"></div><button class="mi" data-act="signout">Sign out</button></div>`:''}</span></span>`}
+return `<span class="title">Home</span><span class="grp" style="gap:14px"><span class="ta hv tbh" data-t="+ New script" data-act="newscript" tabindex="0">+ New script</span><button class="ib" data-act="theme" title="${l}" aria-label="${l}">${svg(theme==='dark'?'sun':'moon')}</button><span class="acw"><button class="ib" data-act="menu" data-v="acct" title="Account" aria-label="Account" aria-haspopup="menu">${av(ME,true)}</button>${st.menu==='acct'?`<div class="menu" style="right:0;top:36px" role="menu"><div class="mh">${esc(PEOPLE[ME].n)}<small>${esc(st.si.email)}</small></div><div class="sep"></div><button class="mi" data-act="signout">Sign out</button></div>`:''}</span></span>`}
 function navH(){if(!D)return '';let h='';const sec=(lab,rows)=>rows?`<div class="lab">${lab}</div><div class="list" style="padding-top:0">${rows}</div>`:'';
 h+=sec('RECENT',D.recent.map(findEp).filter(x=>x[0]).slice(0,3).map(([s,e])=>`<button class="row" data-act="open" data-id="${e.id}">${esc(lbl(s,e))}</button>`).join(''));
 const row=s=>`<button class="row${st.sel===s.id?' sel':''}" data-act="series" data-id="${s.id}">${esc(s.name)}</button>`;

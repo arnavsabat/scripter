@@ -66,7 +66,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - No toolbar on this page (a named exception to SPEC 3.5). The template's own sizes apply (a 400 px column, a 28 px heading, 15 px text and 44-46 px controls), as an exception to SPEC 3.3's tiers for this page only.
   - The legal line links to short Terms and Privacy pages, built in this phase.
 - **Invite row controls (D-027):** in the Members invite row, the role picker and "Invite" look like the email field beside them: 30 px, a 1 px `--line` border, 6 px radius, `--bg` fill, 13 px text-color. The role picker is the app's own "Writer ▾" opening the shared menu, not a native select. "Invite" isn't blue.
-- **Home text actions hover (D-026, D-035):** "+ New episode", "Members" and the toolbar's "+ New script" get the sidebar rows' hover background (`--hover`, 6 px radius), with the padding offset by an equal negative margin so nothing moves. They still bold on click like every text action.
+- **Home text actions hover (D-026, D-035):** "+ New episode", "Members" and the toolbar's "+ New script" get the sidebar rows' hover background (`--hover`, 6 px radius), with the padding offset by an equal negative margin so nothing moves. In the toolbar, the "+ New script" hover box is 28 px tall, matching the 32×28 icon slots beside it (D-036). They still bold on click like every text action.
 - **Cluster phase built (D-023) and its choices confirmed (D-024, D-025):** membership, the hash ring, forwarding, fenced leases and snapshots, failover, graceful rebalancing, three nodes in docker compose, and a chaos suite with zero lost edits. The design reference is `docs/sync-cluster.md`.
 - **Cluster phase (D-022):**
   - Leases renew every 2 s and expire after 6 s; membership heartbeats run on the same schedule.
@@ -231,6 +231,12 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-036 · 2026-10-24 · The "+ New script" hover box matches the toolbar's icon slots
+
+- **Decision (Arnav's call):** in the toolbar, the hover box of "+ New script" is the same height as the theme toggle's slot beside it: 28 px, 6 px radius, text centered vertically, 8 px side padding offset by an equal negative margin. Measured in Chromium, both boxes are 28 px tall with their tops at 14 px, so the two hovers line up. "+ New episode" and "Members" in the series header keep D-026's smaller box (4 px by 6 px padding): they sit beside text, not icons.
+- **What changes for writers:** pointing along the toolbar, each hover highlight is the same height. **For the system:** one modifier class (`.ta.hv.tbh`) in prototype v2.
+- **Status:** Arnav's call.
 
 ### D-035 · 2026-10-24 · "+ New script" gets the same hover
 
