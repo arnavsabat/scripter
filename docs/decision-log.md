@@ -65,13 +65,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building the cluster (D-023), awaiting Arnav:**
-  - The client gives up on a connection that hasn't opened within 5 s.
-  - The forwarding hop holds a new writer for up to 15 s, retrying every 500 ms.
-  - A gracefully leaving server waits one heartbeat (2 s) before handing off.
-  - Log truncation runs in the background once the snapshot pointer has moved.
-  - Dev mode uses a built-in cluster secret.
-  - pnpm's `allowBuilds: { esbuild: false }`.
+- **Choices made while building the cluster (D-023), still awaiting Arnav:** (e) dev mode uses a built-in cluster secret; (f) pnpm's `allowBuilds: { esbuild: false }`; (g) the `node:24.12.0-alpine` image running `tsx`. Items (a)-(d) were confirmed in D-024.
 - **Performance budget (from D-012):** a regression test failing if the p95 local keystroke or remote update exceeds 16 ms on a 110-page script. It's added with the editor package's performance test.
 - **Small choices made while building the editor shell (D-014, items 9-11):**
   - Structural actions get their own undo step.
@@ -206,6 +200,16 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-024 · 2026-10-24 · Cluster phase: chaos suite passes on Arnav's machine; D-023 (a)-(d) confirmed
+
+- **What happened:** Arnav ran `pnpm --filter @wr/sync test:chaos` himself, and all 3 scenarios passed. He confirmed D-023 items (a)-(d):
+  - (a) the 5 s client connect timeout;
+  - (b) the forwarding hop holding a new writer for up to 15 s, retrying every 500 ms;
+  - (c) a graceful leave waiting one heartbeat before handing off;
+  - (d) background log truncation after the pointer moves.
+- **Still open:** items (e)-(g) (the dev cluster secret, the esbuild install-script setting, the server image), awaiting Arnav after Claude's explanation. The hands-on demo script is deferred to later, at Arnav's choice. The one path not yet exercised end to end is the browser against the 3-container Docker cluster.
+- **Status:** Arnav's call.
 
 ### D-023 · 2026-10-24 · Cluster phase built: membership, ring, forwarding, fenced leases, failover, rebalancing
 
