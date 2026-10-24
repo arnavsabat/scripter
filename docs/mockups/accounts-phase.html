@@ -83,24 +83,37 @@ small{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
 .links{display:flex;justify-content:space-between;margin-top:14px}
 .inv{font-size:12px;color:var(--muted);background:var(--side);border-radius:6px;padding:8px 10px;margin-bottom:18px;line-height:1.4}
 .inv b{color:var(--text);font-weight:600}
-/* Sign-in A1: native control sizes */
-.sn{width:280px;margin:110px auto 0}
-.sn h1{margin:0 0 4px}.sn .sub{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.45}
-.nf{width:100%;box-sizing:border-box;height:26px;padding:0 8px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:13px;outline:none}
-.nf:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--blue-ring)}
-.nf.code{font-family:var(--font-script);letter-spacing:.3em;font-size:15px;text-align:center}
-.bz{height:24px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;border-radius:5px;font-size:13px;border:1px solid var(--line);background:var(--bg);box-shadow:0 1px 0 rgba(0,0,0,.04);box-sizing:border-box}
-.bz:hover{background:var(--hover)}
-.bz.def{background:var(--accent);border-color:var(--accent);color:#fff}
-.nrow{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
-.sn .or{margin:16px 0 14px}.gfull{width:100%}
-/* Sign-in A2: home-page rows */
-.srow{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:48px;padding:0 12px;border-bottom:1px solid var(--line2);font-size:15px;cursor:text}
-.srow.btn{cursor:pointer;font-weight:500}.srow.btn:hover,.srow:focus-within{background:var(--hover)}
-.srow input{flex:1;min-width:0;border:0;background:transparent;font-size:15px;outline:none;height:100%;padding:0}
-.srow input::placeholder{color:var(--muted)}
-.srow input.code{font-family:var(--font-script);letter-spacing:.3em}.srow input.code::placeholder{font-family:var(--font-ui);letter-spacing:0}
-.sfoot{display:flex;justify-content:space-between;padding:12px 12px 0}
+/* Sign-in, after Arnav's template (template proportions; "strict" maps them onto SPEC 3.3's tiers) */
+.si-tb{display:none}.si-win.tb-on .si-tb{display:flex}
+.si{width:400px;margin:0 auto;padding:72px 0 40px;text-align:center}
+.si-mark{font-family:var(--font-script);font-weight:700;font-size:20px;letter-spacing:.04em;color:var(--text);margin-bottom:44px}
+.si h1{font-size:28px;font-weight:600;letter-spacing:-.01em;margin:0 0 12px;color:var(--text)}
+.si-sub{text-wrap:balance;font-size:15px;line-height:1.5;color:var(--muted);margin:0 auto 36px;max-width:380px}
+.si-g{width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);border-radius:6px;background:transparent;font-size:15px;font-weight:500;color:var(--text);box-sizing:border-box}
+.si-g:hover{background:var(--hover)}
+.si-g svg{width:18px;height:18px}
+.si-or{display:flex;align-items:center;gap:16px;font-size:13px;color:var(--muted);margin:24px 0}
+.si-or::before,.si-or::after{content:"";flex:1;height:1px;background:var(--line2)}
+.si-f{width:100%;height:46px;box-sizing:border-box;padding:0 14px;border:0;border-radius:6px;background:var(--side);font-size:15px;color:var(--text);outline:none;text-align:left}
+.si-f::placeholder{color:var(--muted)}
+.si-f:focus{box-shadow:inset 0 0 0 1px var(--accent),0 0 0 3px var(--blue-ring)}
+.si-f.code{font-family:var(--font-script);font-size:18px;letter-spacing:.3em;text-align:center}
+.si-f.code::placeholder{font-family:var(--font-ui);font-size:15px;letter-spacing:0}
+.si-c{width:100%;height:44px;margin-top:14px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--toast);color:var(--toast-fg);font-size:15px;font-weight:500}
+.si-c:hover{opacity:.9}
+.si-legal{text-wrap:balance;font-size:12px;color:var(--muted);line-height:1.5;margin:16px 0 0}
+.si-legal a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+.si-alt{font-size:13px;color:var(--muted);margin:22px 0 0}
+.si-win.nomark .si-mark,.si-win.nolegal .si-legal{display:none}
+.si-win.tb-on .si{padding-top:56px}
+.si-win.strict .si{width:320px}
+.si-win.strict .si-mark{font-size:15px;margin-bottom:32px}
+.si-win.strict .si h1{font-size:15px;margin-bottom:4px;letter-spacing:0}
+.si-win.strict .si-sub{font-size:13px;margin-bottom:24px}
+.si-win.strict .si-g,.si-win.strict .si-c{height:34px;font-size:13px}
+.si-win.strict .si-f{height:34px;font-size:13px}
+.si-win.strict .si-or{font-size:12px;margin:16px 0}
+.vars button.on{color:var(--text);border-color:var(--text)}
 /* Members */
 .mrow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;position:relative}
 .mrow:hover{background:var(--hover)}
@@ -141,8 +154,7 @@ small{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
 <body>
 <nav class="mk" aria-label="Mockups">
   <b>Accounts phase · mockups</b>
-  <button data-v="sn" class="on">Sign-in A1 · Native</button>
-  <button data-v="sr">Sign-in A2 · Home rows</button>
+  <button data-v="si" class="on">Sign-in</button>
   <button data-v="ma">Members A · Right panel</button>
   <button data-v="mb">Members B · In place</button>
   <button data-v="em">Invitation email</button>
@@ -152,67 +164,46 @@ small{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
 </nav>
 <div class="wrap">
 
-<!-- ============ SIGN-IN A1 ============ -->
-<section class="view on" id="sn">
-<p class="cap"><strong>Sign-in A1 · Native.</strong> Option A redrawn at macOS control sizes: 13 px text, 26 px fields and 24 px bezel buttons, with one small default button on the right, as in a Mac sheet. Blue appears only on that default button and the focus ring. Enter submits.</p>
-<div class="steps" data-for="sn"><button data-s="email" class="on">1 · Email</button><button data-s="code">2 · Code</button><button data-s="name">3 · Name (first time only)</button><button data-s="invite">From an invite link</button><button data-s="email gray">Grayscale variant</button></div>
-<div class="win">
-  <header class="tb"><span class="title">Writers’ Room</span></header>
-  <div class="body"><div class="center"><div class="sn">
-    <div data-st="email invite gray">
-      <h1 class="title" data-st="email gray">Sign in to Writers’ Room</h1>
-      <h1 class="title" data-st="invite">Join Fogline</h1>
-      <p class="sub" data-st="email gray">No password needed.</p>
-      <p class="sub" data-st="invite">Sam Jones invited you to write. Sign in to join.</p>
-      <input class="nf" type="email" placeholder="Email address" aria-label="Email address" autocomplete="email">
-      <div class="nrow"><button class="bz def" data-st="email invite">Continue</button><button class="bz" data-st="gray">Continue</button></div>
-      <div class="or">or</div>
-      <button class="bz gfull">GOOGLE_G Continue with Google</button>
+<!-- ============ SIGN-IN (template) ============ -->
+<section class="view on" id="si">
+<p class="cap"><strong>Sign-in, after Arnav's template.</strong> The template's layout in our scheme: our tokens in both themes, the system font, 6 px corners instead of pills, and Courier Prime as the brand face. The template's high-contrast "Continue" uses our inverted-surface tokens (the toast's), so it's light in dark mode and dark in light mode, never blue. Toggle the variants below for the parts that conflict with SPEC or don't exist yet.</p>
+<div class="steps" data-for="si"><button data-s="email" class="on">1 · Email</button><button data-s="code">2 · Code</button><button data-s="name">3 · Name (first time only)</button><button data-s="invite">From an invite link</button></div>
+<div class="steps vars"><button data-var="tb">Toolbar (SPEC 3.5)</button><button data-var="strict">Strict size tiers</button><button data-var="nomark">No wordmark</button><button data-var="nolegal">No legal line</button></div>
+<div class="win si-win">
+  <header class="tb si-tb"><span class="title">Writers’ Room</span></header>
+  <div class="body"><div class="center"><div class="si">
+    <div class="si-mark">WRITERS’ ROOM</div>
+    <div data-st="email">
+      <h1>Sign in or create an account</h1>
+      <p class="si-sub">Write together in real time. No password needed.</p>
     </div>
-    <div data-st="code">
-      <h1 class="title">Check your email</h1>
-      <p class="sub">Enter the 6-digit code we sent to maya@example.com.</p>
-      <input class="nf code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" aria-label="Code">
-      <div class="nrow" style="justify-content:space-between;align-items:center"><span class="ta" data-t="Use a different email">Use a different email</span><button class="bz def">Sign in</button></div>
-      <div style="margin-top:10px"><span class="ta" data-t="Send a new code">Send a new code</span></div>
+    <div data-st="invite">
+      <h1>Join Fogline</h1>
+      <p class="si-sub">Sam Jones invited you to write. Sign in or create an account to join.</p>
     </div>
-    <div data-st="name">
-      <h1 class="title">What should the room call you?</h1>
-      <p class="sub">Your name shows on your cursor and in episode lists.</p>
-      <input class="nf" value="Maya Alvarez" aria-label="Your name" autocomplete="name">
-      <div class="nrow"><button class="bz def">Continue</button></div>
-    </div>
-  </div></div></div>
-</div>
-<p class="note">The "Grayscale variant" step shows the same screen with no blue at all: the default button is a plain bezel and Enter still submits. SPEC 3.3 reserves blue for primary actions but doesn't require it.</p>
-</section>
-
-<!-- ============ SIGN-IN A2 ============ -->
-<section class="view" id="sr">
-<p class="cap"><strong>Sign-in A2 · Home rows.</strong> Option A rebuilt from the home page's own parts: the gray sidebar (empty until you're in), the 760 px column, a series-style header, and 48 px rows with line2 dividers. There are no buttons. "Continue with Google" is a row, the email field is a row, and "Email me a code" is a text action that bolds when clicked, like + New episode. It looks like the home page before it has content.</p>
-<div class="steps" data-for="sr"><button data-s="email" class="on">1 · Email</button><button data-s="code">2 · Code</button><button data-s="name">3 · Name (first time only)</button><button data-s="invite">From an invite link</button></div>
-<div class="win">
-  <header class="tb"><span class="title">Writers’ Room</span></header>
-  <div class="body"><aside class="left"></aside><div class="center"><div class="home">
     <div data-st="email invite">
-      <div class="sh"><span><span class="title" data-st="email">Sign in</span><span class="title" data-st="invite">Fogline</span><small data-st="email">No password. Use Google, or get a code by email.</small><small data-st="invite">Sam Jones invited you to write · sign in to join</small></span></div>
-      <div class="eps">
-        <button class="srow btn">GOOGLE_G Continue with Google</button>
-        <label class="srow"><input type="email" placeholder="Email address" autocomplete="email"><span class="ta" data-t="Email me a code">Email me a code</span></label>
-      </div>
+      <button class="si-g">GOOGLE_G Continue with Google</button>
+      <div class="si-or">or</div>
+      <input class="si-f" type="email" placeholder="Enter email address" aria-label="Email address" autocomplete="email">
+      <button class="si-c">Continue</button>
+      <p class="si-legal">By continuing, you agree to the Writers’&nbsp;Room <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
     </div>
     <div data-st="code">
-      <div class="sh"><span><span class="title">Check your email</span><small>We sent a 6-digit code to maya@example.com</small></span></div>
-      <div class="eps"><label class="srow"><input class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"><span class="ta" data-t="Sign in">Sign in</span></label></div>
-      <div class="sfoot"><span class="ta" data-t="Use a different email">Use a different email</span><span class="ta" data-t="Send a new code">Send a new code</span></div>
+      <h1>Check your email</h1>
+      <p class="si-sub">We sent a 6-digit code to maya@example.com.</p>
+      <input class="si-f code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit code" aria-label="Code">
+      <button class="si-c">Continue</button>
+      <p class="si-alt"><span class="ta" data-t="Use a different email">Use a different email</span> · <span class="ta" data-t="Send a new code">Send a new code</span></p>
     </div>
     <div data-st="name">
-      <div class="sh"><span><span class="title">What should the room call you?</span><small>Your name shows on your cursor and in episode lists.</small></span></div>
-      <div class="eps"><label class="srow"><input value="Maya Alvarez" autocomplete="name" aria-label="Your name"><span class="ta" data-t="Continue">Continue</span></label></div>
+      <h1>What should the room call you?</h1>
+      <p class="si-sub">Your name shows on your cursor and in episode lists.</p>
+      <input class="si-f" value="Maya Alvarez" aria-label="Your name" autocomplete="name">
+      <button class="si-c">Continue</button>
     </div>
   </div></div></div>
 </div>
-<p class="note">Enter submits each row. A row with a field gets the hover background while it has focus, so focus stays visible. Google users skip the code and name steps.</p>
+<p class="note"><strong>What's adapted:</strong> the logo becomes a Courier Prime wordmark (we have no logo). The heading covers both cases, because with email codes, signing in and signing up are one flow: a new email simply gets step 3. So the template's "Already have an account? Log in" isn't needed. "Trusted by teams at" is dropped: we have no such logos, and inventing them would be fake. On the code step, the legal line's spot holds "Use a different email · Send a new code". Google users skip steps 2 and 3.</p>
 </section>
 
 <!-- ============ MEMBERS A ============ -->
@@ -347,7 +338,8 @@ function setStep(sec,step){
 }
 document.querySelectorAll('.view').forEach(sec=>{const first=sec.querySelector('.steps button');if(first)setStep(sec,first.dataset.s)});
 document.addEventListener('click',e=>{
-  const s=e.target.closest('.steps button');if(s){setStep(s.closest('.view'),s.dataset.s);return}
+  const vb=e.target.closest('.vars button');if(vb){const w=vb.closest('.view').querySelector('.si-win');const c=vb.dataset.var==='tb'?'tb-on':vb.dataset.var;w.classList.toggle(c);vb.classList.toggle('on');return}
+  const s=e.target.closest('.steps:not(.vars) button');if(s){setStep(s.closest('.view'),s.dataset.s);return}
   const v=e.target.closest('.mk button[data-v]');
   if(v){document.querySelectorAll('.mk button[data-v]').forEach(b=>b.classList.toggle('on',b===v));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id===v.dataset.v));return}
   if(e.target.id==='theme'){const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const dark=cur!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';e.target.textContent=dark?'Light':'Dark';return}

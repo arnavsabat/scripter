@@ -37,6 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Sign-in screen layout (D-028):** Arnav's template (a centered column: mark, heading, subtitle, "Continue with Google", "or", a filled email field, a high-contrast "Continue", a legal line), drawn in our tokens and type. "Continue" uses the inverted-surface tokens (`--toast` / `--toast-fg`), not blue. Four parts are still open (see Open issues).
 - **Invite row controls (D-027):** in the Members invite row, the role picker and "Invite" look like the email field beside them: 30 px, a 1 px `--line` border, 6 px radius, `--bg` fill, 13 px text-color. The role picker is the app's own "Writer ▾" opening the shared menu, not a native select. "Invite" isn't blue.
 - **Home header text actions hover (D-026):** "+ New episode" and "Members" get the sidebar rows' hover background (`--hover`, 6 px radius), with the padding offset by an equal negative margin so nothing moves. They still bold on click like every text action.
 - **Cluster phase built (D-023) and its choices confirmed (D-024, D-025):** membership, the hash ring, forwarding, fenced leases and snapshots, failover, graceful rebalancing, three nodes in docker compose, and a chaos suite with zero lost edits. The design reference is `docs/sync-cluster.md`.
@@ -119,7 +120,7 @@ Phase 2:
 
 17. ~~Spacing before scene headings~~: decided in D-014 (two blank lines).
 18. Mobile and narrow-screen behavior (SPEC 3.8: raise when it comes up).
-19. The sign-in screen design (SPEC 5.6: Highland style, not yet mocked).
+19. ~~The sign-in screen design~~: layout decided in D-028. Still open: the toolbar on sign-in (SPEC 3.5), template sizes versus SPEC 3.3 tiers, the wordmark, and the legal line (needs Terms and Privacy pages).
 20. Email delivery for one-time codes and invites (Cognito's built-in email or Amazon SES), and the invite link flow.
 21. Screens the prototype doesn't mock: Members, + New episode, Invite co-writer…, and the account avatar menu (where sign-out lives).
 - New (D-026): should the hover background extend to every text action (+ New script, Accept, + New what-if, + Snapshot), or stay on the home header's two?
@@ -202,6 +203,41 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-028 · 2026-10-24 · Sign-in screen: Arnav's template, in our design system
+
+- **Context:** the first round of mockups offered A (a quiet centered column) and B (a screenplay title page on the desk). Arnav preferred A, but it didn't have Highland's minimal, native macOS look: it stood out from the other screens and read as generic, especially the full-width blue "Email me a code". Claude redrew A as A1 (native control sizes, a small default button, plus a grayscale variant) and A2 (built from the home page's rows, with no buttons). Arnav then supplied a reference sign-in screen (Mobbin's) to use as an exact template, adapted to our scheme.
+- **Decision (Arnav's call):** the template's layout, top to bottom:
+  - a mark (a Courier Prime wordmark, "WRITERS’ ROOM", since we have no logo);
+  - the heading "Sign in or create an account", then the muted subtitle "Write together in real time. No password needed.";
+  - "Continue with Google", outlined with `--line` and no fill;
+  - an "or" divider in `--line2`;
+  - the email field, filled with `--side` and no border, with an accent focus ring;
+  - "Continue", full width, on the inverted-surface tokens `--toast` / `--toast-fg`: light in dark mode, dark in light mode, never blue;
+  - the 12 px muted legal line.
+
+  The adaptations: our tokens in both themes, the system font, and 6 px corners instead of the template's pills. Template proportions are a 400 px column, a 28 px semibold heading, 15 px text and 44-46 px controls.
+- **Steps on the same layout:**
+  - **Code:** "Check your email", a code field, Continue, and "Use a different email · Send a new code" where the legal line was.
+  - **Name, for a new email only:** "What should the room call you?"
+  - **From an invite link:** "Join Fogline" and "Sam Jones invited you to write…".
+  - Google users skip the code and name steps.
+- **Template parts left out, with reasons:**
+  - "Already have an account? Log in": with email codes, signing in and signing up are one flow; a new email just gets the name step.
+  - "Trusted by teams at" and its logos: we have none, and inventing them would be fake.
+- **Still open for Arnav:**
+  1. Whether the 56 px toolbar shows (SPEC 3.5 says every screen has one; the template has none).
+  2. Template sizes versus SPEC 3.3's tiers (a 28 px heading is outside them; the strict version uses 15 px and 34 px controls).
+  3. Whether to keep the wordmark.
+  4. Whether to keep the legal line, which needs real Terms and Privacy pages that don't exist yet.
+
+  The mockup has a toggle for each.
+- **Rejected:**
+  - B · Title page: Arnav preferred A's directness.
+  - The original A: it stood out from the app and looked generic.
+  - A1 and A2: superseded by the template before Arnav chose between them.
+- **What changes for writers:** a familiar, calm sign-in page that matches the app's colors in both themes. **For the system:** none yet; it's a mockup.
+- **Status:** Arnav's call on the layout; four parts are open.
 
 ### D-027 · 2026-10-24 · The invite row's role picker and "Invite" look like the email field
 
