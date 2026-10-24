@@ -20,6 +20,8 @@ ws(s)://<sync host>/doc/<episodeId>?token=<token>
 | 0    | sync      | y-protocols sync message (below)                         | both            |
 | 1    | awareness | y-protocols awareness update: cursors, selections, names | both            |
 | 3    | ack       | `stored: varUint`                                        | server → client |
+| 4    | ping      | (none)                                                   | client → server |
+| 5    | pong      | (none)                                                   | server → client |
 
 **Sync (type 0)** is followed by a sub-type:
 
@@ -57,11 +59,23 @@ This is how unacknowledged edits are resent (SPEC 5.4). The client never needs a
 
 Why a count rather than "saved up to clock N": Yjs deletions don't advance a writer's clock (a Backspace adds to the delete set, not a new numbered item), so a clock can't confirm a pending deletion. A count covers typing and deletions alike.
 
+## Heartbeat and connecting (D-022)
+
+- The client sends **ping** every 5 s, and the server answers **pong** at once, even while it's still loading the episode (waiting for a dead owner's lease to expire). If _nothing at all_ has arrived for 10 s (checked every second), the client abandons the socket without waiting for a close handshake and reconnects. A frozen server keeps its sockets open, so without this, writers could be stuck for minutes.
+- A connection that hasn't opened within 5 s is abandoned too. A frozen server's operating system still accepts the TCP connection, but the WebSocket handshake never completes.
+- With a cluster, the client is given the list of server URLs and connects to a random one each time. Any server accepts, and forwards to the episode's home if it isn't the home itself (`docs/sync-cluster.md`).
+
+## Between servers
+
+A server forwarding a writer to the episode's home opens its own WebSocket to the home's internal URL, with the same path, and passes messages through untouched. The writer's identity, already verified, travels in the `x-wr-forwarded` header: base64url JSON plus an HMAC-SHA256 signature made with the cluster secret (`WR_CLUSTER_SECRET`), valid for 30 s. Browsers never see this header.
+
 ## Close codes
 
 | Code | Meaning                                | Client behavior                                |
 | ---- | -------------------------------------- | ---------------------------------------------- |
-| 1001 | Server going away: shutdown or handoff | Reconnect with backoff                         |
+| 1001 | Server going away: shutdown            | Reconnect now (backoff reset)                  |
+| 1013 | Try again: no home reachable right now | Reconnect with backoff                         |
+| 4409 | Moved: the episode lives elsewhere now | Reconnect now (backoff reset)                  |
 | 4401 | Unauthorized                           | Stop and ask for a new token                   |
 | 4404 | Bad episode ID                         | Stop                                           |
 | 4500 | Storage failed                         | Reconnect with backoff (the handshake resends) |

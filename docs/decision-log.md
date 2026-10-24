@@ -37,6 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Cluster phase built (D-023), awaiting Arnav's review:** membership, the hash ring, forwarding, fenced leases and snapshots, failover, graceful rebalancing, three nodes in docker compose, and a chaos suite with zero lost edits. The design reference is `docs/sync-cluster.md`.
 - **Cluster phase (D-022):**
   - Leases renew every 2 s and expire after 6 s; membership heartbeats run on the same schedule.
   - 256 SHA-1 virtual nodes per server.
@@ -64,6 +65,13 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Choices made while building the cluster (D-023), awaiting Arnav:**
+  - The client gives up on a connection that hasn't opened within 5 s.
+  - The forwarding hop holds a new writer for up to 15 s, retrying every 500 ms.
+  - A gracefully leaving server waits one heartbeat (2 s) before handing off.
+  - Log truncation runs in the background once the snapshot pointer has moved.
+  - Dev mode uses a built-in cluster secret.
+  - pnpm's `allowBuilds: { esbuild: false }`.
 - **Performance budget (from D-012):** a regression test failing if the p95 local keystroke or remote update exceeds 16 ms on a 110-page script. It's added with the editor package's performance test.
 - **Small choices made while building the editor shell (D-014, items 9-11):**
   - Structural actions get their own undo step.
@@ -183,6 +191,9 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 - Cursor stability when nodes are deleted by other users. Tested in the spike: the cursor moves to the start of the next line. Low risk now.
 - Page-break markers must survive remote updates (annotation handling in the Yjs binding). Resolved by design (D-012, F3): y-prosemirror replaces the whole document on every remote change, so decorations must be recomputed from the document. Mapped decorations vanish (20 → 0 in the control test).
 - New (D-012, F2): any transaction appended during a remote change is never written to Yjs, so clients silently diverge. Every auto-fix after a remote change must run as a separate local transaction.
+- New (D-023): the chaos numbers come from one laptop running DynamoDB Local, which processes writes one at a time on SQLite. Under heavy load it adds latency that real DynamoDB wouldn't (truncation deletes visibly slowed appends). Real AWS numbers come from the load-test phase.
+- New (D-023): a *frozen* server costs writers about 10-13 s (the 10 s client heartbeat plus a reconnect), against about 6-8 s for a crashed one. Making it faster means a shorter heartbeat, which D-022 rejected because of needless reconnects on slow networks.
+- New (D-023): if DynamoDB itself is unavailable, writers keep editing locally and nothing is lost, but no new edits become durable until it returns.
 - New (D-012): y-prosemirror 1.3.7 is in maintenance mode. Its local keystroke cost grows with document length (p95 8 ms at 110 pages, so about 2x headroom).
 - Binding churn: a rewrite of the ProseMirror-Yjs binding has been planned, and no stable release has been confirmed. Update (D-010): the rewrite now exists as the pre-release `@y/prosemirror` 2.0.0-15 on the Yjs 14 beta, and the stable `y-prosemirror` 1.3.7 hasn't had a release since July 2025. We build on the stable line, and an upgrade later would be its own decision.
 - Scene IDs staying unique through copy-paste and splits.
@@ -195,6 +206,54 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-023 · 2026-10-24 · Cluster phase built: membership, ring, forwarding, fenced leases, failover, rebalancing
+
+- **What was built:**
+  - **Membership** (`cluster.ts`): a heartbeat every 2 s; a server is dead after 6 s.
+  - **Consistent hashing** (`ring.ts`): 256 SHA-1 virtual nodes per server.
+  - **Forwarding** (`server.ts`): a WebSocket pipe per writer, with the identity HMAC-signed by the cluster secret.
+  - **Leases** (`storage/coordination.ts`): acquire increments the epoch in one conditional write; renew and release are conditional on owner and epoch; a new owner waits for expiry.
+  - **Fenced storage:** every log append is a `TransactWriteItems` combining the lease check and the log put. Snapshots are immutable S3 objects plus a fenced, forward-only pointer item, and the log is truncated only after the pointer moves.
+  - **Failover:** a new owner loads the pointer's snapshot plus the log tail, and the clients' handshake resends what it lacks.
+  - **Graceful handoff:** idle rooms first, then snapshot, release, and close with 4409. Shutdown leaves the ring, waits one heartbeat, then hands off.
+  - **Client:** a random server per connect, a heartbeat (ping every 5 s, give up after 10 s, checked every second), a 5 s connect timeout, "Reconnecting…", and an immediate reconnect on 4409 and 1001.
+  - **Local cluster:** three nodes in docker compose (`pnpm cluster:up`, `apps/sync/Dockerfile`), with table creation that tolerates several servers racing.
+  - **Docs:** `docs/sync-cluster.md` (the design, written for interviews) and an updated `PROTOCOL.md`.
+- **Tests:**
+  - **Ring (5):** determinism, balance, and minimal movement on join and leave.
+  - **Storage and fencing against DynamoDB Local + SeaweedFS (11):** includes "eight servers race for one lease: exactly one wins", "an outdated owner's append is refused", and "an outdated owner can't move the snapshot pointer".
+  - **In-process cluster (5):** routing, failover, split brain, adding a server (idle first), removing one.
+  - **Chaos suite** with 3 real processes and the real timings (`test:chaos`, below).
+- **Measured** (chaos suite, three runs; worst wait for a keystroke to be confirmed durable; **0 lost edits in every run**):
+
+  | Scenario | Takeover | Worst writer wait |
+  |---|---|---|
+  | SIGKILL the home mid-typing | 6.1-7.3 s after the kill | 6.3-8.7 s |
+  | SIGSTOP the home, then SIGCONT (split brain) | about 10.7 s after the freeze | about 13 s, for a normal writer on the frozen server |
+  | Add a server, then SIGTERM one, 6 writers typing | graceful | 0.3-2.2 s |
+
+  In the split-brain runs, the woken owner stepped down because its append was fenced, or because its lease renewal was refused. DynamoDB holds no epoch-1 log item after the first epoch-2 item.
+- **Bugs the chaos runs found, all fixed:**
+  1. Servers racing to create the DynamoDB tables crashed the losers. Table creation now tolerates `ResourceInUseException` and waits for the winner.
+  2. After a crash, writers' reconnect backoff kept growing while the ring caught up. The forwarding hop now holds a new writer (answering its pings) and retries every 500 ms.
+  3. The hop flushed a writer's opening messages to a home that then turned it away, so the next home never got the writer's state vector, and the writer never re-synced. Messages are now kept until a home starts the session, and replayed.
+  4. A room being handed off still counted as held, so a writer reconnecting in that window re-opened the episode on the old server and took the lease back, forcing a second handoff. Only open or loading rooms count as held now.
+  5. Handoffs waited for log truncation: deleting hundreds of items took 2-3 s per episode on DynamoDB Local. Truncation now runs in the background once the pointer has moved, which is safe at any time and by anyone.
+  6. A graceful shutdown bounced writers back to the leaving server. It now leaves the ring and waits one heartbeat before handing off, still serving its episodes meanwhile.
+  7. The client checked the heartbeat deadline only when it pinged, so a silent server was noticed after 10-15 s; it's now checked every second. A connection that never opens (a frozen server's OS still accepts TCP) had no timeout; there's now a 5 s connect timeout.
+  8. A measurement bug in our own test: "confirmed" meant "nothing outstanding", which never happens while someone types faster than the round trip. That made graceful handoffs look like 10 s pauses. The suite now tracks each keystroke's own acknowledgment.
+  9. Test isolation: each chaos scenario now runs its own cluster with its own membership table (an earlier scenario's servers had joined the next one's ring).
+- **Choices made while building, for Arnav to confirm:**
+  - (a) A 5 s client connect timeout.
+  - (b) The forwarding hop holds a new writer for up to 15 s, retrying every 500 ms.
+  - (c) A graceful leave waits one heartbeat (2 s) before handing off.
+  - (d) Truncation runs in the background after the pointer moves.
+  - (e) Dev mode falls back to a built-in cluster secret, and outside dev the server refuses to start without one.
+  - (f) `allowBuilds: { esbuild: false }`: pnpm 12 blocks install scripts, and esbuild's only re-checks a binary pnpm already installed.
+  - (g) The image is `node:24.12.0-alpine`, run with `tsx`. Production bundling is still to be decided with the deploy.
+- **What changes for writers:** a server can crash, freeze, join or leave mid-scene. They see "Reconnecting…" for a few seconds (under a second for planned changes), keep typing, and lose nothing.
+- **Status:** built and tested; awaiting Arnav's review and confirmation of (a)-(g).
 
 ### D-022 · 2026-10-24 · Cluster phase decisions
 

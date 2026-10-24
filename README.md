@@ -4,7 +4,7 @@ A real-time collaborative screenwriting tool built like a TV writers' room (work
 
 The systems centerpiece is a horizontally scaled sync service: one home server per script, chosen by consistent hashing; ownership leases with fencing tokens; a durable edit log; and failover with zero lost edits, measured by a load-test harness.
 
-**Status:** real-time co-writing through one sync server: live edits, presence, offline editing that merges, and a durable edit log with snapshots. See `docs/SPEC.md` for the full specification and `docs/decision-log.md` for every decision and why it was made.
+**Status:** real-time co-writing on a horizontally scaled sync cluster: consistent hashing, leases with fencing tokens, failover, and graceful rebalancing, with zero lost edits under chaos tests. See `docs/SPEC.md` for the full specification and `docs/decision-log.md` for every decision and why it was made.
 
 ## Repo layout
 
@@ -49,9 +49,11 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 
 **Co-writing locally:** open `http://localhost:5173/?as=Maya` in one browser window and `http://localhost:5173/?as=Sam` in another. `?ep=pilot` picks an episode (the default is `dev-episode`). The names come from a **development auth stub**: unsigned tokens, which the server accepts only with `WR_DEV_AUTH=1`.
 
+**A 3-server cluster:** `pnpm cluster:up` builds the sync server image and starts `sync-1`, `sync-2` and `sync-3` on `localhost:4001`-`4003` (plus the services). Point the web app at all three with `VITE_SYNC_URLS=ws://localhost:4001,ws://localhost:4002,ws://localhost:4003 pnpm dev:web`. Kill one (`docker kill writers-room-sync-2-1`), freeze one (`docker pause` / `docker unpause`), or stop one gracefully (`docker stop`) while writing. `pnpm cluster:down` stops them. How it all works is in `docs/sync-cluster.md`.
+
 **Without containers:** `WR_STORAGE=memory pnpm --filter @wr/sync dev` keeps everything in the server's memory. That's for development only; nothing survives a restart.
 
-**Tests:** `pnpm test` runs everything that needs no containers. The web integration tests run in real Chromium; install it once with `pnpm --filter @wr/web exec playwright install chromium`. With the services up, `pnpm --filter @wr/sync test:services` runs the DynamoDB and S3 storage tests and a crash test that kills the server process with SIGKILL mid-typing.
+**Tests:** `pnpm test` runs everything that needs no containers. The web integration tests run in real Chromium; install it once with `pnpm --filter @wr/web exec playwright install chromium`. With the services up, `pnpm --filter @wr/sync test:services` runs the DynamoDB and S3 storage and fencing tests, and `pnpm --filter @wr/sync test:chaos` runs the chaos suite. That suite starts three real server processes and kills one mid-typing (SIGKILL), freezes one until it's fenced off (SIGSTOP/SIGCONT), and adds and removes servers, printing the pause writers saw.
 
 ## Scripts
 

@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-022) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-023) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -92,5 +92,10 @@ REPO WORKING NOTES
   - Never acknowledge or broadcast an update before the log append resolves.
   - Resend is the Yjs handshake, not a queue.
   - Edit-log items are chunked under 400 KB.
+- **Cluster (D-022, D-023):** the design reference is `docs/sync-cluster.md`.
+  - Membership heartbeats every 2 s (a server is dead after 6 s); 256 SHA-1 virtual nodes; a WebSocket pipe per forwarded writer (identity HMAC-signed); leases renewed every 2 s and expiring after 6 s.
+  - **Every** log append and snapshot-pointer move is a DynamoDB transaction fenced on the lease epoch. Truncate only after the pointer moves.
+  - The ring is a routing hint; the lease decides who writes. A closing room doesn't count as held.
+  - Chaos suite: `pnpm --filter @wr/sync test:chaos` (needs the services).
 - The browser keeps each episode in IndexedDB (y-indexeddb) and connects with `?as=Name&ep=id` (dev auth stub). Web tests use a real sync server from `apps/web/test/syncServer.ts`, with a control endpoint for kill, restart and drop.
 - Web test files run one at a time (`fileParallelism: false`): real key presses go to the focused frame.
