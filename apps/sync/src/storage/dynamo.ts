@@ -5,21 +5,28 @@
 // offline session), so large updates are split into chunks written in order. The server acks
 // only after every chunk is written, so an incomplete group (a crash mid-write) was never
 // acknowledged; readers skip it and the client resends through the reconnect handshake.
-// Each item is written with attribute_not_exists, so a seq can never be written twice. (Epoch
-// fencing for multiple servers is added to this same condition in the scaled-service phase.)
+// Fencing (D-022): every append is a DynamoDB transaction that also checks the lease item still
+// names this server and epoch. If another server has taken the lease (a higher epoch), the
+// whole write is refused, so an outdated owner can never add to the log. Each log item is also
+// written with attribute_not_exists, so a seq can never be written twice.
 import {
   BatchWriteItemCommand,
   CreateTableCommand,
   DescribeTableCommand,
   DynamoDBClient,
-  PutItemCommand,
   QueryCommand,
   ResourceNotFoundException,
+  TransactWriteItemsCommand,
+  TransactionCanceledException,
   type AttributeValue,
+  type TransactWriteItem,
 } from '@aws-sdk/client-dynamodb';
-import type { EditLog, LogEntry, LogTail } from './types';
+import { leaseCheck } from './coordination';
+import { FencedError, type EditLog, type Fence, type LogEntry, type LogTail } from './types';
 
 const CHUNK_BYTES = 350_000;
+/** A transaction is limited to 4 MB and 100 items: 10 chunks of 350 KB plus the lease check fit. */
+const CHUNKS_PER_TRANSACTION = 10;
 
 function concat(parts: Uint8Array[]) {
   if (parts.length === 1) return parts[0]!;
@@ -38,6 +45,8 @@ export class DynamoEditLog implements EditLog {
   constructor(
     private readonly client: DynamoDBClient,
     private readonly table: string,
+    /** The coordination table holding the lease items that fence every append. */
+    private readonly coordinationTable: string,
   ) {}
 
   /** Creates the table if it doesn't exist (local development; AWS tables come from CDK). */
@@ -64,23 +73,40 @@ export class DynamoEditLog implements EditLog {
     );
   }
 
-  async append(docId: string, seq: number, update: Uint8Array) {
+  async append(docId: string, seq: number, update: Uint8Array, fence: Fence) {
     const chunks = Math.max(1, Math.ceil(update.byteLength / CHUNK_BYTES));
-    for (let chunk = 0; chunk < chunks; chunk++) {
-      await this.client.send(
-        new PutItemCommand({
-          TableName: this.table,
-          Item: {
-            docId: { S: docId },
-            k: { S: key(seq, chunk) },
-            seq: { N: String(seq) },
-            chunk: { N: String(chunk) },
-            chunks: { N: String(chunks) },
-            update: { B: update.subarray(chunk * CHUNK_BYTES, (chunk + 1) * CHUNK_BYTES) },
-          },
-          ConditionExpression: 'attribute_not_exists(k)',
-        }),
-      );
+    const item = (chunk: number): TransactWriteItem => ({
+      Put: {
+        TableName: this.table,
+        Item: {
+          docId: { S: docId },
+          k: { S: key(seq, chunk) },
+          seq: { N: String(seq) },
+          chunk: { N: String(chunk) },
+          chunks: { N: String(chunks) },
+          epoch: { N: String(fence.epoch) },
+          update: { B: update.subarray(chunk * CHUNK_BYTES, (chunk + 1) * CHUNK_BYTES) },
+        },
+        ConditionExpression: 'attribute_not_exists(k)',
+      },
+    });
+    // Almost every update is one chunk, so one transaction: [lease still mine?] + [log item].
+    // A huge update spans several transactions, each fenced; a crash between them leaves an
+    // incomplete group, which was never acknowledged and which readers skip.
+    for (let first = 0; first < chunks; first += CHUNKS_PER_TRANSACTION) {
+      const items = [leaseCheck(this.coordinationTable, docId, fence)];
+      for (let c = first; c < Math.min(chunks, first + CHUNKS_PER_TRANSACTION); c++)
+        items.push(item(c));
+      try {
+        await this.client.send(new TransactWriteItemsCommand({ TransactItems: items }));
+      } catch (err) {
+        if (
+          err instanceof TransactionCanceledException &&
+          err.CancellationReasons?.[0]?.Code === 'ConditionalCheckFailed'
+        )
+          throw new FencedError(docId, fence);
+        throw err;
+      }
     }
   }
 

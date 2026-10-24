@@ -6,8 +6,11 @@ import { memoryStorage } from '../src/storage/memory';
 
 export type Storage = ReturnType<typeof memoryStorage>;
 
+/** Cluster timings scaled down 6x so tests run fast; the chaos suite uses the real ones. */
+export const FAST = { leaseTtlMs: 1000, renewEveryMs: 330, heartbeatMs: 330, deadAfterMs: 1000 };
+
 export async function server(storage: Storage, port = 0, extra: Partial<SyncServerOptions> = {}) {
-  return startSyncServer({ port, storage, devAuth: true, ...extra });
+  return startSyncServer({ port, storage, devAuth: true, ...FAST, ...extra });
 }
 
 /** A client whose network can be switched off: while offline, connections are refused. */

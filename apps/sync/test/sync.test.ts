@@ -70,7 +70,9 @@ describe('two writers', () => {
   });
 
   it('rejects a bad token with 4401 and stops retrying', async () => {
-    const srv = track(await server(memoryStorage(), 0, { devAuth: false }));
+    const srv = track(
+      await server(memoryStorage(), 0, { devAuth: false, clusterSecret: 'test-secret' }),
+    );
     const a = track(client(srv, 'Maya'));
     await until(() => a.c.connection === 'stopped');
     expect(a.c.fatal).toBe('unauthorized');

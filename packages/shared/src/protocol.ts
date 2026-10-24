@@ -7,11 +7,17 @@ export const MSG_SYNC = 0;
 export const MSG_AWARENESS = 1;
 /** "I've durably stored N of your update messages on this connection" (D-019). */
 export const MSG_ACK = 3;
+/** Client heartbeat (D-022): the client sends ping every 5 s; the server answers pong at once. */
+export const MSG_PING = 4;
+export const MSG_PONG = 5;
 
 /** y-protocols sync sub-types: step 1 carries a state vector, step 2 and update carry Yjs updates. */
 export const SYNC_STEP1 = 0;
 export const SYNC_STEP2 = 1;
 export const SYNC_UPDATE = 2;
+
+export const encodePing = () => new Uint8Array([MSG_PING]);
+export const encodePong = () => new Uint8Array([MSG_PONG]);
 
 export function encodeAck(stored: number): Uint8Array {
   const e = encoding.createEncoder();
@@ -31,8 +37,12 @@ export const CLOSE = {
   BAD_DOCUMENT: 4404,
   /** The server couldn't make an update durable. Reconnect: the handshake resends it. */
   STORAGE_FAILED: 4500,
-  /** The server is shutting down (or handing the episode to another server). Reconnect. */
+  /** The server is shutting down. Reconnect. */
   GOING_AWAY: 1001,
+  /** No server can serve this episode right now (its home is unreachable or still taking over). Reconnect with backoff. */
+  TRY_AGAIN: 1013,
+  /** The episode now lives on another server (handoff, or this server lost its lease). Reconnect at once. */
+  MOVED: 4409,
 } as const;
 
 /** Episode IDs are also DynamoDB keys and S3 object names, so keep them plain. */

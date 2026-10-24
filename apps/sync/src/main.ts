@@ -1,7 +1,6 @@
 // Entry point. Configuration comes from the environment (see the repo's .env.example).
-import { DynamoEditLog, dynamoClient } from './storage/dynamo';
+import { awsConfigFromEnv, awsStorage } from './storage/aws';
 import { memoryStorage } from './storage/memory';
-import { S3SnapshotStore, s3Client } from './storage/s3';
 import type { Storage } from './storage/types';
 import { startSyncServer } from './server';
 
@@ -26,18 +25,7 @@ async function storageFromEnv(): Promise<Storage> {
     logger.info('⚠️  in-memory storage: nothing survives a restart (development only)');
     return memoryStorage();
   }
-  const region = env.AWS_REGION ?? 'us-east-1';
-  const log = new DynamoEditLog(
-    dynamoClient(env.DYNAMODB_ENDPOINT, region),
-    env.WR_EDIT_LOG_TABLE ?? 'wr-edit-log',
-  );
-  const snapshots = new S3SnapshotStore(
-    s3Client(env.S3_ENDPOINT, region, env.S3_ACCESS_KEY_ID, env.S3_SECRET_ACCESS_KEY),
-    env.S3_SNAPSHOT_BUCKET ?? 'wr-snapshots',
-  );
-  if (env.DYNAMODB_ENDPOINT) await log.ensureTable(); // local emulators only
-  if (env.S3_ENDPOINT) await snapshots.ensureBucket();
-  return { log, snapshots };
+  return awsStorage(awsConfigFromEnv(env));
 }
 
 const devAuth = env.WR_DEV_AUTH === '1';
@@ -47,6 +35,9 @@ const server = await startSyncServer({
   port: Number(env.PORT ?? 4000),
   storage: await storageFromEnv(),
   devAuth,
+  ...(env.WR_SERVER_ID ? { serverId: env.WR_SERVER_ID } : {}),
+  ...(env.WR_INTERNAL_URL ? { internalUrl: env.WR_INTERNAL_URL } : {}),
+  ...(env.WR_CLUSTER_SECRET ? { clusterSecret: env.WR_CLUSTER_SECRET } : {}),
   logger,
 });
 
