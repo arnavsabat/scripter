@@ -37,6 +37,11 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase choices (D-030):**
+  - **Members** opens a collapsible 340 px right panel on the home screen, using Compare's component. "Members" is an opener (bold while open), and the × or Esc also closes it.
+  - **Email:** SES with DKIM on a domain Arnav buys.
+  - **Region:** `ca-central-1`.
+  - **Sign-in for development and tests:** the real Cognito pool for running the app; a test-only signing key, trusted only during test runs, for automated tests. Nothing unsigned is accepted anywhere.
 - **Sign-in screen layout (D-028, D-029):** Arnav's template, drawn in our tokens and type.
   - Top to bottom: the Courier Prime wordmark, heading, subtitle, "Continue with Google", "or", a filled email field, a high-contrast "Continue" and the legal line.
   - "Continue" uses the inverted-surface tokens (`--toast` / `--toast-fg`), not blue.
@@ -115,7 +120,7 @@ Spike and Phase 1:
 10. How TypeScript runs on Node: dev uses `tsx` (D-018). Production bundling is decided with the first deploy.
 11. Load-test targets and method: concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
 12. Autocomplete behavior and look (SPEC 4.4; first on the cut list after the sync cuts).
-13. AWS region (for example, ca-central-1 for Toronto users or us-east-1 for cost and service availability).
+13. ~~AWS region~~: `ca-central-1` (D-030).
 14. How to gate the first AWS deploy before Cognito exists (SPEC 5.6). Also at deploy (D-025): where the cluster secret lives on AWS, and how the sync server is built for production.
 15. Which kind of "small Postgres" to run on AWS: RDS, Aurora Serverless v2, or Postgres on the Fargate task (SPEC 5.5).
 16. Monitoring and logging tool (the imported log deferred this to the build).
@@ -125,7 +130,7 @@ Phase 2:
 17. ~~Spacing before scene headings~~: decided in D-014 (two blank lines).
 18. Mobile and narrow-screen behavior (SPEC 3.8: raise when it comes up).
 19. ~~The sign-in screen design~~: decided in D-028 and D-029.
-20. Email delivery for one-time codes and invites (Cognito's built-in email or Amazon SES), and the invite link flow.
+20. ~~Email delivery~~: SES on our own domain (D-030). Still open: the invite link flow.
 21. Screens the prototype doesn't mock: Members, + New episode, Invite co-writer…, and the account avatar menu (where sign-out lives).
 - New (D-026): should the hover background extend to every text action (+ New script, Accept, + New what-if, + Snapshot), or stay on the home header's two?
 22. Renaming scripts and episodes.
@@ -207,6 +212,30 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-030 · 2026-10-24 · Members panel collapsible; SES on our own domain; ca-central-1; how dev and tests sign in
+
+- **Decisions (Arnav's calls):**
+  1. **Members view:**
+     - The right panel (mockup "Members A"): 340 px, using Compare's component, beside the episode list.
+     - It lists each person with their avatar, name, episodes and role. For the showrunner, each role is a quiet "Writer ▾" menu (Showrunner / Writer / Viewer / Remove from series), and an invited person's menu also has "Cancel invitation". The INVITED section lists pending people, and the invite row (D-027) sits at the bottom. Writers and viewers see the list read-only.
+     - It's **collapsible:** "Members" toggles the panel (340 to 0 px over 240 ms, like the sidebar and Compare), and the × or Esc also closes it.
+     - This changes SPEC 3.4's list, where "Members" was a one-shot action that bolds for 0.7 s: it's now an opener, bold while the panel is open, like Compare.
+     - Rejected: the in-place list (B), which hid the episodes while open, and a dropdown, too cramped for a 15-person room.
+  2. **Email sender:** Amazon SES, sending from a domain Arnav buys (about $10-15 a year), verified with DKIM so the mail is signed and lands in inboxes. SES is required anyway: Cognito's passwordless email codes need the Essentials plan *and* SES sending, and invitation emails can only go through SES. A real domain is also how SES leaves its sandbox, where it sends only to verified addresses, before the beta.
+     - Rejected: sending from Gmail through SES, which fails Gmail's sender checks and lands in spam.
+  3. **Region:** `ca-central-1` (Montreal). It's closest to the Toronto beta and keeps accounts and scripts in Canada, and Cognito Essentials and SES are both available there.
+     - Rejected: `us-east-1`, about 5-10% cheaper but farther away, with the data in the US. CloudFront's certificate still has to live in `us-east-1`; that's a deploy detail.
+  4. **How development and tests sign in:**
+     - Running the app locally uses the real Cognito user pool, on the free tier (10,000 monthly active users on Essentials), with real emails.
+     - Automated tests sign tokens with a test-only key pair generated per run. The API and sync servers trust that key only when started by the test harness, and check it with the same code as Cognito tokens: signature against a JWKS, issuer, audience/client ID, `token_use` and expiry.
+     - The unsigned `DEV-UNSIGNED.` tokens and `WR_DEV_AUTH` are removed.
+     - Rejected: the `cognito-local` emulator (unmaintained, and no passwordless email codes, so tests would pass against something we never ship), and real Cognito in tests (slow, flaky, and it needs AWS credentials on every run).
+- **What changes for writers:** invitations and sign-in codes come from the app's own domain and arrive in the inbox. The Members panel slides in and out beside the episode list. **For the system:**
+  - A Cognito user pool (Essentials plan, passwordless email codes plus a Google identity provider) and an SES domain identity, both in `ca-central-1` and both defined in CDK.
+  - The servers verify JWTs against a configurable list of trusted issuers.
+- **Needed from Arnav before Cognito can exist:** an AWS account, the budget alarms ($20 and $40) set up first, the domain, and a Google Cloud OAuth client for "Continue with Google". Claude gives step-by-step instructions for each.
+- **Status:** Arnav's call.
 
 ### D-029 · 2026-10-24 · Sign-in: no toolbar, template sizes, wordmark, legal line with real pages
 

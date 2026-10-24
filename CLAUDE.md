@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-029) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-030) · `docs/prototype/writers-room-prototype.html` (visual and interaction source of truth) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -70,7 +70,7 @@ PARTS 2-5, CONDENSED (full text: docs/SPEC.md)
 - **Roles:** Showrunner (everything); Writer (edits assigned episodes, adds co-writers from series members, creates what-ifs, sends to main without approval); Viewer (read-only). Enforced per connection at the home sync server. Every check goes through `canEdit` / `canMerge(user, scope)`.
 - **Sync service:** one home server per episode doc by consistent hashing with virtual nodes over DynamoDB heartbeats. Any server forwards to the home. DynamoDB leases with an epoch fencing token. Every update is appended to the DynamoDB edit log, conditional on the current epoch, **before** ack and broadcast. Clients resend unacked updates (Yjs dedupes), which gives zero lost edits. Periodic S3 snapshots truncate the log. Failover loads snapshot plus log tail. Backoff with full jitter. Graceful handoff on scaling. Tokens verified on connect.
 - **AWS (lean):** S3 + CloudFront, one Fargate container, DynamoDB on demand, a small Postgres, CDK. Budget alarms at $20 and $40 **before** the first deploy. The multi-node cluster only for load tests and demos. Never Lambda with API Gateway WebSockets.
-- **Auth:** Cognito with a custom sign-in (email OTP plus Google, no passwords). JWTs verified by the API and sync. A clearly marked dev stub until then.
+- **Auth:** Cognito with a custom sign-in (email OTP plus Google, no passwords). JWTs verified by the API and sync. Cognito Essentials plus SES on our own domain, in `ca-central-1` (D-030). Development uses the real pool; automated tests sign tokens with a per-run test key, trusted only under the test harness. Nothing unsigned is accepted (the dev stub is being removed).
 - **PDF and import:** browser-side PDF from the pagination output (Courier Prime embedded). Import .fdx and Fountain.
 - **Pagination:** a pure function of blocks; wrapping by character count (never measure the DOM); about 54-55 lines per page; rules for headings, cues, (MORE)/(CONT'D), parentheticals, transitions and action splits; incremental from the first changed block; viewports anchored to block IDs.
 - **Usage:** count events only, never content.
