@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Cluster phase built (D-023), awaiting Arnav's review:** membership, the hash ring, forwarding, fenced leases and snapshots, failover, graceful rebalancing, three nodes in docker compose, and a chaos suite with zero lost edits. The design reference is `docs/sync-cluster.md`.
+- **Cluster phase built (D-023) and its choices confirmed (D-024, D-025):** membership, the hash ring, forwarding, fenced leases and snapshots, failover, graceful rebalancing, three nodes in docker compose, and a chaos suite with zero lost edits. The design reference is `docs/sync-cluster.md`.
 - **Cluster phase (D-022):**
   - Leases renew every 2 s and expire after 6 s; membership heartbeats run on the same schedule.
   - 256 SHA-1 virtual nodes per server.
@@ -65,7 +65,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building the cluster (D-023), still awaiting Arnav:** (e) dev mode uses a built-in cluster secret; (f) pnpm's `allowBuilds: { esbuild: false }`; (g) the `node:24.12.0-alpine` image running `tsx`. Items (a)-(d) were confirmed in D-024.
 - **Performance budget (from D-012):** a regression test failing if the p95 local keystroke or remote update exceeds 16 ms on a 110-page script. It's added with the editor package's performance test.
 - **Small choices made while building the editor shell (D-014, items 9-11):**
   - Structural actions get their own undo step.
@@ -110,7 +109,7 @@ Spike and Phase 1:
 11. Load-test targets and method: concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
 12. Autocomplete behavior and look (SPEC 4.4; first on the cut list after the sync cuts).
 13. AWS region (for example, ca-central-1 for Toronto users or us-east-1 for cost and service availability).
-14. How to gate the first AWS deploy before Cognito exists (SPEC 5.6).
+14. How to gate the first AWS deploy before Cognito exists (SPEC 5.6). Also at deploy (D-025): where the cluster secret lives on AWS, and how the sync server is built for production.
 15. Which kind of "small Postgres" to run on AWS: RDS, Aurora Serverless v2, or Postgres on the Fargate task (SPEC 5.5).
 16. Monitoring and logging tool (the imported log deferred this to the build).
 
@@ -200,6 +199,15 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-025 · 2026-10-24 · D-023 (e)-(g) confirmed
+
+- **Decision:** after Claude's plain-language explanation, Arnav confirmed the last three D-023 choices:
+  - (e) In dev mode, servers sign forwarded identities with a built-in cluster secret; outside dev, a server refuses to start without a real one. Where the AWS secret lives is decided with the deploy.
+  - (f) `allowBuilds: { esbuild: false }`: esbuild's install script stays off (pnpm's safe default), since it only re-checks a binary pnpm already installs.
+  - (g) The sync server image is `node:24.12.0-alpine`, running TypeScript with `tsx`, for local use. The production build (for example, bundling ahead of time) is decided with the deploy.
+- **What changes for writers:** nothing. **For the system:** every cluster-phase choice is now settled, and two follow-ups (the AWS secret's location and the production build) are carried into the deploy phase.
+- **Status:** Arnav's call. Every D-023 choice is confirmed; only the hands-on demo is deferred (D-024).
 
 ### D-024 · 2026-10-24 · Cluster phase: chaos suite passes on Arnav's machine; D-023 (a)-(d) confirmed
 
