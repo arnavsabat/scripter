@@ -37,6 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Home header text actions hover (D-026):** "+ New episode" and "Members" get the sidebar rows' hover background (`--hover`, 6 px radius), with the padding offset by an equal negative margin so nothing moves. They still bold on click like every text action.
 - **Cluster phase built (D-023) and its choices confirmed (D-024, D-025):** membership, the hash ring, forwarding, fenced leases and snapshots, failover, graceful rebalancing, three nodes in docker compose, and a chaos suite with zero lost edits. The design reference is `docs/sync-cluster.md`.
 - **Cluster phase (D-022):**
   - Leases renew every 2 s and expire after 6 s; membership heartbeats run on the same schedule.
@@ -120,6 +121,7 @@ Phase 2:
 19. The sign-in screen design (SPEC 5.6: Highland style, not yet mocked).
 20. Email delivery for one-time codes and invites (Cognito's built-in email or Amazon SES), and the invite link flow.
 21. Screens the prototype doesn't mock: Members, + New episode, Invite co-writer…, and the account avatar menu (where sign-out lives).
+- New (D-026): should the hover background extend to every text action (+ New script, Accept, + New what-if, + Snapshot), or stay on the home header's two?
 22. Renaming scripts and episodes.
 23. Fountain and .fdx import edge cases: title pages, notes, boneyard, dual dialogue, and unsupported element types.
 24. PDF library: pdf-lib is the spec's example, so confirm it. Courier Prime will need to be bundled locally for PDF embedding, alongside the Google Fonts link.
@@ -199,6 +201,19 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-026 · 2026-10-24 · "+ New episode" and "Members" get a hover background
+
+- **Context:** the accounts phase began with mockups (`docs/mockups/accounts-phase.html`) for the sign-in screen, the Members view, the invitation email and solo writers. Reviewing them, Arnav asked for the series header's "+ New episode" and "Members" to come alive on hover the way everything in the left panel does.
+- **Decision:** both get the sidebar rows' hover treatment: a `--hover` background with a 6 px radius. Padding of 4 px by 6 px is offset by an equal negative margin, so the text sits exactly where it did and its neighbors never move. Everything else about them is unchanged: muted 13 px at rest, bold for about 0.7 s on click (or held while open), with bold width reserved in advance.
+- **Options considered:**
+  - (a) No hover, as in the prototype (SPEC 3.4 gives text actions a bold-on-click and nothing on hover).
+  - (b) A hover background on these two only (chosen).
+  - (c) A hover background on every text action (+ New script, Accept, + New what-if, + Snapshot).
+- **Tradeoffs:** (b) makes the home header feel as responsive as the sidebar at no layout cost. It's a deviation from the prototype, and it leaves the other text actions without a hover for now; whether to extend it to them, option (c), is an open question for Arnav.
+- **What changes for writers:** pointing at "+ New episode" or "Members" now shows they're clickable before you click. **For the system:** one CSS rule, applied in the mockups now and carried into the real home page when it's built.
+- **Rejected:** (a), because the header controls felt dead next to the sidebar's hover rows.
+- **Status:** Arnav's call. Option (c) is open.
 
 ### D-025 · 2026-10-24 · D-023 (e)-(g) confirmed
 

@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Accounts phase mockups</title>
+<!-- Mockups for the "real users and rooms" phase. Decision options only: nothing here is built yet.
+     Colors come from the real tokens file; open this file directly in a browser. -->
+<link rel="stylesheet" href="../../packages/shared/tokens.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:var(--desk);color:var(--text);font-family:var(--font-ui)}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+input{font:inherit;color:var(--text)}
+/* Mockup page chrome (not part of any option) */
+.mk{position:sticky;top:0;z-index:100;display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:10px 16px;background:var(--bg);border-bottom:1px solid var(--line)}
+.mk b{font-size:13px;margin-right:10px}
+.mk button{font-size:13px;padding:5px 10px;border-radius:6px;color:var(--muted)}
+.mk button:hover{background:var(--hover)}
+.mk button.on{background:var(--accent-bg);color:var(--accent)}
+.mk .sp{flex:1}
+.wrap{max-width:1180px;margin:0 auto;padding:24px 16px 60px}
+.view{display:none}.view.on{display:block}
+.cap{font-size:13px;color:var(--muted);line-height:1.5;max-width:820px;margin:0 0 14px}
+.cap strong{color:var(--text)}
+.steps{display:flex;gap:6px;margin:0 0 12px;flex-wrap:wrap}
+.steps button{font-size:12px;padding:4px 9px;border-radius:6px;border:1px solid var(--line);color:var(--muted);background:var(--bg)}
+.steps button.on{color:var(--accent);border-color:var(--accent)}
+.win{height:680px;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);box-shadow:0 8px 30px rgba(0,0,0,.10)}
+.note{font-size:12px;color:var(--muted);margin-top:10px;line-height:1.5;max-width:820px}
+
+/* App styles, copied from the prototype */
+.tb{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 20px;background:var(--bg);border-bottom:1px solid var(--line2)}
+.title{font-size:15px;font-weight:600;white-space:nowrap}
+.grp{display:flex;align-items:center;gap:2px;position:relative}
+.ib{width:32px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--icon)}
+.ib:hover{background:var(--hover)}
+.av{width:24px;height:24px;border-radius:50%;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);flex-shrink:0}
+.a1{background:var(--avatar-1-bg);color:var(--avatar-1-fg)}.a2{background:var(--avatar-2-bg);color:var(--avatar-2-fg)}.a3{background:var(--avatar-3-bg);color:var(--avatar-3-fg)}
+.ta{display:inline-grid;font-weight:400;cursor:pointer;font-size:13px;color:var(--muted)}
+.ta::after{content:attr(data-t);font-weight:600;height:0;visibility:hidden;overflow:hidden}
+.ta.hold,.ta.flash{font-weight:600;color:var(--text)}
+/* Header text actions get the sidebar rows' hover background (Arnav, Oct 24). Padding is offset by an equal negative margin, so nothing moves. */
+.ta.hv{padding:4px 6px;margin:-4px -6px;border-radius:6px}.ta.hv:hover{background:var(--hover)}
+.body{flex:1;display:flex;min-height:0;position:relative}
+.left{width:300px;flex-shrink:0;background:var(--side);border-right:1px solid var(--line);box-sizing:border-box;overflow-y:auto}
+.center{flex:1;min-width:0;overflow:auto;background:var(--bg)}
+.list{padding:10px 8px 0}
+.row{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;padding:9px 12px;border-radius:6px;font-size:15px;font-weight:500}
+.row:hover{background:var(--hover)}.row.sel{background:var(--sel)}
+small{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
+.lab{font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--muted);padding:16px 12px 6px}
+.home{max-width:760px;margin:0 auto;padding:40px 48px}
+.sh{display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 14px}
+.sh>span:first-child{display:flex;flex-direction:column}
+.eps{border-top:1px solid var(--line2)}
+.ep{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;height:48px;padding:0 12px;border-bottom:1px solid var(--line2);font-size:15px}
+.ep:hover{background:var(--hover)}
+.live{color:var(--green)}
+.menu{position:absolute;z-index:20;padding:4px;background:var(--menu);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);font-size:13px;line-height:1.2;color:var(--text);min-width:180px}
+.mi{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;height:30px;padding:0 10px;border-radius:6px;font-size:13px;gap:12px}
+.mi:hover{background:var(--hover)}.mi span{font-size:12px;color:var(--muted)}
+.sep{height:1px;background:var(--line2);margin:4px 6px}
+.pb{height:30px;display:inline-flex;align-items:center;justify-content:center;padding:0 12px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:600;box-sizing:border-box}
+.rpw{width:340px;flex-shrink:0;overflow:hidden;transition:width .24s ease}.rpw.shut{width:0}
+.rp{width:340px;height:100%;box-sizing:border-box;background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column}
+.rh{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 12px 12px 20px;border-bottom:1px solid var(--line2)}
+.rh b{font-size:13px}.rh>span{display:flex;flex-direction:column}
+.rb{flex:1;overflow:auto;padding:8px 8px 0}
+.rf{padding:14px 20px;border-top:1px solid var(--line2)}
+
+/* New pieces proposed in these mockups */
+.field{width:100%;box-sizing:border-box;height:34px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:14px;outline:none}
+.field:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--blue-ring)}
+.field.code{font-family:var(--font-script);font-size:18px;letter-spacing:.35em;text-align:center;height:40px}
+.gbtn{width:100%;box-sizing:border-box;height:34px;display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:13px;font-weight:500}
+.gbtn:hover{background:var(--hover)}
+.or{display:flex;align-items:center;gap:10px;font-size:12px;color:var(--muted);margin:14px 0}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line2)}
+.fl{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+.wide{width:100%;height:34px;margin-top:10px}
+.links{display:flex;justify-content:space-between;margin-top:14px}
+.inv{font-size:12px;color:var(--muted);background:var(--side);border-radius:6px;padding:8px 10px;margin-bottom:18px;line-height:1.4}
+.inv b{color:var(--text);font-weight:600}
+/* Sign-in A1: native control sizes */
+.sn{width:280px;margin:110px auto 0}
+.sn h1{margin:0 0 4px}.sn .sub{font-size:12px;color:var(--muted);margin:0 0 16px;line-height:1.45}
+.nf{width:100%;box-sizing:border-box;height:26px;padding:0 8px;border:1px solid var(--line);border-radius:5px;background:var(--bg);font-size:13px;outline:none}
+.nf:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--blue-ring)}
+.nf.code{font-family:var(--font-script);letter-spacing:.3em;font-size:15px;text-align:center}
+.bz{height:24px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 14px;border-radius:5px;font-size:13px;border:1px solid var(--line);background:var(--bg);box-shadow:0 1px 0 rgba(0,0,0,.04);box-sizing:border-box}
+.bz:hover{background:var(--hover)}
+.bz.def{background:var(--accent);border-color:var(--accent);color:#fff}
+.nrow{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+.sn .or{margin:16px 0 14px}.gfull{width:100%}
+/* Sign-in A2: home-page rows */
+.srow{display:flex;align-items:center;gap:10px;width:100%;box-sizing:border-box;height:48px;padding:0 12px;border-bottom:1px solid var(--line2);font-size:15px;cursor:text}
+.srow.btn{cursor:pointer;font-weight:500}.srow.btn:hover,.srow:focus-within{background:var(--hover)}
+.srow input{flex:1;min-width:0;border:0;background:transparent;font-size:15px;outline:none;height:100%;padding:0}
+.srow input::placeholder{color:var(--muted)}
+.srow input.code{font-family:var(--font-script);letter-spacing:.3em}.srow input.code::placeholder{font-family:var(--font-ui);letter-spacing:0}
+.sfoot{display:flex;justify-content:space-between;padding:12px 12px 0}
+/* Members */
+.mrow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;position:relative}
+.mrow:hover{background:var(--hover)}
+.mrow>span.n{display:flex;flex-direction:column;flex:1;min-width:0;font-size:14px;font-weight:500}
+.role{font-size:12px;color:var(--muted);white-space:nowrap}
+.role.can{cursor:pointer}
+.role.can:hover{color:var(--text)}
+.mep{display:flex;align-items:center;gap:12px;width:100%;box-sizing:border-box;height:48px;padding:0 12px;border-bottom:1px solid var(--line2);font-size:15px;position:relative}
+.mep:hover{background:var(--hover)}
+.mep .nm{flex:1;display:flex;align-items:baseline;gap:8px}
+.irow{display:flex;gap:8px;align-items:center}
+.irow .field{height:30px;font-size:13px}
+.sel2{height:30px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font-size:13px;padding:0 6px}
+/* Email */
+.mails{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.mail{background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:14px;line-height:1.5}
+.mail .hd{padding:12px 16px;border-bottom:1px solid var(--line2);font-size:12px;color:var(--muted);line-height:1.6}
+.mail .hd b{color:var(--text);font-size:13px}
+.mail .bd{padding:20px 16px}
+.mail .bd p{margin:0 0 14px}
+.mail .ft{padding:0 16px 16px;font-size:12px;color:var(--muted);line-height:1.5}
+.mail .tag{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--muted);margin-bottom:6px}
+.minis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.mini{height:380px;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
+.mini .left{width:150px}.mini .home{padding:24px 16px}.mini .tb{padding:0 10px 0 14px}
+.mini .row{font-size:13px;padding:7px 8px}.mini .ep{font-size:13px;height:40px;padding:0 8px}.mini .sh{padding:0 8px 10px}
+.mini .lab{padding:12px 8px 4px}
+.cap2{font-size:12px;color:var(--muted);margin:8px 2px 0;line-height:1.45}
+.empty{font-size:13px;color:var(--muted);padding:60px 0 0;text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+<nav class="mk" aria-label="Mockups">
+  <b>Accounts phase · mockups</b>
+  <button data-v="sn" class="on">Sign-in A1 · Native</button>
+  <button data-v="sr">Sign-in A2 · Home rows</button>
+  <button data-v="ma">Members A · Right panel</button>
+  <button data-v="mb">Members B · In place</button>
+  <button data-v="em">Invitation email</button>
+  <button data-v="solo">Solo writers</button>
+  <span class="sp"></span>
+  <button id="theme">Dark</button>
+</nav>
+<div class="wrap">
+
+<!-- ============ SIGN-IN A1 ============ -->
+<section class="view on" id="sn">
+<p class="cap"><strong>Sign-in A1 · Native.</strong> Option A redrawn at macOS control sizes: 13 px text, 26 px fields and 24 px bezel buttons, with one small default button on the right, as in a Mac sheet. Blue appears only on that default button and the focus ring. Enter submits.</p>
+<div class="steps" data-for="sn"><button data-s="email" class="on">1 · Email</button><button data-s="code">2 · Code</button><button data-s="name">3 · Name (first time only)</button><button data-s="invite">From an invite link</button><button data-s="email gray">Grayscale variant</button></div>
+<div class="win">
+  <header class="tb"><span class="title">Writers’ Room</span></header>
+  <div class="body"><div class="center"><div class="sn">
+    <div data-st="email invite gray">
+      <h1 class="title" data-st="email gray">Sign in to Writers’ Room</h1>
+      <h1 class="title" data-st="invite">Join Fogline</h1>
+      <p class="sub" data-st="email gray">No password needed.</p>
+      <p class="sub" data-st="invite">Sam Jones invited you to write. Sign in to join.</p>
+      <input class="nf" type="email" placeholder="Email address" aria-label="Email address" autocomplete="email">
+      <div class="nrow"><button class="bz def" data-st="email invite">Continue</button><button class="bz" data-st="gray">Continue</button></div>
+      <div class="or">or</div>
+      <button class="bz gfull">GOOGLE_G Continue with Google</button>
+    </div>
+    <div data-st="code">
+      <h1 class="title">Check your email</h1>
+      <p class="sub">Enter the 6-digit code we sent to maya@example.com.</p>
+      <input class="nf code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" aria-label="Code">
+      <div class="nrow" style="justify-content:space-between;align-items:center"><span class="ta" data-t="Use a different email">Use a different email</span><button class="bz def">Sign in</button></div>
+      <div style="margin-top:10px"><span class="ta" data-t="Send a new code">Send a new code</span></div>
+    </div>
+    <div data-st="name">
+      <h1 class="title">What should the room call you?</h1>
+      <p class="sub">Your name shows on your cursor and in episode lists.</p>
+      <input class="nf" value="Maya Alvarez" aria-label="Your name" autocomplete="name">
+      <div class="nrow"><button class="bz def">Continue</button></div>
+    </div>
+  </div></div></div>
+</div>
+<p class="note">The "Grayscale variant" step shows the same screen with no blue at all: the default button is a plain bezel and Enter still submits. SPEC 3.3 reserves blue for primary actions but doesn't require it.</p>
+</section>
+
+<!-- ============ SIGN-IN A2 ============ -->
+<section class="view" id="sr">
+<p class="cap"><strong>Sign-in A2 · Home rows.</strong> Option A rebuilt from the home page's own parts: the gray sidebar (empty until you're in), the 760 px column, a series-style header, and 48 px rows with line2 dividers. There are no buttons. "Continue with Google" is a row, the email field is a row, and "Email me a code" is a text action that bolds when clicked, like + New episode. It looks like the home page before it has content.</p>
+<div class="steps" data-for="sr"><button data-s="email" class="on">1 · Email</button><button data-s="code">2 · Code</button><button data-s="name">3 · Name (first time only)</button><button data-s="invite">From an invite link</button></div>
+<div class="win">
+  <header class="tb"><span class="title">Writers’ Room</span></header>
+  <div class="body"><aside class="left"></aside><div class="center"><div class="home">
+    <div data-st="email invite">
+      <div class="sh"><span><span class="title" data-st="email">Sign in</span><span class="title" data-st="invite">Fogline</span><small data-st="email">No password. Use Google, or get a code by email.</small><small data-st="invite">Sam Jones invited you to write · sign in to join</small></span></div>
+      <div class="eps">
+        <button class="srow btn">GOOGLE_G Continue with Google</button>
+        <label class="srow"><input type="email" placeholder="Email address" autocomplete="email"><span class="ta" data-t="Email me a code">Email me a code</span></label>
+      </div>
+    </div>
+    <div data-st="code">
+      <div class="sh"><span><span class="title">Check your email</span><small>We sent a 6-digit code to maya@example.com</small></span></div>
+      <div class="eps"><label class="srow"><input class="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6-digit code"><span class="ta" data-t="Sign in">Sign in</span></label></div>
+      <div class="sfoot"><span class="ta" data-t="Use a different email">Use a different email</span><span class="ta" data-t="Send a new code">Send a new code</span></div>
+    </div>
+    <div data-st="name">
+      <div class="sh"><span><span class="title">What should the room call you?</span><small>Your name shows on your cursor and in episode lists.</small></span></div>
+      <div class="eps"><label class="srow"><input value="Maya Alvarez" autocomplete="name" aria-label="Your name"><span class="ta" data-t="Continue">Continue</span></label></div>
+    </div>
+  </div></div></div>
+</div>
+<p class="note">Enter submits each row. A row with a field gets the hover background while it has focus, so focus stays visible. Google users skip the code and name steps.</p>
+</section>
+
+<!-- ============ MEMBERS A ============ -->
+<section class="view" id="ma">
+<p class="cap"><strong>Members A · Right panel.</strong> "Members" opens a 340 px panel on the right of the home screen, the same component as Compare. The episode list stays visible beside it. Each person shows their role and episodes. The showrunner can change a role or remove someone from the role's quiet menu, and invites by email at the bottom. Writers and viewers see the same list read-only, with no invite row.</p>
+<div class="steps" data-for="ma"><button data-s="sr" class="on">As the showrunner</button><button data-s="sr menu">Role menu open</button><button data-s="wr">As a writer</button></div>
+<div class="win">
+  HOME_TOOLBAR
+  <div class="body">
+    HOME_SIDEBAR
+    <div class="center"><div class="home">
+      <div class="sh"><span><span class="title">The Long Night</span><small>3 episodes · you’re the showrunner</small></span><span class="grp" style="gap:16px"><span class="ta hv" data-t="+ New episode">+ New episode</span><span class="ta hv hold" id="maMembers" data-t="Members">Members</span></span></div>
+      EPISODES
+    </div></div>
+    <aside class="rpw" id="maPanel"><div class="rp">
+      <div class="rh"><span><b>Members</b><small>5 people</small></span><button class="ib" id="maClose" title="Close members" aria-label="Close members">ICON_X</button></div>
+      <div class="rb">
+        <div class="mrow"><span class="av a3">AR</span><span class="n">Arnav Sabat (you)<small>All episodes</small></span><span class="role">Showrunner</span></div>
+        <div class="mrow"><span class="av a1">MA</span><span class="n">Maya Alvarez<small>Ep 1, Ep 3</small></span><span class="role can" data-st="sr">Writer ▾</span><span class="role" data-st="wr">Writer</span>
+          <div class="menu" data-st="menu" style="right:6px;top:38px"><button class="mi">Showrunner</button><button class="mi">Writer<span>✓</span></button><button class="mi">Viewer</button><div class="sep"></div><button class="mi">Remove from series</button></div></div>
+        <div class="mrow"><span class="av a2">SJ</span><span class="n">Sam Jones<small>Ep 2, Ep 3</small></span><span class="role can" data-st="sr">Writer ▾</span><span class="role" data-st="wr">Writer</span></div>
+        <div class="mrow"><span class="av a1">PN</span><span class="n">Priya Nair<small>Reads everything</small></span><span class="role can" data-st="sr">Viewer ▾</span><span class="role" data-st="wr">Viewer</span></div>
+        <div class="lab">INVITED</div>
+        <div class="mrow"><span class="av a2">JO</span><span class="n">jo@example.com<small>Invited Oct 22 · not joined yet</small></span><span class="role can" data-st="sr">Writer ▾</span><span class="role" data-st="wr">Writer</span></div>
+      </div>
+      <div class="rf" data-st="sr">
+        <label class="fl">Invite to The Long Night</label>
+        <div class="irow"><input class="field" placeholder="Email address"><select class="sel2" aria-label="Role"><option>Writer</option><option>Viewer</option></select><button class="pb">Invite</button></div>
+      </div>
+    </div></aside>
+  </div>
+</div>
+<p class="note"><strong>Collapsible:</strong> click "Members" (it stays bold while the panel is open), the ×, or press Esc. The panel slides 340 ↔ 0 px over 240 ms like the sidebar and Compare, and the episode list re-centers. Removing someone from one episode (not the series) happens where co-writers are added: the episode's Share › Invite co-writer… list. One control per action. The role menu on the "Invited" row also has "Cancel invitation".</p>
+</section>
+
+<!-- ============ MEMBERS B ============ -->
+<section class="view" id="mb">
+<p class="cap"><strong>Members B · In place.</strong> "Members" swaps the episode list for the member list in the same 760 px column, with the same 48 px rows. No new panel. "Members" stays bold while the list shows. Click it again, or the series in the sidebar, to return to episodes. The invite row sits at the top of the list for the showrunner.</p>
+<div class="steps" data-for="mb"><button data-s="sr" class="on">As the showrunner</button><button data-s="sr menu">Role menu open</button><button data-s="wr">As a writer</button></div>
+<div class="win">
+  HOME_TOOLBAR
+  <div class="body">
+    HOME_SIDEBAR
+    <div class="center"><div class="home">
+      <div class="sh"><span><span class="title">The Long Night</span><small>5 people · you’re the showrunner</small></span><span class="grp" style="gap:16px"><span class="ta hv" data-t="+ New episode">+ New episode</span><span class="ta hv hold" data-t="Members">Members</span></span></div>
+      <div class="eps">
+        <div class="mep" data-st="sr"><div class="irow" style="flex:1"><input class="field" placeholder="Invite by email"><select class="sel2" aria-label="Role"><option>Writer</option><option>Viewer</option></select><button class="pb">Invite</button></div></div>
+        <div class="mep"><span class="av a3">AR</span><span class="nm">Arnav Sabat (you)<small>All episodes</small></span><span class="role">Showrunner</span></div>
+        <div class="mep"><span class="av a1">MA</span><span class="nm">Maya Alvarez<small>Ep 1, Ep 3</small></span><span class="role can" data-st="sr">Writer ▾</span><span class="role" data-st="wr">Writer</span>
+          <div class="menu" data-st="menu" style="right:6px;top:40px"><button class="mi">Showrunner</button><button class="mi">Writer<span>✓</span></button><button class="mi">Viewer</button><div class="sep"></div><button class="mi">Remove from series</button></div></div>
+        <div class="mep"><span class="av a2">SJ</span><span class="nm">Sam Jones<small>Ep 2, Ep 3</small></span><span class="role can" data-st="sr">Writer ▾</span><span class="role" data-st="wr">Writer</span></div>
+        <div class="mep"><span class="av a1">PN</span><span class="nm">Priya Nair<small>Reads everything</small></span><span class="role can" data-st="sr">Viewer ▾</span><span class="role" data-st="wr">Viewer</span></div>
+        <div class="mep"><span class="av a2">JO</span><span class="nm">jo@example.com<small>Invited Oct 22 · not joined yet</small></span><span class="role can" data-st="sr">Writer ▾</span><span class="role" data-st="wr">Writer</span></div>
+      </div>
+    </div></div>
+  </div>
+</div>
+<p class="note">Same rules as A: per-episode removal lives in Share › Invite co-writer…, and an invited row's menu has "Cancel invitation".</p>
+</section>
+
+<!-- ============ EMAIL ============ -->
+<section class="view" id="em">
+<p class="cap"><strong>Invitation email.</strong> Three wordings. All are plain text with one button. The sender's name and the series come first, the link works for 14 days, and a line says what to do if it's unexpected. Sent from <em>Writers’ Room &lt;invites@your-domain&gt;</em>. The sign-in code email is fixed: subject "Your Writers’ Room code: 123456", body "Enter 123456 to sign in. It expires in a few minutes. If you didn’t ask for it, ignore this email."</p>
+<div class="mails">
+  <div class="mail">
+    <div class="hd"><span class="tag">1 · PLAIN</span><br><b>Sam Jones invited you to Fogline</b><br>From: Writers’ Room</div>
+    <div class="bd"><p>Sam Jones invited you to write on <strong>Fogline</strong> in Writers’ Room.</p><p><span class="pb">Join Fogline</span></p></div>
+    <div class="ft">This link works for 14 days. If you weren’t expecting this, you can ignore it.</div>
+  </div>
+  <div class="mail">
+    <div class="hd"><span class="tag">2 · THE ROOM</span><br><b>There’s a seat for you in the Fogline room</b><br>From: Writers’ Room</div>
+    <div class="bd"><p>Sam Jones is putting a room together for <strong>Fogline</strong> and wants you in it as a writer.</p><p>You’ll write episodes together in real time, right in your browser.</p><p><span class="pb">Take your seat</span></p></div>
+    <div class="ft">This link works for 14 days. If you weren’t expecting this, you can ignore it.</div>
+  </div>
+  <div class="mail">
+    <div class="hd"><span class="tag">3 · ROLE SPELLED OUT</span><br><b>Join Fogline on Writers’ Room</b><br>From: Writers’ Room</div>
+    <div class="bd"><p>Sam Jones (sam@example.com) invited you to <strong>Fogline</strong> as a <strong>writer</strong>.</p><p>Writers edit the episodes they’re assigned to and read the rest. Writers’ Room is a screenwriting app for writing together in real time.</p><p><span class="pb">Accept invitation</span></p></div>
+    <div class="ft">This link works for 14 days. If you weren’t expecting this, you can ignore it.</div>
+  </div>
+</div>
+<p class="note">For a viewer invitation, the role words change: "to read Fogline" (1), "wants you to read along" (2), "as a viewer · Viewers can read every episode" (3).</p>
+</section>
+
+<!-- ============ SOLO ============ -->
+<section class="view" id="solo">
+<p class="cap"><strong>Solo writers: when the series layer appears.</strong> These three states show the recommended rule (option a): a one-episode series looks like a plain script everywhere, under a SCRIPTS label with no "Ep 1 ·" and no "1 episode". It becomes a series the moment a second episode exists. Until then, renaming the script renames the hidden series with it.</p>
+<div class="minis">
+  <div>
+    <div class="mini">
+      <header class="tb"><span class="title">Home</span><span class="grp" style="gap:10px"><span class="ta" data-t="+ New script">+ New script</span><span class="av a3" style="border:0">AR</span></span></header>
+      <div class="body"><div class="left"></div><div class="center"><div class="empty">No scripts yet.<br>Start one with + New script.</div></div></div>
+    </div>
+    <p class="cap2"><strong>Brand-new account.</strong> Empty sections are hidden, and the only hint points at the existing toolbar control (no second button).</p>
+  </div>
+  <div>
+    <div class="mini">
+      <header class="tb"><span class="title">Home</span><span class="grp" style="gap:10px"><span class="ta" data-t="+ New script">+ New script</span><span class="av a3" style="border:0">AR</span></span></header>
+      <div class="body"><div class="left"><div class="lab">RECENT</div><div class="list" style="padding-top:0"><div class="row">Night Shift</div></div><div class="lab">SCRIPTS</div><div class="list" style="padding-top:0"><div class="row sel">Night Shift</div></div></div>
+      <div class="center"><div class="home"><div class="sh"><span><span class="title">Night Shift</span><small>Script · just you</small></span><span class="grp" style="gap:10px"><span class="ta hv" data-t="+ New episode">+ New episode</span><span class="ta hv" data-t="Members">Members</span></span></div><div class="eps"><div class="ep">Night Shift<small>you · edited now</small></div></div></div></div></div>
+    </div>
+    <p class="cap2"><strong>One script.</strong> "+ New script" made a one-episode series named after the script. No series words anywhere. "+ New episode" is the way in.</p>
+  </div>
+  <div>
+    <div class="mini">
+      <header class="tb"><span class="title">Home</span><span class="grp" style="gap:10px"><span class="ta" data-t="+ New script">+ New script</span><span class="av a3" style="border:0">AR</span></span></header>
+      <div class="body"><div class="left"><div class="lab">RECENT</div><div class="list" style="padding-top:0"><div class="row">Ep 2 · Untitled</div></div><div class="lab">SERIES</div><div class="list" style="padding-top:0"><div class="row sel">Night Shift</div></div></div>
+      <div class="center"><div class="home"><div class="sh"><span><span class="title">Night Shift</span><small>2 episodes · you’re the showrunner</small></span><span class="grp" style="gap:10px"><span class="ta hv" data-t="+ New episode">+ New episode</span><span class="ta hv" data-t="Members">Members</span></span></div><div class="eps"><div class="ep">Ep 1 · Night Shift<small>you · edited Oct 22</small></div><div class="ep">Ep 2 · Untitled<small>you · edited now</small></div></div></div></div></div>
+    </div>
+    <p class="cap2"><strong>After + New episode.</strong> Now it's a series: it moves to SERIES, episodes get numbers, and the meta line says "2 episodes · you’re the showrunner".</p>
+  </div>
+</div>
+</section>
+</div>
+
+<template id="t-toolbar"><header class="tb"><span class="title">Home</span><span class="grp" style="gap:14px"><span class="ta" data-t="+ New script">+ New script</span><button class="ib" aria-label="Switch to dark mode">ICON_MOON</button><span class="av a3" style="border:0">AR</span></span></header></template>
+<template id="t-sidebar"><aside class="left"><div class="lab">RECENT</div><div class="list" style="padding-top:0"><div class="row">Ep 3 · The Long Night</div></div><div class="lab">SERIES</div><div class="list" style="padding-top:0"><div class="row sel">The Long Night</div><div class="row">Harbor Lights</div></div><div class="lab">INVITATIONS</div><div class="list" style="padding-top:0"><div class="row"><span style="display:flex;flex-direction:column">Fogline<small>from Sam</small></span><span class="ta" data-t="Accept">Accept</span></div></div></aside></template>
+<template id="t-episodes"><div class="eps"><div class="ep">Ep 1 · Pilot<small>Maya · edited Oct 12</small></div><div class="ep">Ep 2 · Undertow<small>Sam · edited Oct 16</small></div><div class="ep">Ep 3 · The Long Night<small><span class="live">●</span> Maya, Sam · editing now</small></div></div></template>
+
+<script>
+const P='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+const ICON={X:P+'<path d="M6 6l12 12M18 6L6 18"/></svg>',MOON:P+'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>'};
+// Google's "G" mark keeps its brand colors (Google's sign-in branding rules), the only fixed colors here.
+const G='<svg width="16" height="16" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 7l7.2 5.6c4.2-3.9 7.1-9.6 7.1-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.2-5.6c-2 1.4-4.7 2.3-8.7 2.3-6.2 0-11.5-4.1-13.4-9.8l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
+const tpl=id=>document.getElementById(id).innerHTML;
+document.querySelectorAll('.win').forEach(w=>{w.innerHTML=w.innerHTML.replace('HOME_TOOLBAR',tpl('t-toolbar')).replace('HOME_SIDEBAR',tpl('t-sidebar')).replace('EPISODES',tpl('t-episodes'))});
+document.body.innerHTML=document.body.innerHTML.replaceAll('GOOGLE_G',G).replaceAll('ICON_X',ICON.X).replaceAll('ICON_MOON',ICON.MOON);
+
+function setStep(sec,step){
+  const tags=step.split(' ');
+  sec.querySelectorAll('[data-st]').forEach(el=>{const want=el.dataset.st.split(' ');el.style.display=want.some(t=>tags.includes(t))?'':'none'});
+  sec.querySelectorAll('.steps button').forEach(b=>b.classList.toggle('on',b.dataset.s===step));
+}
+document.querySelectorAll('.view').forEach(sec=>{const first=sec.querySelector('.steps button');if(first)setStep(sec,first.dataset.s)});
+document.addEventListener('click',e=>{
+  const s=e.target.closest('.steps button');if(s){setStep(s.closest('.view'),s.dataset.s);return}
+  const v=e.target.closest('.mk button[data-v]');
+  if(v){document.querySelectorAll('.mk button[data-v]').forEach(b=>b.classList.toggle('on',b===v));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('on',x.id===v.dataset.v));return}
+  if(e.target.id==='theme'){const cur=document.documentElement.dataset.theme||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');const dark=cur!=='dark';document.documentElement.dataset.theme=dark?'dark':'light';e.target.textContent=dark?'Light':'Dark';return}
+  if(e.target.closest('#maMembers')||e.target.closest('#maClose')){const p=document.getElementById('maPanel');const shut=p.classList.toggle('shut');document.getElementById('maMembers').classList.toggle('hold',!shut);return}
+  const ta=e.target.closest('.ta:not(.hold)');if(ta){ta.classList.add('flash');setTimeout(()=>ta.classList.remove('flash'),700)}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.getElementById('maPanel').classList.add('shut');document.getElementById('maMembers').classList.remove('hold')}});
+if(matchMedia('(prefers-color-scheme: dark)').matches&&!document.documentElement.dataset.theme)document.getElementById('theme').textContent='Light';
+</script>
+</body>
+</html>
