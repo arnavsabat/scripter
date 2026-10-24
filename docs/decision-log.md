@@ -37,6 +37,11 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Invitations and sharing (D-032):**
+  - **Invitation links** are one-time, expire after 14 days and can be cancelled by the showrunner. Opening one and signing in, with any email, accepts it. Pending invitations also show under INVITATIONS for the invited address.
+  - **Share › Copy invite link** copies a link to the episode: members land in it, and anyone else is told to ask the showrunner.
+  - **Share › Invite co-writer…** is a checklist menu of the series' writers (✓ = assigned; click to toggle, with an Undo toast). The showrunner also gets an invite-by-email row at the bottom.
+  - **The account avatar menu** shows the name and email as a header, then Sign out.
 - **Accounts phase libraries and security model (D-031):**
   - **Postgres:** `pg` with hand-written SQL, and numbered `.sql` migrations applied by our own small runner.
   - **Auth libraries:** `jose` to verify JWTs (and to sign test tokens), and plain `fetch` for Cognito's JSON API.
@@ -135,8 +140,8 @@ Phase 2:
 17. ~~Spacing before scene headings~~: decided in D-014 (two blank lines).
 18. Mobile and narrow-screen behavior (SPEC 3.8: raise when it comes up).
 19. ~~The sign-in screen design~~: decided in D-028 and D-029.
-20. ~~Email delivery~~: SES on our own domain (D-030). Still open: the invite link flow.
-21. Screens the prototype doesn't mock: Members, + New episode, Invite co-writer…, and the account avatar menu (where sign-out lives).
+20. ~~Email delivery~~ and ~~the invite link flow~~: SES on our own domain (D-030); one-time links (D-032).
+21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). Still open: what + New episode does.
 - New (D-026): should the hover background extend to every text action (+ New script, Accept, + New what-if, + Snapshot), or stay on the home header's two?
 22. Renaming scripts and episodes.
 23. Fountain and .fdx import edge cases: title pages, notes, boneyard, dual dialogue, and unsupported element types.
@@ -218,6 +223,33 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-032 · 2026-10-24 · Invitation links, Copy invite link, Invite co-writer…, and the account menu
+
+- **Decisions (Arnav's calls):**
+  1. **Invitation links are one-time.**
+     - The email's button carries a random token. Only its SHA-256 hash is stored, so a leaked database can't be used to accept invitations.
+     - Whoever opens the link and signs in, with any email address, joins the series in the invited role. The token is then used up.
+     - It expires after 14 days, and the showrunner can cancel it ("Cancel invitation" in Members).
+     - Opening the link counts as accepting. Pending invitations also appear under INVITATIONS, with Accept, for anyone signed in with the invited address, which covers people who sign in without clicking the link.
+     - Rejected: links tied to the invited email. That's safer if an email is forwarded, but people with a school address and a personal one get stuck, and the showrunner has to re-invite.
+  2. **Share › "Copy invite link"** copies a link to the current episode (`/e/<episodeId>`). The prototype's label is unchanged.
+     - Series members who open it land in the episode, in edit or view mode by their role.
+     - Anyone else signs in and sees "You don't have access to this episode. Ask the showrunner." Only the showrunner brings new people in, by email in Members (SPEC 5.3).
+     - Rejected: a reusable join link for the showrunner. It would keep working wherever it's pasted, need a revoke control, and make one menu item mean two things depending on role.
+  3. **Share › "Invite co-writer…"** opens the shared menu as a checklist of the series' writers, with ✓ on those assigned to this episode.
+     - Clicking a name adds or removes them as a co-writer, and a toast confirms it, with Undo.
+     - The episode's writers and the showrunner can use it (SPEC 5.3: a writer adds existing members to their own episode, and the showrunner can remove anyone). Viewers aren't listed; the showrunner first makes them writers in Members.
+     - For the showrunner only, the bottom of the menu has the D-027 invite row: an email field, a role picker and Invite, which invite a new person to the series and assign this episode.
+     - Rejected: a right panel inside the script. It would be a second panel beside Compare, for a quick action.
+  4. **The account avatar menu** is the shared menu: the name and email as a muted, non-clickable header, then "Sign out".
+     - Changing your name or deleting your account is by request for now, and the Privacy page (D-029) says how.
+     - Rejected: self-serve "Edit name…" and "Delete account…". Deleting a showrunner raises its own question (who inherits the series?) and adds scope.
+- **What changes for writers:** one email button gets someone into the room with whichever account they use. A link pasted in the group chat opens the episode for members. Adding a co-writer is two clicks from inside the script.
+- **For the system:**
+  - **`invitations`:** series, role, email, the token's hash, inviter, expiry, accepted-by and accepted-at, cancelled-at, and an optional episode to assign on acceptance. That last field supports the showrunner's invite row in "Invite co-writer…".
+  - **Routes:** `/i/<token>` (accept an invitation) and `/e/<episodeId>` (open an episode).
+- **Status:** Arnav's call.
 
 ### D-031 · 2026-10-24 · Accounts libraries and security model: pg + SQL migrations, jose + fetch, httpOnly refresh cookie, Postgres-backed permissions with NOTIFY
 
