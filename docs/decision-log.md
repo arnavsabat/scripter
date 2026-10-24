@@ -37,6 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Prototype v2 (D-034):** `docs/prototype/writers-room-prototype-v2.html` is the visual and interaction source of truth from the accounts phase on. It's v1 plus D-026 to D-033. v1 stays unchanged as the record of what the earlier phases matched.
 - **Home, naming and access cues (D-033):**
   - **Invitation email:** wording 1, Plain.
   - **Solo writers:** a one-episode series looks like a plain script (a SCRIPTS sidebar section, "Script · just you", no "Ep 1 ·"). It becomes a series at the 2nd episode, and renaming it renames the hidden series.
@@ -230,6 +231,39 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-034 · 2026-10-24 · Prototype v2: the accounts phase, clickable end to end
+
+- **Decision (Arnav's call):** before building the phase, a clickable v2 prototype, so the visuals can be reviewed and edited first. It's a copy (`docs/prototype/writers-room-prototype-v2.html`) that becomes the visual and interaction source of truth from this phase on. The original stays untouched as the record of what the earlier phases matched.
+  - Rejected: editing v1 in place, which would lose that record.
+  - The scaled script page is unchanged from v1. The real build's page geometry still follows D-003.
+- **What v2 adds to v1:**
+  - **Sign-in, from the template (D-028, D-029):** the email, code and first-time-name steps; the "Join Fogline" version from an invitation link; "Continue with Google"; and the Terms and Privacy pages, drafted for review.
+  - **Home:**
+    - Sidebar sections RECENT, SCRIPTS, SERIES and INVITATIONS, each hidden when empty; Accept, after which the series joins SERIES.
+    - The series header: renamed by clicking the title (showrunner only), with + New episode (showrunner only) and Members, both with the D-026 hover.
+    - Episode rows with the live dot, the empty home for a new account, and the solo script that becomes a series at episode 2 (D-033).
+  - **Members panel (D-030, D-027):** collapsible; role menus that change roles, remove members (with Undo) and cancel invitations; and the invite row with the field-styled picker.
+  - **Account menu (D-032):** the name and email, then Sign out.
+  - **Script screen:**
+    - The toolbar title renames by click (D-033); "View only" appears for viewers and for writers not assigned to the episode; presence avatars show only the others connected.
+    - Share › Copy invite link, and Share › Invite co-writer…, the checklist with Undo plus the showrunner's invite row (D-032).
+    - New scripts and episodes open blank, with the title ready to type.
+  - **A "Prototype" chip at the top center, dashed and labelled "Not part of the app":** switch your role in The Long Night, sign out, open an invitation link. Sign-in hints: `arnav@example.com` or Google opens the sample room, any other email is a new empty account, and any 6 digits work as the code.
+- **Small details Claude chose while building, for Arnav's review:**
+  1. Clickable titles get the `--hover` background on hover, like the D-026 text actions, so you can tell they're editable.
+  2. Members lists you first, then by role (showrunner, writer, viewer). Its meta line reads "4 people · 1 invited".
+  3. Changing a role, removing someone, inviting, cancelling an invitation, and accepting ("You joined Fogline") all confirm with the shared toast. Removals and co-writer changes offer Undo.
+  4. The co-writer checklist is headed "CO-WRITERS" and shows each writer's avatar at 20 px.
+  5. A new episode is assigned to whoever created it.
+  6. After "Accept", "Accepted ✓" shows for about 0.8 s before the series moves into SERIES.
+  7. In "View only", Send to main is refused with a toast. Which roles can see and create what-ifs and snapshots is still Phase 3's decision.
+- **Checked:** a scripted walk through every flow in Chromium, in light and dark, with no script errors. That walk found and fixed four bugs:
+  - the chip covered the Members panel's Invite button (moved to the top center);
+  - a delayed focus crashed when the step had already changed;
+  - rename lost keystrokes typed in the first 30 ms;
+  - a toast from before signing out stayed visible.
+- **Status:** built; awaiting Arnav's visual review and edits. The AWS setup follows the review.
 
 ### D-033 · 2026-10-24 · Invitation email wording, solo writers, naming, live status, "View only", cookie plugin
 

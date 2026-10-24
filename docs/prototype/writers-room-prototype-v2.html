@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Writers’ Room · Interactive prototype v2</title>
+<!-- v2 (decision log D-034): v1 plus the accounts phase decisions D-026 to D-033 (sign-in, Terms and Privacy, home with
+     series and scripts, Members, renaming, View only, Share menu). v1 (writers-room-prototype.html) is kept unchanged as the
+     record of what the earlier phases matched. Page geometry in the real build follows D-003, not this file's scaled page. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&display=swap">
+<style>
+:root{--bg:#fff;--side:#E9E9EC;--sel:#D6D7DC;--text:#1F1F22;--muted:#5F5F64;--icon:#6B6B70;--line:#DEDEE2;--line2:#ECECEF;--accent:#2F6DB5;--accent-bg:#E6E7EB;--desk:#E9E9EC;--page:#fff;--ink:#111;--ins-bg:#E3F1E6;--ins-fg:#1E5A2E;--del-bg:#F8E3E1;--del-fg:#9A2B23;--amber:#C98A1B;--amber-ring:#F6E7CC;--blue-ring:#DCE6F5;--panel:#FAFAFB;--menu:#fff;--hover:rgba(0,0,0,.05);--toast:#2B2B2F;--toast-fg:#fff;--toast-link:#9CC1F0;--green:#3B8E4F;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#1C1C1E;--side:#26262A;--sel:#3A3A3F;--text:#ECECEE;--muted:#A1A1A8;--icon:#A1A1A8;--line:#38383C;--line2:#2F2F33;--accent:#6EA2E6;--accent-bg:#34363C;--desk:#26262A;--page:#1C1C1E;--ink:#E8E8EA;--ins-bg:#1F3A27;--ins-fg:#9FD6AE;--del-bg:#3F2322;--del-fg:#F0A49C;--amber:#E0A84A;--amber-ring:#4A3A1E;--blue-ring:#22344D;--panel:#202023;--menu:#2A2A2E;--hover:rgba(255,255,255,.06);--toast:#ECECEE;--toast-fg:#1C1C1E;--toast-link:#2F6DB5;--green:#6CC685;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#1C1C1E;--side:#26262A;--sel:#3A3A3F;--text:#ECECEE;--muted:#A1A1A8;--icon:#A1A1A8;--line:#38383C;--line2:#2F2F33;--accent:#6EA2E6;--accent-bg:#34363C;--desk:#26262A;--page:#1C1C1E;--ink:#E8E8EA;--ins-bg:#1F3A27;--ins-fg:#9FD6AE;--del-bg:#3F2322;--del-fg:#F0A49C;--amber:#E0A84A;--amber-ring:#4A3A1E;--blue-ring:#22344D;--panel:#202023;--menu:#2A2A2E;--hover:rgba(255,255,255,.06);--toast:#ECECEE;--toast-fg:#1C1C1E;--toast-link:#2F6DB5;--green:#6CC685;color-scheme:dark}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+#app{height:100%;display:flex;flex-direction:column;overflow:hidden}
+.T{transition:opacity .22s ease,transform .22s ease}
+header{height:56px;flex-shrink:0;position:relative;background:var(--bg);border-bottom:1px solid var(--line2);z-index:10}
+header>div{position:absolute;inset:0;display:flex;align-items:center;justify-content:space-between;padding:0 16px 0 12px}
+#tbHome{padding-left:20px}
+.title{font-size:15px;font-weight:600;white-space:nowrap}
+.grp{display:flex;align-items:center;gap:2px;position:relative}
+.lgrp{display:flex;align-items:center;gap:8px;position:relative;min-width:0}
+.ib{width:32px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:6px;color:var(--icon)}
+.ib:hover{background:var(--hover)}.ib.on{background:var(--accent-bg);color:var(--accent)}
+.sw{font-size:13px;color:var(--icon);white-space:nowrap;padding:4px 2px}
+.av{width:24px;height:24px;border-radius:50%;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+.a1{background:#C9D8EE;color:#1F3F6B}.a2{background:#E2D4EC;color:#4A2A63;margin-left:-6px}.a3{background:#D9E6D3;color:#2E4A25}
+.dv{width:1px;height:22px;background:var(--line);margin:0 8px}
+.ta{display:inline-grid;font-weight:400;cursor:pointer;font-size:13px;color:var(--muted)}
+.ta::after{content:attr(data-t);font-weight:600;height:0;visibility:hidden;overflow:hidden}
+.ta.flash,.ta.hold{font-weight:600;color:var(--text)}
+#body{flex:1;display:flex;min-height:0;position:relative}
+#left{width:300px;flex-shrink:0;overflow:hidden;background:var(--side);position:relative;transition:width .24s ease}
+#left .in{position:absolute;top:0;bottom:0;left:0;width:300px;border-right:1px solid var(--line);box-sizing:border-box;display:flex;flex-direction:column;overflow-y:auto}
+.left-closed #left{width:0}
+#center{flex:1;min-width:0;position:relative;background:var(--bg);transition:background-color .24s ease}
+.left-closed.is-script #center{background:var(--desk)}
+#center .in{position:absolute;inset:0;overflow:auto}
+#right{width:0;flex-shrink:0;overflow:hidden;background:var(--panel);transition:width .24s ease}
+.right-open #right{width:340px}
+#rp{width:340px;height:100%;box-sizing:border-box;border-left:1px solid var(--line);display:flex;flex-direction:column}
+.is-script .L-home,.is-home .L-script{opacity:0;transform:translateX(-10px);pointer-events:none}
+.is-home .L-script{transform:translateX(10px)}
+.tabs{display:flex;gap:20px;padding:16px 18px 10px;border-bottom:1px solid var(--line)}
+.tab{padding-bottom:8px;margin-bottom:-11px;border-bottom:2px solid transparent}
+.tab.on{color:var(--text);font-weight:600;border-color:var(--accent)}
+.list{padding:10px 8px 0}
+.row{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;padding:9px 12px;border-radius:6px;font-size:15px;font-weight:500}
+.row:hover{background:var(--hover)}.row.sel{background:var(--sel)}
+.row.big>span{display:flex;flex-direction:column}
+small{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px}
+.lab{font-size:11px;font-weight:600;letter-spacing:.06em;color:var(--muted);padding:16px 12px 6px}
+.lab.r{display:flex;justify-content:space-between;align-items:center}
+.lab .ta{letter-spacing:0}
+.act{padding:8px 12px}
+.snap{padding:8px 12px;font-size:14px}.snap small{display:block}
+.tag{font-size:10px;font-weight:600;padding:1px 6px;border-radius:4px;background:#DCE8F7;color:#2E5A8C}
+.nd{font-size:13px}.nd.blue{color:var(--accent)}.nd.amber{color:var(--amber)}
+.legend{margin-top:auto;padding:14px 20px;font-size:12px;color:var(--muted)}
+.desk{min-width:max-content;display:flex;justify-content:center;padding:40px 24px 80px}
+.page{position:relative;width:612px;min-height:792px;flex-shrink:0;box-sizing:border-box;padding:48px 72px 48px 108px;background:var(--page);font-family:"Courier Prime","Courier New",monospace;font-size:16px;line-height:1.15;color:var(--ink);box-shadow:0 0 0 rgba(0,0,0,0);transition:box-shadow .24s ease}
+.left-closed .page{box-shadow:0 1px 3px rgba(0,0,0,.12),0 8px 24px rgba(0,0,0,.08)}
+.pn{text-align:right;margin-right:-24px;height:18px;opacity:0;transition:opacity .24s ease}
+.left-closed .pn{opacity:1}
+.sc{cursor:text}
+.b{margin-top:18px}.b.h{position:relative;margin-top:36px;border-radius:3px}.sc:first-of-type .b.h{margin-top:14px}
+.b.c{margin-left:158px}.b.p{margin-top:0;margin-left:115px}.b.d{margin-top:0;margin-left:72px;width:252px}
+.b.h.pulse{animation:pulse 1.2s ease}
+@keyframes pulse{0%,40%{background:var(--blue-ring)}100%{background:transparent}}
+ins{background:var(--ins-bg);color:var(--ins-fg);text-decoration:none}
+del{background:var(--del-bg);color:var(--del-fg)}
+.dot{position:absolute;left:-36px;top:4px;width:10px;height:10px;border-radius:50%}
+.dot.blue{background:var(--accent)}.dot.amber{background:var(--amber)}
+.dot.blue.on{box-shadow:0 0 0 4px var(--blue-ring)}.dot.amber.on{box-shadow:0 0 0 4px var(--amber-ring)}
+.pop,.menu{position:absolute;z-index:20;padding:4px;background:var(--menu);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.12);font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:13px;line-height:1.2;color:var(--text)}
+.pop{left:-214px;top:22px;width:170px}
+.menu{top:36px;min-width:200px}
+.mi{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;height:30px;padding:0 10px;border-radius:6px;font-size:13px;gap:12px}
+.mi:hover{background:var(--hover)}.mi span{font-size:12px;color:var(--muted)}
+.rh{display:flex;justify-content:space-between;align-items:flex-start;padding:16px 12px 12px 20px;border-bottom:1px solid var(--line2)}
+.rh b{font-size:13px}.rh>span{display:flex;flex-direction:column}
+.rb{flex:1;padding:20px;overflow:auto}
+.pv{font-family:"Courier Prime","Courier New",monospace;font-size:13px;line-height:1.2;color:var(--ink)}
+.pv .b{margin-top:14px}.pv .b.h{margin-top:0}.pv .b.c{margin-left:104px}.pv .b.p{margin-left:76px}.pv .b.d{margin-left:48px;width:180px}
+.note,.empty{font-size:12px;color:var(--muted);margin-top:18px;line-height:1.45}.empty{margin-top:0}
+.rf{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-top:1px solid var(--line2)}
+.pb{height:30px;display:inline-flex;align-items:center;padding:0 12px;border-radius:6px;background:var(--accent);color:#fff;font-size:13px;font-weight:600}
+.pb[disabled]{opacity:.45;cursor:default}
+.home{max-width:760px;margin:0 auto;padding:40px 48px}
+.sh{display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 14px}
+.sh>span:first-child{display:flex;flex-direction:column}
+.eps{border-top:1px solid var(--line2)}
+.ep{display:flex;justify-content:space-between;align-items:center;width:100%;box-sizing:border-box;height:48px;padding:0 12px;border-bottom:1px solid var(--line2);font-size:15px}
+.ep:hover{background:var(--hover)}
+.live{color:var(--green)}
+.toast{position:fixed;left:50%;bottom:calc(28px + env(safe-area-inset-bottom,0px));transform:translate(-50%,12px);opacity:0;pointer-events:none;display:flex;gap:14px;align-items:center;padding:10px 16px;border-radius:8px;background:var(--toast);color:var(--toast-fg);font-size:13px;white-space:nowrap;z-index:50;transition:opacity .2s ease,transform .2s ease}
+.toast.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+.toast button{color:var(--toast-link);font-weight:600}
+.shade{position:absolute;inset:0;z-index:30;background:rgba(0,0,0,.18);display:flex;align-items:flex-start;justify-content:center;padding-top:60px;opacity:0;pointer-events:none;transition:opacity .2s ease}
+.review .shade{opacity:1;pointer-events:auto}
+.sheet{width:min(520px,92%);background:var(--menu);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 40px rgba(0,0,0,.18)}
+.sheet h2{font-size:15px;font-weight:600;margin:0;padding:18px 20px 4px}
+.sheet>p{margin:0;padding:0 20px 12px;font-size:12px;color:var(--muted)}
+.rv{display:flex;align-items:center;gap:12px;padding:10px 20px;border-top:1px solid var(--line2);font-size:14px}
+.rv input{accent-color:var(--accent);width:15px;height:15px}
+.rv .st{margin-left:auto;font-size:12px;color:var(--muted)}
+.sf{display:flex;justify-content:flex-end;align-items:center;gap:18px;padding:14px 20px;border-top:1px solid var(--line2)}
+.rvr{height:32px}.rvr .rvn{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text)}
+.rvr .nd{font-size:9px}.rvr .nd.blue{color:var(--accent)}.rvr .nd.amber{color:var(--amber)}
+.rvr .ck{width:14px;text-align:right;font-size:13px;color:var(--accent)}.rvr .ta{font-size:13px}
+.sep{height:1px;background:var(--line2);margin:4px 6px}
+.mi.send{color:var(--accent);font-weight:600}.mi.send[disabled]{color:var(--muted);font-weight:400;cursor:default}.mi.send[disabled]:hover{background:none}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+/* ===== v2 additions (accounts phase, D-026 to D-034) ===== */
+.a2{margin-left:0}.avs .av+.av{margin-left:-6px}
+/* Header text actions get the sidebar rows' hover (D-026) */
+.ta.hv{padding:4px 6px;margin:-4px -6px;border-radius:6px}.ta.hv:hover{background:var(--hover)}
+/* Click-to-rename titles (D-033) */
+.title.rn{cursor:text;border-radius:4px;padding:2px 6px;margin:-2px -6px}.title.rn:hover{background:var(--hover)}
+.ren{font:inherit;font-size:15px;font-weight:600;color:var(--text);background:var(--hover);border:0;border-radius:4px;padding:2px 6px;margin:-2px -6px;outline:none;box-shadow:0 0 0 2px var(--blue-ring);min-width:120px}
+.vo{font-size:12px;color:var(--muted);white-space:nowrap}
+.acw{position:relative}
+.mh{display:flex;flex-direction:column;padding:6px 10px 8px;font-size:13px;font-weight:500}
+/* Members panel (D-030) */
+.rb.ml{padding:8px 8px 0}
+.mrow{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;position:relative}
+.mrow:hover{background:var(--hover)}
+.mrow .n{display:flex;flex-direction:column;flex:1;min-width:0;font-size:14px;font-weight:500}
+.role{font-size:12px;color:var(--muted);white-space:nowrap}button.role:hover{color:var(--text)}
+.mrow .menu{right:6px;top:38px;min-width:180px}
+#rp .rf.inv{display:block}
+.fl{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+.irow{display:flex;gap:8px;align-items:center}
+.fld{flex:1;min-width:0;height:30px;box-sizing:border-box;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font:inherit;font-size:13px;color:var(--text);outline:none}
+.fld:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--blue-ring)}
+/* Field-styled buttons (D-027) */
+.fbtn{height:30px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;border:1px solid var(--line);border-radius:6px;background:var(--bg);font-size:13px;color:var(--text);white-space:nowrap;flex-shrink:0;box-sizing:border-box}
+.fbtn:hover{background:linear-gradient(var(--hover),var(--hover)),var(--bg)}
+.fbtn:focus-visible{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--blue-ring)}
+.fbtn .car{font-size:10px;color:var(--muted)}
+.pick{position:relative;display:inline-flex}
+.pick .menu{right:0;top:34px;min-width:140px}
+.rf .pick .menu{top:auto;bottom:34px}
+/* Invite co-writer checklist (D-032) */
+.menu.cw{width:290px}
+.cwn{display:flex;align-items:center;gap:8px}
+.cw .av{width:20px;height:20px;font-size:9px;border:0}
+.cw .ck{color:var(--accent);font-size:13px}
+.cwi{padding:6px}
+.cw .none{padding:6px 10px;font-size:12px;color:var(--muted)}
+/* Empty home (D-033) */
+.emptyh{font-size:13px;color:var(--muted);text-align:center;padding-top:96px;line-height:1.6}
+/* Sign-in and legal pages (D-028, D-029): no toolbar, the template's own sizes */
+.gate{position:fixed;inset:0;z-index:60;background:var(--bg);overflow:auto;opacity:0;pointer-events:none;transition:opacity .22s ease}
+.gate.on{opacity:1;pointer-events:auto}
+.si{width:calc(100% - 32px);max-width:400px;margin:0 auto;padding:72px 0 40px;text-align:center}
+.si-mark{display:inline-block;font-family:"Courier Prime","Courier New",monospace;font-weight:700;font-size:20px;letter-spacing:.04em;color:var(--text);margin-bottom:44px}
+.si h1{font-size:28px;font-weight:600;letter-spacing:-.01em;margin:0 0 12px}
+.si-sub{text-wrap:balance;font-size:15px;line-height:1.5;color:var(--muted);margin:0 auto 36px}
+.si-g{width:100%;height:44px;display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--line);border-radius:6px;font-size:15px;font-weight:500;box-sizing:border-box;text-align:center}
+.si-g:hover{background:var(--hover)}
+.si-or{display:flex;align-items:center;gap:16px;font-size:13px;color:var(--muted);margin:24px 0}
+.si-or::before,.si-or::after{content:"";flex:1;height:1px;background:var(--line2)}
+.si-f{width:100%;height:46px;box-sizing:border-box;padding:0 14px;border:0;border-radius:6px;background:var(--side);font:inherit;font-size:15px;color:var(--text);outline:none}
+.si-f::placeholder{color:var(--muted)}
+.si-f:focus{box-shadow:inset 0 0 0 1px var(--accent),0 0 0 3px var(--blue-ring)}
+.si-f.code{font-family:"Courier Prime","Courier New",monospace;font-size:18px;letter-spacing:.3em;text-align:center}
+.si-f.code::placeholder{font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:15px;letter-spacing:0}
+.si-c{width:100%;height:44px;margin-top:14px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:var(--toast);color:var(--toast-fg);font-size:15px;font-weight:500}
+.si-c:hover{opacity:.9}
+.si-legal{text-wrap:balance;font-size:12px;color:var(--muted);line-height:1.5;margin:16px 0 0}
+.si-legal button{text-decoration:underline;text-underline-offset:2px;font-size:12px;color:inherit}
+.si-alt{font-size:13px;color:var(--muted);margin:22px 0 0}
+.lg{width:calc(100% - 32px);max-width:640px;margin:0 auto;padding:56px 0 80px}
+.lg .top{text-align:center;margin-bottom:40px}.lg .si-mark{margin:0}
+.lg h1{font-size:28px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px}
+.lg .upd{font-size:12px;color:var(--muted);margin:0 0 28px}
+.lg h2{font-size:15px;font-weight:600;margin:28px 0 6px}
+.lg p,.lg li{font-size:15px;line-height:1.6;margin:0 0 10px}
+.lg ul{padding-left:20px;margin:0 0 10px}
+.lg .draft{font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:8px 10px;margin:0 0 24px}
+/* Prototype-only controls: not part of the app */
+#proto{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:70;font-size:12px;color:var(--muted)}
+#proto .chip{border:1px dashed var(--line);background:var(--menu);border-radius:6px;padding:5px 9px;font-size:12px;color:var(--muted)}
+#proto .pp{position:absolute;left:50%;transform:translateX(-50%);top:34px;width:260px;background:var(--menu);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;box-shadow:0 6px 20px rgba(0,0,0,.12);line-height:1.45}
+#proto .pp b{color:var(--text);font-weight:600}
+#proto .seg{display:flex;gap:4px;margin:4px 0 10px}
+#proto .seg button{border:1px solid var(--line);border-radius:5px;padding:3px 7px;font-size:12px}
+#proto .seg button.on{color:var(--accent);border-color:var(--accent)}
+#proto .pl{display:block;color:var(--text);padding:3px 0;font-size:12px}#proto .pl:hover{text-decoration:underline}
+#proto .hint{margin-top:8px}
+</style>
+</head>
+<body>
+<div id="app" class="is-home">
+<header>
+<div id="tbHome" class="T L-home"></div>
+<div id="tbScript" class="T L-script"></div>
+</header>
+<div id="body">
+<aside id="left"><div class="in T L-home" id="navH"></div><div class="in T L-script" id="navS"></div></aside>
+<main id="center">
+<div class="in T L-home" id="homeC"></div>
+<div class="in T L-script" id="scroller"><div class="desk"><div class="page" id="page"></div></div></div>
+</main>
+<aside id="right"><div id="rp"></div></aside>
+<div class="shade" id="shade"></div>
+</div>
+</div>
+<div class="gate" id="gate"></div>
+<div class="toast" id="toast" role="status"></div>
+<div id="proto"></div>
+<script>
+const P='<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">';
+const ic={side:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/>',back:'<path d="M15 5l-7 7 7 7"/>',share:'<path d="M12 15V3M8 7l4-4 4 4M5 12v8h14v-8"/>',chg:'<path d="M12 4v8M8 8h8M8 18h8"/>',rev:'<path d="M4 6h12M4 12h12M4 18h7M15 17l2 2 4-4"/>',x:'<path d="M6 6l12 12M18 6L6 18"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',moon:'<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>'};
+// Google's "G" keeps its brand colors (Google's sign-in branding rules): the only fixed colors in the file besides v1's.
+const G='<svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.6 5.4 2.7 13.3l7.9 6.1C12.5 13.6 17.8 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.4c-.5 2.9-2.2 5.3-4.6 7l7.2 5.6c4.2-3.9 7.1-9.6 7.1-17.1z"/><path fill="#FBBC05" d="M10.6 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.2.8-4.6l-7.9-6.1C1 16.6 0 20.2 0 24s1 7.4 2.7 10.7l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.2-5.6c-2 1.4-4.7 2.3-8.7 2.3-6.2 0-11.5-4.1-13.4-9.8l-7.9 6.1C6.6 42.6 14.6 48 24 48z"/></svg>';
+const svg=k=>P+ic[k]+'</svg>';
+const $=s=>document.querySelector(s);
+const esc=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const cap=t=>t[0].toUpperCase()+t.slice(1);
+
+// ---------- Script sample (unchanged from v1; every existing episode shows it) ----------
+const S=[
+{id:'km',nav:'Kitchen – Morning',main:[['h','INT. KITCHEN – MORNING'],['a','Gray light. MARA sets out two mugs, then puts one back.']]},
+{id:'kn',nav:'Kitchen – Night',main:[['h','INT. KITCHEN – NIGHT'],['a','Rain hammers the window. MARA grips the counter.'],['c','MARA'],['d','We can still fix this.'],['a','She doesn’t believe it either.']],
+ wi:[['h','INT. KITCHEN – NIGHT'],['a','Rain hammers the window. MARA grips the counter.{+ The kettle screams, ignored.+}'],['c','MARA'],['d','{-We can still fix this.-} {+It’s already too late.+}'],['a','She doesn’t believe it either.']]},
+{id:'hd',nav:'Harbor – Dawn',conflict:true,by:'Sam, 1h ago',main:[['h','EXT. HARBOR – DAWN'],['a','Fog lifts off the water. DEV waits on the pier.{+ A gull circles overhead.+}'],['c','DEV'],['d','She isn’t coming.']],
+ wi:[['h','EXT. HARBOR – DAWN'],['a','Fog lifts off the water. DEV waits on the pier{+, soaked+}.'],['c','DEV'],['p','(to himself)'],['d','She isn’t coming{+ back+}.']]},
+{id:'ld',nav:'Lighthouse – Day',main:[['h','INT. LIGHTHOUSE – DAY'],['a','A beam sweeps the empty keeper’s room.']],wi:[['h','INT. LIGHTHOUSE – DAY'],['a','A beam sweeps the empty keeper’s room.{+ DEV climbs the last stair, breathing hard.+}']]},
+{id:'od',nav:'Office – Day',main:[['h','INT. HARBORMASTER’S OFFICE – DAY'],['a','Charts pinned edge to edge. A radio crackles with nobody on it.']]}];
+S.forEach(s=>s.sent=false);
+
+// ---------- People, accounts and series (prototype data; the real app gets this from the API) ----------
+const PEOPLE={ar:{n:'Arnav Sabat',f:'Arnav',i:'AR',c:'a3'},ma:{n:'Maya Alvarez',f:'Maya',i:'MA',c:'a1'},sj:{n:'Sam Jones',f:'Sam',i:'SJ',c:'a2'},pn:{n:'Priya Nair',f:'Priya',i:'PN',c:'a1'}};
+const ARNAV='arnav@example.com';
+let ME=null,D=null,uid=0;
+const accounts={};
+function sample(){return{me:'ar',series:[
+ {id:'ln',name:'The Long Night',members:{ar:'showrunner',ma:'writer',sj:'writer',pn:'viewer'},invited:[{email:'jo@example.com',role:'writer',when:'Oct 22'}],
+  eps:[{id:'e1',name:'Pilot',w:['ma'],ed:'Oct 12'},{id:'e2',name:'Undertow',w:['sj'],ed:'Oct 16'},{id:'e3',name:'The Long Night',w:['ma','sj','ar'],ed:'Oct 22',live:['ma','sj']}]},
+ {id:'hl',name:'Harbor Lights',members:{sj:'showrunner',ar:'writer',ma:'writer'},invited:[],eps:[{id:'h1',name:'Pilot',w:['ar'],ed:'Sep 30'},{id:'h2',name:'Low Tide',w:['ma'],ed:'Oct 3'}]},
+ {id:'ns',name:'Night Shift',members:{ar:'showrunner'},invited:[],eps:[{id:'n1',name:'Night Shift',w:['ar'],ed:'Oct 20'}]}],
+ invitations:[{id:'fg',name:'Fogline',from:'Sam',role:'writer'}],recent:['e3']}}
+const fogline=()=>({id:'fg',name:'Fogline',members:{sj:'showrunner',[ME]:'writer'},invited:[],eps:[{id:'f1',name:'Pilot',w:['sj'],ed:'Oct 18'},{id:'f2',name:'Breakwater',w:['sj'],ed:'Oct 21'}]});
+const ser=id=>D&&D.series.find(s=>s.id===id);
+function findEp(id){if(D)for(const s of D.series){const e=s.eps.find(x=>x.id===id);if(e)return[s,e]}return[]}
+const role=s=>s.members[ME];
+const isSR=s=>role(s)==='showrunner';
+const canEdit=(s,e)=>isSR(s)||(role(s)==='writer'&&e.w.includes(ME)); // the shared canEdit(user, scope) rule, SPEC 5.3
+const num=(s,e)=>s.eps.length>1?`Ep ${s.eps.indexOf(e)+1} · `:'';
+const lbl=(s,e)=>num(s,e)+e.name;
+const first=id=>id===ME?'you':PEOPLE[id].f;
+const av=(id,plain)=>`<span class="av ${PEOPLE[id].c}"${plain?' style="border:0"':''}>${PEOPLE[id].i}</span>`;
+const PHRASE={showrunner:'you’re the showrunner',writer:'you’re a writer',viewer:'you’re a viewer'};
+function meta(s){if(s.eps.length===1){const o=Object.keys(s.members).filter(id=>id!==ME);return 'Script · '+(o.length?'you and '+o.map(first).join(', '):'just you')}return `${s.eps.length} episodes · ${PHRASE[role(s)]}`}
+function rowMeta(e){if(e.live&&e.live.length)return `<span class="live">●</span> ${e.live.map(first).join(', ')} · editing now`;return `${e.w.map(first).join(', ')} · edited ${e.ed}`}
+function initials(name){const w=name.trim().split(/\s+/).filter(Boolean);return(w.length>1?w[0][0]+w[1][0]:(w[0]||'?').slice(0,2)).toUpperCase()}
+
+// ---------- UI state ----------
+const st={screen:'signin',si:{step:'email',email:'',invite:false},legal:null,sel:null,ep:null,members:false,ren:null,proto:false,pick:{invR:'writer',cwR:'writer'},undoFn:null,
+ draft:'main',left:true,right:false,auto:false,chg:false,tab:'scenes',cur:'kn',pop:null,menu:null,review:false,rv:new Set(),snaps:[{n:'Table read draft',m:'Oct 15 · Maya',tag:'BLUE'}],wis:['Darker ending'],sess:false,undo:null};
+const clean=t=>t.replace(/\{\+(.*?)\+\}/g,'$1').replace(/\{-(.*?)-\}/g,'');
+const diff=t=>t.replace(/\{\+(.*?)\+\}/g,'<ins>$1</ins>').replace(/\{-(.*?)-\}/g,'<del>$1</del>');
+const sc=id=>S.find(s=>s.id===id);
+const curEp=()=>findEp(st.ep);
+const blank=()=>{const[,e]=curEp();return !e||!!e.blank};
+const status=s=>(st.draft!=='wi'||!s.wi||s.sent||blank())?null:(s.conflict?'amber':'blue');
+const pending=()=>S.filter(s=>status(s));
+function blocks(s){if(st.draft==='wi'&&s.wi){if(s.sent)return s.wi.map(([k,t])=>[k,clean(t)]);return s.wi.map(([k,t])=>[k,st.chg?diff(t):clean(t)])}return s.main.map(([k,t])=>[k,clean(t)])}
+
+// ---------- Sign-in, Terms and Privacy (no toolbar; D-028, D-029) ----------
+function gate(){if(st.legal)return legal(st.legal);if(st.screen!=='signin')return '';const x=st.si;let h='<div class="si"><div class="si-mark">WRITERS’ ROOM</div>';
+if(x.step==='email')h+=(x.invite?'<h1>Join Fogline</h1><p class="si-sub">Sam Jones invited you to write. Sign in or create an account to join.</p>':'<h1>Sign in or create an account</h1><p class="si-sub">Write together in real time. No password needed.</p>')
+ +`<button class="si-g" data-act="google">${G} Continue with Google</button><div class="si-or">or</div><input class="si-f" id="siE" data-keep data-enter="siEmail" type="email" placeholder="Enter email address" aria-label="Email address" autocomplete="email" value="${esc(x.email)}"><button class="si-c" data-act="siEmail">Continue</button><p class="si-legal">By continuing, you agree to the Writers’&nbsp;Room <button data-act="legal" data-v="terms">Terms of Service</button> and <button data-act="legal" data-v="privacy">Privacy Policy</button>.</p>`;
+if(x.step==='code')h+=`<h1>Check your email</h1><p class="si-sub">We sent a 6-digit code to ${esc(x.email)}.</p><input class="si-f code" id="siC" data-keep data-enter="siCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter 6-digit code" aria-label="Code"><button class="si-c" data-act="siCode">Continue</button><p class="si-alt"><span class="ta" data-t="Use a different email" data-act="siBack" tabindex="0">Use a different email</span> · <span class="ta" data-t="Send a new code" data-act="siResend" tabindex="0">Send a new code</span></p>`;
+if(x.step==='name')h+=`<h1>What should the room call you?</h1><p class="si-sub">Your name shows on your cursor and in episode lists.</p><input class="si-f" id="siN" data-keep data-enter="siName" placeholder="Your name" aria-label="Your name" autocomplete="name"><button class="si-c" data-act="siName">Continue</button>`;
+return h+'</div>'}
+function legal(k){const back='<p class="si-alt" style="text-align:left;margin-top:36px"><span class="ta" data-t="← Back" data-act="legalBack" tabindex="0">← Back</span></p>';
+const top='<div class="top"><span class="si-mark">WRITERS’ ROOM</span></div><div class="draft">Draft for Arnav’s review (D-029). Plain-language placeholder text, not legal advice. Bracketed details are to be confirmed.</div>';
+if(k==='privacy')return `<div class="lg">${top}<h1>Privacy Policy</h1><p class="upd">Last updated [date]</p>
+<h2>What we store</h2><ul><li>Your email address and name, so you can sign in and your room can see who’s writing.</li><li>The scripts you and your room write, so they’re there when you come back.</li><li>Counts of things that happen, like “a PDF was exported”. Never what you wrote.</li></ul>
+<h2>Who can see your scripts</h2><p>Only people in that series: the showrunner, and the writers and viewers they invite. We don’t sell your data or share it with advertisers, and we don’t use your scripts to train AI.</p>
+<h2>Where it lives</h2><p>On Amazon Web Services in Canada (Montreal). Sign-in codes and invitations are sent by email through Amazon.</p>
+<h2>Deleting your account</h2><p>Email [privacy@our domain] and we’ll delete your account and your email address within [30] days. Series you share with others stay with them.</p>
+<h2>Changes</h2><p>If this policy changes, we’ll email you before it takes effect.</p>${back}</div>`;
+return `<div class="lg">${top}<h1>Terms of Service</h1><p class="upd">Last updated [date]</p>
+<h2>Your writing is yours</h2><p>You own what you write. You let us store and show it to the people you share it with, only so the app works.</p>
+<h2>Using Writers’ Room</h2><p>Use it to write. Don’t use it to break the law, harass people, or attack or overload the service.</p>
+<h2>It’s a beta</h2><p>Writers’ Room is free while it’s in beta, and things may break. We work hard not to lose anything, but keep your own copies of anything important (PDF export).</p>
+<h2>Accounts</h2><p>We may suspend an account that abuses the service. You can stop using it at any time, and ask us to delete your account (see the Privacy Policy).</p>
+<h2>Changes</h2><p>If these terms change, we’ll email you before they take effect.</p>${back}</div>`}
+function finishSignIn(email,name){
+ if(email===ARNAV){accounts[ARNAV]=accounts[ARNAV]||sample()}
+ else if(!accounts[email]){const id='u'+(++uid);PEOPLE[id]={n:name||email.split('@')[0],f:(name||email).split(/[\s@]/)[0],i:initials(name||email),c:'a3'};accounts[email]={me:id,series:[],invitations:[],recent:[]}}
+ D=accounts[email];ME=D.me;
+ if(st.si.invite){if(!ser('fg'))D.series.push(fogline());D.invitations=D.invitations.filter(i=>i.id!=='fg');st.sel='fg'}
+ else if(!ser(st.sel))st.sel=D.series[0]&&D.series[0].id;
+ const joined=st.si.invite;st.si={step:'email',email,invite:false};st.screen='home';st.members=false;render();if(joined)toast('You joined Fogline')}
+function signOut(invite){$('#toast').classList.remove('show');Object.assign(st,{screen:'signin',si:{step:'email',email:'',invite:!!invite},legal:null,menu:null,members:false,ren:null,right:false,pop:null,review:false});render();setTimeout(()=>{const i=$('#siE');if(i)i.focus()},50)}
+
+// ---------- Home (SPEC 3.10 with D-026, D-030, D-033) ----------
+function tbHome(){if(!D)return '';const l=theme==='dark'?'Switch to light mode':'Switch to dark mode';
+return `<span class="title">Home</span><span class="grp" style="gap:14px"><span class="ta" data-t="+ New script" data-act="newscript" tabindex="0">+ New script</span><button class="ib" data-act="theme" title="${l}" aria-label="${l}">${svg(theme==='dark'?'sun':'moon')}</button><span class="acw"><button class="ib" data-act="menu" data-v="acct" title="Account" aria-label="Account" aria-haspopup="menu">${av(ME,true)}</button>${st.menu==='acct'?`<div class="menu" style="right:0;top:36px" role="menu"><div class="mh">${esc(PEOPLE[ME].n)}<small>${esc(st.si.email)}</small></div><div class="sep"></div><button class="mi" data-act="signout">Sign out</button></div>`:''}</span></span>`}
+function navH(){if(!D)return '';let h='';const sec=(lab,rows)=>rows?`<div class="lab">${lab}</div><div class="list" style="padding-top:0">${rows}</div>`:'';
+h+=sec('RECENT',D.recent.map(findEp).filter(x=>x[0]).slice(0,3).map(([s,e])=>`<button class="row" data-act="open" data-id="${e.id}">${esc(lbl(s,e))}</button>`).join(''));
+const row=s=>`<button class="row${st.sel===s.id?' sel':''}" data-act="series" data-id="${s.id}">${esc(s.name)}</button>`;
+h+=sec('SCRIPTS',D.series.filter(s=>s.eps.length===1).map(row).join(''));
+h+=sec('SERIES',D.series.filter(s=>s.eps.length>1).map(row).join(''));
+h+=sec('INVITATIONS',D.invitations.map(i=>`<div class="row" style="cursor:default"><span style="display:flex;flex-direction:column">${esc(i.name)}<small>from ${esc(i.from)}</small></span><span class="ta" data-t="Accepted ✓" data-act="${i.done?'':'accept'}" data-id="${i.id}" tabindex="0">${i.done?'Accepted ✓':'Accept'}</span></div>`).join(''));
+return h}
+function homeC(){if(!D)return '';const s=ser(st.sel);if(!s)return '<div class="home"><div class="emptyh">No scripts yet.<br>Start one with + New script.</div></div>';
+const t=st.ren==='series'?`<span><input class="ren" id="renI" value="${esc(s.name)}" aria-label="Rename"></span>`:isSR(s)?`<span class="title rn" data-act="renS" title="Rename" role="button" tabindex="0">${esc(s.name)}</span>`:`<span class="title">${esc(s.name)}</span>`;
+return `<div class="home"><div class="sh"><span>${t}<small>${meta(s)}</small></span><span class="grp" style="gap:16px">${isSR(s)?'<span class="ta hv" data-t="+ New episode" data-act="newep" tabindex="0">+ New episode</span>':''}<span class="ta hv${st.members?' hold':''}" data-t="Members" data-act="members" tabindex="0" aria-expanded="${st.members}">Members</span></span></div>
+<div class="eps">${s.eps.map(e=>`<button class="ep" data-act="open" data-id="${e.id}">${esc(lbl(s,e))}<small>${rowMeta(e)}</small></button>`).join('')}</div></div>`}
+function pick(key){const v=st.pick[key];return `<span class="pick"><button class="fbtn" data-act="menu" data-v="pick:${key}" aria-haspopup="menu" aria-label="Role for the invitation">${cap(v)}<span class="car">▾</span></button>${st.menu==='pick:'+key?`<span class="menu" role="menu">${['writer','viewer'].map(r=>`<button class="mi" data-act="pickset" data-id="${key}" data-v="${r}">${cap(r)}<span>${v===r?'✓':''}</span></button>`).join('')}</span>`:''}</span>`}
+function membersP(){const s=ser(st.sel);if(!s)return '';const sr=isSR(s);
+const order=Object.keys(s.members).sort((a,b)=>(a===ME?-1:b===ME?1:0)||['showrunner','writer','viewer'].indexOf(s.members[a])-['showrunner','writer','viewer'].indexOf(s.members[b]));
+const epsOf=id=>{const r=s.members[id];if(r==='showrunner')return 'All episodes';if(r==='viewer')return 'Reads everything';const l=s.eps.filter(e=>e.w.includes(id)).map(e=>s.eps.length>1?'Ep '+(s.eps.indexOf(e)+1):e.name);return l.join(', ')||'No episodes yet'};
+let h=order.map(id=>{const r=s.members[id];const ctl=sr&&id!==ME?`<button class="role" data-act="menu" data-v="role:${id}" aria-haspopup="menu">${cap(r)} ▾</button>${st.menu==='role:'+id?`<div class="menu" role="menu">${['showrunner','writer','viewer'].map(x=>`<button class="mi" data-act="setrole" data-id="${id}" data-v="${x}">${cap(x)}<span>${r===x?'✓':''}</span></button>`).join('')}<div class="sep"></div><button class="mi" data-act="rmmember" data-id="${id}">Remove from series</button></div>`:''}`:`<span class="role">${cap(r)}</span>`;
+ return `<div class="mrow">${av(id)}<span class="n">${esc(PEOPLE[id].n)}${id===ME?' (you)':''}<small>${epsOf(id)}</small></span>${ctl}</div>`}).join('');
+if(s.invited.length)h+='<div class="lab">INVITED</div>'+s.invited.map((v,i)=>{const ctl=sr?`<button class="role" data-act="menu" data-v="inv:${i}" aria-haspopup="menu">${cap(v.role)} ▾</button>${st.menu==='inv:'+i?`<div class="menu" role="menu">${['writer','viewer'].map(x=>`<button class="mi" data-act="setinv" data-id="${i}" data-v="${x}">${cap(x)}<span>${v.role===x?'✓':''}</span></button>`).join('')}<div class="sep"></div><button class="mi" data-act="cancelinv" data-id="${i}">Cancel invitation</button></div>`:''}`:`<span class="role">${cap(v.role)}</span>`;
+ return `<div class="mrow"><span class="av a2">${esc(v.email.slice(0,2).toUpperCase())}</span><span class="n">${esc(v.email)}<small>Invited ${v.when} · not joined yet</small></span>${ctl}</div>`}).join('');
+const n=Object.keys(s.members).length;
+return `<div class="rh"><span><b>Members</b><small>${n} ${n===1?'person':'people'}${s.invited.length?' · '+s.invited.length+' invited':''}</small></span><button class="ib" data-act="closeM" title="Close members" aria-label="Close members">${svg('x')}</button></div><div class="rb ml">${h}</div>${sr?`<div class="rf inv"><label class="fl" for="invE">Invite to ${esc(s.name)}</label><div class="irow"><input class="fld" id="invE" data-keep data-enter="invite" type="email" placeholder="Email address">${pick('invR')}<button class="fbtn" data-act="invite">Invite</button></div></div>`:''}`}
+
+// ---------- Script screen (v1, plus rename, View only and the Share menu) ----------
+function tbScript(){const[s,e]=curEp();if(!e)return '';const wi=st.draft==='wi',ce=canEdit(s,e);
+const t=st.ren==='ep'?`<span class="title">${num(s,e)}<input class="ren" id="renI" value="${esc(e.name)}" aria-label="Rename"></span>`:ce?`<span class="title rn" data-act="renE" title="Rename" role="button" tabindex="0">${esc(lbl(s,e))}</span>`:`<span class="title">${esc(lbl(s,e))}</span>`;
+const others=(e.live||[]).filter(id=>id!==ME);
+return `<div class="lgrp"><button class="ib" data-act="home" title="Back to home" aria-label="Back to home">${svg('back')}</button><button class="ib" data-act="left" title="${st.left?'Hide':'Show'} sidebar" aria-label="Toggle sidebar">${svg('side')}</button>${t}<span style="position:relative"><button class="sw" data-act="menu" data-v="draft" title="Switch draft">${wi?'Main › Darker ending':'Main'} ▾</button>${st.menu==='draft'?`<div class="menu" style="left:0;top:30px"><button class="mi" data-act="draft" data-v="main">Main<span>${wi?'':'✓'}</span></button><button class="mi" data-act="draft" data-v="wi">Darker ending<span>${wi?'✓':''}</span></button></div>`:''}</span>${ce?'':'<span class="vo">View only</span>'}</div>
+<div class="grp">${others.length?`<span class="avs" style="display:flex;margin-right:6px">${others.map(id=>av(id)).join('')}</span><span class="dv"></span>`:''}${wi?`<button class="ib${st.chg?' on':''}" data-act="chg" title="Show changes from main" aria-label="Show changes from main" aria-pressed="${st.chg}">${svg('chg')}</button><button class="ib${st.review?' on':''}" data-act="review" title="Review all changes" aria-label="Review all changes">${svg('rev')}</button>${st.review?rvMenu():''}`:''}<button class="ib${st.menu==='share'||st.menu==='cowriter'?' on':''}" data-act="menu" data-v="share" title="Share" aria-label="Share">${svg('share')}</button>${st.menu==='share'?`<div class="menu" style="right:0" role="menu"><button class="mi" data-act="copylink">Copy invite link</button>${ce?'<button class="mi" data-act="menu" data-v="cowriter">Invite co-writer…</button>':''}</div>`:''}${st.menu==='cowriter'||(st.menu&&st.menu.startsWith('pick:cw'))?cwMenu(s,e):''}</div>`}
+function cwMenu(s,e){const ws=Object.keys(s.members).filter(id=>s.members[id]==='writer');
+return `<div class="menu cw" style="right:0" role="menu" aria-label="Co-writers"><div class="lab" style="padding:8px 10px 6px">CO-WRITERS</div>${ws.length?ws.map(id=>`<button class="mi" data-act="cwt" data-id="${id}" role="menuitemcheckbox" aria-checked="${e.w.includes(id)}"><span class="cwn">${av(id)}${esc(PEOPLE[id].n)}${id===ME?' (you)':''}</span><span class="ck">${e.w.includes(id)?'✓':''}</span></button>`).join(''):'<div class="none">No writers in this series yet.</div>'}${isSR(s)?`<div class="sep"></div><div class="cwi"><div class="irow"><input class="fld" id="cwE" data-keep data-enter="cwinvite" type="email" placeholder="Invite by email" aria-label="Invite by email">${pick('cwR')}<button class="fbtn" data-act="cwinvite">Invite</button></div></div>`:''}</div>`}
+function nav(){const wi=st.draft==='wi';let h=`<div class="tabs"><button class="ta tab${st.tab==='scenes'?' on':''}" data-t="Scenes" data-act="tab" data-v="scenes">Scenes</button><button class="ta tab${st.tab==='drafts'?' on':''}" data-t="Drafts" data-act="tab" data-v="drafts">Drafts</button></div>`;
+const scenes=blank()?[]:S;
+if(st.tab==='scenes'){h+='<div class="list">'+scenes.map(s=>{const x=status(s);const m=wi&&s.sent?'<small style="margin:0">Sent ✓</small>':x?`<span class="nd ${x}">●</span>`:'';return `<button class="row${st.cur===s.id?' sel':''}" data-act="jump" data-id="${s.id}">${s.nav}${m}</button>`}).join('')+'</div>'+(wi&&scenes.length?'<div class="legend"><span class="nd blue">●</span> differs from main &nbsp; <span class="nd amber">●</span> main changed too</div>':'')}
+else{h+=`<div class="list"><button class="row big${!wi?' sel':''}" data-act="draft" data-v="main"><span><span style="font-weight:600">Main</span><small>Editing now · Maya, Sam</small></span></button><div class="act"><span class="ta" data-t="+ New what-if" data-act="newwi" tabindex="0">+ New what-if</span></div></div><div class="lab">WHAT-IFS</div><div class="list" style="padding-top:0">`+st.wis.map((w,i)=>`<button class="row big${wi&&!i?' sel':''}" data-act="draft" data-v="${i?'x':'wi'}"><span>${w}<small>${i?'you · just now · no changes yet':'Maya · 2h ago · '+pending().length+' scenes differ'}</small></span></button>`).join('')+`</div><div class="lab r"><span>SNAPSHOTS</span><span class="ta" data-t="+ Snapshot" data-act="snap" tabindex="0">+ Snapshot</span></div><div class="list" style="padding-top:0">`+st.snaps.map(x=>`<div class="snap">${x.n}${x.tag?` <span class="tag">${x.tag}</span>`:''}<small>${x.m}</small></div>`).join('')+'</div>'}
+return h}
+function page(){let h='<div class="pn">1.</div>';if(blank())return h;S.forEach(s=>{const x=status(s);h+=`<section class="sc" data-scene="${s.id}" id="sc-${s.id}">`;blocks(s).forEach(([k,t])=>{if(k==='h'){const on=st.pop===s.id||(st.right&&st.cur===s.id);h+=`<div class="b h" id="h-${s.id}">${x?`<button class="dot ${x}${on?' on':''}" data-act="dot" data-id="${s.id}" title="${x==='amber'?'Main changed this scene too':'Differs from main'}" aria-label="${x==='amber'?'Main changed this scene too':'Differs from main'}"></button>`:''}${st.pop===s.id?`<div class="pop" role="menu"><button class="mi" data-act="send" data-id="${s.id}">Send to main<span>⌘↵</span></button><button class="mi" data-act="compare" data-id="${s.id}">Compare<span>⌘⇧↵</span></button></div>`:''}${t}</div>`}else h+=`<div class="b ${k}">${t}</div>`});h+='</section>'});return h}
+function right(){if(st.screen==='home')return membersP();if(!st.ep)return '';const s=sc(st.cur),x=s&&status(s);let body;
+if(!x)body=`<p class="empty">${st.draft!=='wi'?'Compare shows main’s version while you work in a what-if.':s.sent?'This scene was sent. It matches main now.':'This scene matches main.'}</p>`;
+else body=`<div class="pv">${s.main.map(([k,t])=>`<div class="b ${k}">${s.conflict?diff(t):clean(t)}</div>`).join('')}</div><p class="note">${s.conflict?'Highlights show what Sam added since this what-if began.':'Main hasn’t changed this scene since your what-if began.'}</p>`;
+return `<div class="rh"><span><b>Main’s version</b><small>${s.nav}${x&&s.by?' · changed by '+s.by:''}</small></span><button class="ib" data-act="closeR" title="Close compare" aria-label="Close compare">${svg('x')}</button></div><div class="rb">${body}</div><div class="rf"><small style="margin:0">Esc to close</small>${x?`<button class="pb" data-act="sendc" data-id="${s.id}">Send mine to main</button>`:''}</div>`}
+function rvMenu(){const p=pending();return `<div class="menu" style="right:0;width:270px" role="menu" aria-label="Send changes to main"><div class="lab" style="padding:8px 10px 6px">SEND TO MAIN</div>${p.length?p.map(s=>s.conflict?`<div class="mi rvr"><span class="rvn"><span class="nd amber">●</span>${s.nav}</span><span class="ta" data-t="Compare" data-act="rvc" data-id="${s.id}">Compare</span></div>`:`<button class="mi rvr" data-act="rvt" data-id="${s.id}" role="menuitemcheckbox" aria-checked="${st.rv.has(s.id)}"><span class="rvn"><span class="nd blue">●</span>${s.nav}</span><span class="ck">${st.rv.has(s.id)?'✓':''}</span></button>`).join('')+`<div class="sep"></div><button class="mi send" data-act="rvsend" ${st.rv.size?'':'disabled'}>${st.rv.size?'Send '+st.rv.size+' scene'+(st.rv.size===1?'':'s'):'Select scenes to send'}</button>`:'<div class="mi" style="color:var(--muted)">Everything’s in main</div>'}</div>`}
+
+// ---------- Prototype-only controls ----------
+function proto(){let h=`<button class="chip" data-act="proto" aria-expanded="${st.proto}">Prototype ${st.proto?'▾':'▸'}</button>`;if(!st.proto)return h;
+const ln=ME==='ar'&&ser('ln');
+return h+`<div class="pp"><b>Prototype controls</b><br>Not part of the app.<div style="height:8px"></div>${ln?`Your role in The Long Night<div class="seg">${['showrunner','writer','viewer'].map(r=>`<button class="${role(ln)===r?'on':''}" data-act="as" data-v="${r}">${cap(r)}</button>`).join('')}</div>`:''}${D?'<button class="pl" data-act="signout">Sign out</button>':''}<button class="pl" data-act="invlink">Open an invitation link${D?' (signs out)':''}</button><div class="hint">Sign in as ${ARNAV} (or with Google) for the sample room. Any other email is a new, empty account. Any 6 digits work as the code. Existing episodes all show the same sample scenes; new ones start blank.</div></div>`}
+
+// ---------- Render ----------
+function render(){const keep={};document.querySelectorAll('[data-keep]').forEach(i=>keep[i.id]=i.value);const f=document.activeElement&&document.activeElement.id;
+const home=st.screen!=='script';const a=$('#app');a.className=(home?'is-home':'is-script')+(st.left||home?'':' left-closed')+((st.right&&!home)||(st.members&&home)?' right-open':'');
+$('#tbHome').innerHTML=tbHome();$('#navH').innerHTML=navH();$('#homeC').innerHTML=homeC();
+$('#tbScript').innerHTML=tbScript();$('#navS').innerHTML=st.ep?nav():'';$('#page').innerHTML=st.ep?page():'';$('#rp').innerHTML=right();$('#shade').innerHTML='';
+const g=$('#gate');g.innerHTML=gate();g.classList.toggle('on',st.screen==='signin'||!!st.legal);
+$('#proto').innerHTML=proto();
+for(const id in keep){const i=document.getElementById(id);if(i&&i.value===''&&keep[id])i.value=keep[id]}
+if(f){const i=document.getElementById(f);if(i&&i.tagName==='INPUT')i.focus()}}
+let tt;function toast(m,undo){const t=$('#toast');t.innerHTML=m+(undo?'<button data-act="undo">Undo</button>':'');t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),6000)}
+function flash(el){if(!el)return;el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),700)}
+function pulse(ids){requestAnimationFrame(()=>ids.forEach(id=>{const h=$('#h-'+id);if(h){h.classList.remove('pulse');void h.offsetWidth;h.classList.add('pulse')}}))}
+function send(ids){const[s,e]=curEp();if(!canEdit(s,e)){toast('View only: you can’t send to main');return}st.undoFn=null;st.undo=ids.map(id=>{const x=sc(id);return[x,x.main]});ids.forEach(id=>{const x=sc(id);x.main=x.wi.map(([k,t])=>[k,clean(t)]);x.sent=true});
+if(!st.sess){st.snaps.unshift({n:'Before sending from “Darker ending”',m:'just now · automatic'});st.sess=true}
+st.pop=null;render();pulse(ids);toast(ids.length===1?`“${sc(ids[0]).nav}” sent to main`:`${ids.length} scenes sent to main`,true)}
+function compare(id){st.cur=id;st.pop=null;if(!st.right&&st.left&&innerWidth<1300){st.left=false;st.auto=true}st.right=true;render()}
+function closeR(){st.right=false;if(st.auto){st.left=true;st.auto=false}render()}
+function trySend(id){const s=sc(id);if(s.conflict){compare(id);toast('Main changed this scene too, so compare it first')}else send([id])}
+function open(id,ren){const[s]=findEp(id);Object.assign(st,{ep:id,screen:'script',left:true,right:false,members:false,ren:ren?'ep':null,tab:'scenes',menu:null,pop:null,draft:'main'});st.sel=s.id;D.recent=[id,...D.recent.filter(x=>x!==id)];render();if(ren)focusRen()}
+const focusSoon=id=>setTimeout(()=>{const i=document.getElementById(id);if(i)i.focus()},30);
+function focusRen(){const i=$('#renI');if(i){i.focus();i.select()}}
+function saveRen(raw){const v=raw.trim(),k=st.ren;st.ren=null;if(!v)return;if(k==='ep'){const[s,e]=curEp();e.name=v;if(s.eps.length===1)s.name=v}else{const s=ser(st.sel);s.name=v;if(s.eps.length===1)s.eps[0].name=v}}
+function commitRen(){const i=$('#renI');if(!i||!st.ren)return;saveRen(i.value);render()}
+function invite(input,key,ep){const s=ser(st.sel)||curEp()[0];const i=$('#'+input);const v=i&&i.value.trim();if(!v||!v.includes('@')){if(i)i.focus();return}s.invited.push({email:v,role:st.pick[key],when:'just now',ep});i.value='';render();toast(`Invitation sent to ${esc(v)}`)}
+
+document.addEventListener('click',e=>{
+if(e.target.closest('#proto')&&!e.target.closest('[data-act]'))return;
+const el=e.target.closest('[data-act]');const a=el&&el.dataset.act,id=el&&el.dataset.id,v=el&&el.dataset.v;
+if(!el){if(e.target.closest('.menu,input,.gate'))return;const s=e.target.closest('.sc');let ch=false;if(st.pop||st.menu||st.review){st.pop=null;st.menu=null;st.review=false;ch=true}if(s&&st.cur!==s.dataset.scene){st.cur=s.dataset.scene;ch=true}if(ch)render();return}
+if(!['menu','dot','rvt','cwt','proto','as'].includes(a))st.menu=null;
+if(a!=='review'&&a!=='rvt')st.review=false;
+switch(a){
+// sign-in
+case'google':st.si.email=ARNAV;finishSignIn(ARNAV);break;
+case'siEmail':{const i=$('#siE'),x=i.value.trim();if(!x.includes('@')){i.focus();break}st.si.email=x;st.si.step='code';render();focusSoon('siC');break}
+case'siCode':{const x=$('#siC').value.replace(/\D/g,'');if(x.length<6){$('#siC').focus();break}const isNew=st.si.email!==ARNAV&&!accounts[st.si.email];if(isNew){st.si.step='name';render();focusSoon('siN')}else finishSignIn(st.si.email);break}
+case'siName':{const n=$('#siN').value.trim();if(!n){$('#siN').focus();break}finishSignIn(st.si.email,n);break}
+case'siBack':st.si.step='email';render();break;
+case'siResend':flash(el);toast(`We sent a new code to ${esc(st.si.email)}`);break;
+case'legal':st.legal=v;render();$('#gate').scrollTop=0;break;
+case'legalBack':st.legal=null;render();break;
+case'signout':signOut(false);break;
+case'invlink':signOut(true);st.proto=false;render();break;
+case'proto':st.proto=!st.proto;render();break;
+case'as':ser('ln').members[ME]=v;render();break;
+// home
+case'series':st.sel=id;st.ren=null;render();break;
+case'newscript':{const n=++uid,s={id:'s'+n,name:'Untitled script',members:{[ME]:'showrunner'},invited:[],eps:[{id:'x'+n,name:'Untitled script',w:[ME],ed:'just now',blank:true}]};D.series.unshift(s);flash(el);setTimeout(()=>open(s.eps[0].id,true),250);break}
+case'newep':{const s=ser(st.sel),n=++uid,ep={id:'x'+n,name:'Untitled',w:[ME],ed:'just now',blank:true};s.eps.push(ep);flash(el);setTimeout(()=>open(ep.id,true),250);break}
+case'members':st.members=!st.members;render();break;
+case'closeM':st.members=false;render();break;
+case'renS':st.ren='series';render();focusRen();break;
+case'renE':st.ren='ep';render();focusRen();break;
+case'accept':{const inv=D.invitations.find(i=>i.id===id);inv.done=true;el.textContent='Accepted ✓';flash(el);setTimeout(()=>{if(!ser('fg'))D.series.push(fogline());D.invitations=D.invitations.filter(i=>i!==inv);render();toast('You joined Fogline')},800);break}
+case'setrole':{const s=ser(st.sel);s.members[id]=v;render();toast(`${PEOPLE[id].f} is now ${v==='showrunner'?'a showrunner':'a '+v}`);break}
+case'rmmember':{const s=ser(st.sel),old=s.members[id],eps=s.eps.filter(x=>x.w.includes(id));delete s.members[id];eps.forEach(x=>x.w=x.w.filter(w=>w!==id));st.undoFn=()=>{s.members[id]=old;eps.forEach(x=>x.w.push(id))};render();toast(`${PEOPLE[id].f} removed from ${esc(s.name)}`,true);break}
+case'setinv':ser(st.sel).invited[id].role=v;render();break;
+case'cancelinv':{const s=ser(st.sel),x=s.invited.splice(+id,1)[0];render();toast(`Invitation to ${esc(x.email)} cancelled`);break}
+case'pickset':st.pick[id]=v;st.menu=id==='cwR'?'cowriter':null;render();break;
+case'invite':invite('invE','invR');break;
+// script
+case'open':open(id);break;
+case'home':commitRen();Object.assign(st,{screen:'home',right:false,review:false,pop:null,auto:false,ren:null});render();break;
+case'copylink':{const[s,e]=curEp();try{navigator.clipboard.writeText(location.href.split('#')[0]+'#/e/'+e.id)}catch(err){}render();toast(`Link to “${esc(lbl(s,e))}” copied`);break}
+case'cwt':{const[s,e]=curEp(),had=e.w.includes(id),flip=()=>{e.w=e.w.includes(id)?e.w.filter(w=>w!==id):[...e.w,id]};flip();st.undoFn=flip;render();toast(`${PEOPLE[id].f} ${had?'removed from':'added to'} ${esc(lbl(s,e))}`,true);break}
+case'cwinvite':{const[s,e]=curEp();st.sel=s.id;invite('cwE','cwR',e.id);break}
+case'left':st.left=!st.left;st.auto=false;st.pop=null;render();break;
+case'menu':st.menu=st.menu===v?null:v;st.pop=null;render();break;
+case'draft':if(v==='x'){toast('Only “Darker ending” is wired up in this prototype');render();break}st.draft=v;st.pop=null;st.review=false;if(v==='main'){st.right=false;if(st.auto){st.left=true;st.auto=false}}render();break;
+case'chg':st.chg=!st.chg;render();break;
+case'review':st.review=!st.review;st.pop=null;st.rv=new Set(pending().filter(s=>!s.conflict).map(s=>s.id));render();break;
+case'rvt':st.rv.has(id)?st.rv.delete(id):st.rv.add(id);render();break;
+case'rvc':st.review=false;compare(id);break;
+case'rvsend':if(st.rv.size){const ids=[...st.rv];st.review=false;send(ids)}break;
+case'tab':st.tab=v;render();break;
+case'jump':st.cur=id;st.pop=null;render();$('#sc-'+id).scrollIntoView({behavior:'smooth',block:'start'});break;
+case'dot':st.cur=id;st.pop=st.pop===id?null:id;st.menu=null;render();break;
+case'send':trySend(id);break;
+case'compare':compare(id);break;
+case'sendc':send([id]);break;
+case'closeR':closeR();break;
+case'undo':if(st.undoFn){st.undoFn();st.undoFn=null;render();toast('Undone')}else if(st.undo){st.undo.forEach(([s,m])=>{s.main=m;s.sent=false});st.undo=null;render();toast('Send undone')}else $('#toast').classList.remove('show');break;
+case'snap':st.snaps.unshift({n:'Snapshot',m:'just now · you'});render();flash(document.querySelector('[data-act="snap"]'));break;
+case'newwi':st.wis.push('Untitled what-if');render();flash(document.querySelector('[data-act="newwi"]'));break;
+case'flash':flash(el);break;
+case'theme':theme=theme==='dark'?'light':'dark';applyTheme(theme);try{localStorage.setItem('wr-theme',theme)}catch(err){}render();break}
+});
+document.addEventListener('keydown',e=>{const t=e.target;
+if(t.id==='renI'){if(e.key==='Enter'){e.preventDefault();commitRen()}else if(e.key==='Escape'){e.preventDefault();st.ren=null;render()}return}
+if(e.key==='Enter'&&t.dataset&&t.dataset.enter){e.preventDefault();const b=document.createElement('button');b.dataset.act=t.dataset.enter;document.body.appendChild(b);b.click();b.remove();return}
+if((e.key==='Enter'||e.key===' ')&&t.dataset&&t.dataset.act&&(t.getAttribute('role')==='button'||t.classList.contains('ta'))){e.preventDefault();t.click();return}
+if(e.key==='Escape'){if(st.menu||st.pop){st.pop=null;st.menu=null;render();return}if(st.legal){st.legal=null;render();return}if(st.screen==='home'&&st.members){st.members=false;render();return}}
+if(st.screen!=='script')return;
+if(e.key==='Escape'){if(st.review){st.review=false;render()}else if(st.right)closeR();return}
+if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();const s=sc(st.cur);if(!status(s)){toast('This scene has nothing to send');return}if(e.shiftKey)compare(s.id);else trySend(s.id)}});
+document.addEventListener('focusout',e=>{if(e.target.id==='renI'&&st.ren){saveRen(e.target.value);setTimeout(render,200)}});
+document.addEventListener('input',e=>{if(e.target.id==='siC'){e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);if(e.target.value.length===6)$('[data-act="siCode"]').click()}});
+let theme;try{theme=localStorage.getItem('wr-theme')}catch(err){}
+if(theme!=='light'&&theme!=='dark')theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+function applyTheme(t){document.documentElement.dataset.theme=t}
+applyTheme(theme);
+render();
+setTimeout(()=>{const i=$('#siE');if(i)i.focus()},50);
+</script>
+</body>
+</html>
