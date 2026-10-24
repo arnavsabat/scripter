@@ -94,7 +94,7 @@ describe('server crash and offline work', () => {
         crashed = true;
       }
       if (i === 40) {
-        await until(() => maya.host.querySelector('.cue')?.textContent === 'Offline', 5000);
+        await until(() => maya.host.querySelector('.cue')?.textContent === 'Reconnecting…', 5000);
       }
     }
     expect(crashed).toBe(true);
@@ -116,7 +116,7 @@ describe('server crash and offline work', () => {
     await until(() => !maya.host.querySelector('.cue'));
 
     await server('kill');
-    await until(() => maya.host.querySelector('.cue')?.textContent === 'Offline', 5000);
+    await until(() => maya.host.querySelector('.cue')?.textContent === 'Reconnecting…', 5000);
     expect(maya.host.querySelector('.cue')?.getAttribute('title')).toContain(
       'saved on this device',
     );
@@ -126,7 +126,7 @@ describe('server crash and offline work', () => {
 
     const reopened = await mount('Maya', ep, 'left', 'ready'); // server still down
     expect(reopened.lines()[0]).toBe('action: Before the outage. Written offline.');
-    expect(reopened.host.querySelector('.cue')?.textContent).toBe('Offline');
+    expect(reopened.host.querySelector('.cue')?.textContent).toBe('Reconnecting…');
 
     await server('restart');
     await until(() => !reopened.host.querySelector('.cue'), 15_000);

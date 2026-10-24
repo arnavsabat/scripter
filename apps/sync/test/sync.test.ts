@@ -91,7 +91,7 @@ describe('offline editing', () => {
     b.net.offline = true;
     srv.dropConnections();
     await until(() => a.c.connection === 'offline' && b.c.connection === 'offline');
-    expect(a.c.cue).toBe('offline');
+    expect(a.c.cue).toBe('reconnecting'); // the network is fine; the server is unreachable (D-022)
     for (let i = 0; i < 200; i++) {
       type(a.doc, `a${i} `);
       type(b.doc, `b${i} `);

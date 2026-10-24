@@ -19,7 +19,11 @@ interface Props {
   cue: Cue;
 }
 
-const CUE_TEXT = { offline: 'Offline', syncing: 'Syncing…' } as const;
+const CUE_TEXT = {
+  offline: 'Offline',
+  reconnecting: 'Reconnecting…',
+  syncing: 'Syncing…',
+} as const;
 const CUE_HINT = 'Your edits are saved on this device and will merge when you reconnect.';
 
 export function Toolbar({

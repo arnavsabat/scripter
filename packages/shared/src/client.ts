@@ -16,11 +16,15 @@ import {
   SYNC_STEP1,
   SYNC_STEP2,
   SYNC_UPDATE,
+  encodePing,
 } from './protocol';
 
 // This package runs in browsers and Node alike; both provide these globals.
 declare function setTimeout(callback: () => void, ms: number): unknown;
 declare function clearTimeout(id: unknown): void;
+declare function setInterval(callback: () => void, ms: number): unknown;
+declare function clearInterval(id: unknown): void;
+declare const navigator: { onLine?: boolean } | undefined;
 
 /** The parts of the WebSocket API we use (the browser's and Node 24's global WebSocket both fit). */
 export interface SocketLike {
@@ -37,12 +41,17 @@ export type SocketFactory = (url: string) => SocketLike;
 
 export type Connection = 'connecting' | 'online' | 'offline' | 'stopped';
 
-/** What the quiet toolbar cue shows (D-018 item 6): nothing, "Offline" or "Syncing…". */
-export type Cue = null | 'offline' | 'syncing';
+/**
+ * What the quiet toolbar cue shows (D-018 item 6, D-022): nothing, "Offline" (the browser has no
+ * network), "Reconnecting…" (the network is fine but no server can serve the episode right now,
+ * e.g. during a failover), or "Syncing…" (catching up, or an edit is slow to be acknowledged).
+ */
+export type Cue = null | 'offline' | 'reconnecting' | 'syncing';
 
 export interface SyncClientOptions {
   /** Base URL of the sync server, e.g. ws://localhost:4000 */
-  serverUrl: string;
+  /** Base URL of the sync server, or a list to pick from at random on each (re)connect (D-022). */
+  serverUrl: string | readonly string[];
   docId: string;
   token: string;
   doc: Y.Doc;
@@ -50,6 +59,8 @@ export interface SyncClientOptions {
   socket: SocketFactory;
   /** Unsaved work older than this shows "Syncing…" (so normal typing never flickers it). */
   syncingCueAfterMs?: number;
+  /** Heartbeat (D-022): ping every `everyMs`; if nothing arrives for `deadAfterMs`, reconnect. */
+  heartbeat?: { everyMs: number; deadAfterMs: number };
   /** Reconnect backoff: random(0, min(capMs, baseMs × 2^attempt)), "full jitter" (SPEC 5.4). */
   backoff?: { baseMs: number; capMs: number };
   random?: () => number;
@@ -69,17 +80,20 @@ export class SyncClient {
   private socket: SocketLike | null = null;
   private attempt = 0;
   private retryTimer: unknown = null;
+  private heartbeatTimer: unknown = null;
+  private lastHeard = 0;
   private cueTimer: unknown = null;
   private unsavedSince: number | null = null;
   private listeners = new Set<() => void>();
   private readonly opts: Required<
-    Pick<SyncClientOptions, 'syncingCueAfterMs' | 'backoff' | 'random'>
+    Pick<SyncClientOptions, 'syncingCueAfterMs' | 'backoff' | 'random' | 'heartbeat'>
   > &
     SyncClientOptions;
 
   constructor(options: SyncClientOptions) {
     this.opts = {
       syncingCueAfterMs: 1500,
+      heartbeat: { everyMs: 5_000, deadAfterMs: 10_000 },
       backoff: { baseMs: 250, capMs: 10_000 },
       random: Math.random,
       ...options,
@@ -103,7 +117,10 @@ export class SyncClient {
   }
 
   get cue(): Cue {
-    if (this.connection === 'offline' || this.connection === 'stopped') return 'offline';
+    if (this.connection === 'offline' || this.connection === 'stopped') {
+      const browserOffline = typeof navigator !== 'undefined' && navigator?.onLine === false;
+      return browserOffline || this.connection === 'stopped' ? 'offline' : 'reconnecting';
+    }
     if (this.connection === 'connecting') return null;
     const slow =
       this.unsavedSince !== null && Date.now() - this.unsavedSince >= this.opts.syncingCueAfterMs;
@@ -119,12 +136,22 @@ export class SyncClient {
     for (const l of this.listeners) l();
   }
 
+  /** The server this connection goes to: a random one from the list (D-022: any server accepts). */
+  private pickServer() {
+    const urls =
+      typeof this.opts.serverUrl === 'string' ? [this.opts.serverUrl] : this.opts.serverUrl;
+    return urls[Math.floor(this.opts.random() * urls.length)] ?? urls[0]!;
+  }
+
   private connect() {
     if (this.connection === 'stopped') return;
-    const { serverUrl, docId, token } = this.opts;
-    const socket = this.opts.socket(`${serverUrl}/doc/${docId}?token=${encodeURIComponent(token)}`);
+    const { docId, token } = this.opts;
+    const socket = this.opts.socket(
+      `${this.pickServer()}/doc/${docId}?token=${encodeURIComponent(token)}`,
+    );
     socket.binaryType = 'arraybuffer';
     this.socket = socket;
+    this.lastHeard = Date.now();
     this.sent = 0;
     this.stored = 0;
     this.caughtUp = false;
@@ -138,29 +165,58 @@ export class SyncClient {
       encoding.writeVarUint8Array(e, Y.encodeStateVector(this.doc));
       socket.send(encoding.toUint8Array(e));
       if (this.awareness?.getLocalState()) this.sendAwareness([this.doc.clientID]);
+      this.startHeartbeat(socket);
       this.emit();
     };
-    socket.onmessage = (ev) => this.onMessage(new Uint8Array(ev.data as ArrayBuffer));
+    socket.onmessage = (ev) => {
+      this.lastHeard = Date.now();
+      this.onMessage(new Uint8Array(ev.data as ArrayBuffer));
+    };
     socket.onerror = () => {};
-    socket.onclose = (ev) => {
-      if (this.socket !== socket) return;
-      this.socket = null;
-      // Co-writers' carets and avatars go away while we can't see them.
-      if (this.awareness) {
-        const others = [...this.awareness.getStates().keys()].filter(
-          (id) => id !== this.doc.clientID,
-        );
-        awarenessProtocol.removeAwarenessStates(this.awareness, others, this);
+    socket.onclose = (ev) => this.disconnected(socket, ev.code);
+  }
+
+  /**
+   * Heartbeat (D-022): a frozen server keeps its sockets open without answering, so the browser
+   * would never notice. Ping every 5 s; if nothing at all has arrived for 10 s, give up on this
+   * socket at once (without waiting for a close handshake the frozen server can't complete).
+   */
+  private startHeartbeat(socket: SocketLike) {
+    clearInterval(this.heartbeatTimer);
+    const { everyMs, deadAfterMs } = this.opts.heartbeat;
+    this.heartbeatTimer = setInterval(() => {
+      if (this.socket !== socket) return clearInterval(this.heartbeatTimer);
+      if (Date.now() - this.lastHeard > deadAfterMs) {
+        socket.close();
+        this.disconnected(socket, 4000);
+        return;
       }
-      if (ev.code === CLOSE.UNAUTHORIZED || ev.code === CLOSE.BAD_DOCUMENT) {
-        this.fatal = ev.code === CLOSE.UNAUTHORIZED ? 'unauthorized' : 'bad episode';
-        this.connection = 'stopped';
-      } else if (this.connection !== 'stopped') {
-        this.connection = 'offline';
-        this.scheduleReconnect();
-      }
-      this.emit();
-    };
+      if (socket.readyState === 1) socket.send(encodePing());
+    }, everyMs);
+  }
+
+  private disconnected(socket: SocketLike, code: number) {
+    if (this.socket !== socket) return;
+    this.socket = null;
+    clearInterval(this.heartbeatTimer);
+    // Co-writers' carets and avatars go away while we can't see them.
+    if (this.awareness) {
+      const others = [...this.awareness.getStates().keys()].filter(
+        (id) => id !== this.doc.clientID,
+      );
+      awarenessProtocol.removeAwarenessStates(this.awareness, others, this);
+    }
+    if (code === CLOSE.UNAUTHORIZED || code === CLOSE.BAD_DOCUMENT) {
+      this.fatal = code === CLOSE.UNAUTHORIZED ? 'unauthorized' : 'bad episode';
+      this.connection = 'stopped';
+    } else if (this.connection !== 'stopped') {
+      this.connection = 'offline';
+      // The episode moved (handoff) or the server is shutting down gracefully: the new home is
+      // ready, so come straight back instead of continuing an old backoff.
+      if (code === CLOSE.MOVED || code === CLOSE.GOING_AWAY) this.attempt = 0;
+      this.scheduleReconnect();
+    }
+    this.emit();
   }
 
   private scheduleReconnect() {
@@ -284,6 +340,7 @@ export class SyncClient {
     this.connection = 'stopped';
     clearTimeout(this.retryTimer);
     clearTimeout(this.cueTimer);
+    clearInterval(this.heartbeatTimer);
     if (this.awareness)
       awarenessProtocol.removeAwarenessStates(this.awareness, [this.doc.clientID], 'local');
     this.doc.off('update', this.onDocUpdate);

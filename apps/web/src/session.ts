@@ -3,13 +3,14 @@
 import { devIdentity, makeDevToken, type Identity } from '@wr/shared';
 
 export interface Session {
-  serverUrl: string;
+  /** One sync server URL, or the cluster's list (the client picks one at random, D-022). */
+  serverUrl: string | readonly string[];
   docId: string;
   identity: Identity;
   token: string;
 }
 
-export function sessionFromUrl(url: URL, serverUrl: string): Session {
+export function sessionFromUrl(url: URL, serverUrl: string | readonly string[]): Session {
   const identity = devIdentity(url.searchParams.get('as') ?? 'Writer');
   const docId = (url.searchParams.get('ep') ?? 'dev-episode').toLowerCase();
   return { serverUrl, docId, identity, token: makeDevToken(identity) };

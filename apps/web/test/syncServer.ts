@@ -6,6 +6,8 @@ import { memoryStorage } from '@wr/sync/memory';
 import * as Y from 'yjs';
 
 export const SYNC_PORT = 4787;
+/** Cluster timings scaled down so kill-and-restart doesn't wait the full 6 s lease (D-022). */
+const FAST = { leaseTtlMs: 1000, renewEveryMs: 330, heartbeatMs: 330, deadAfterMs: 1000 };
 export const CONTROL_PORT = 4788;
 
 export default async function setup() {
@@ -23,7 +25,7 @@ export default async function setup() {
         await server?.kill();
         server = null;
       } else if (url.pathname === '/restart') {
-        server ??= await startSyncServer({ port: SYNC_PORT, storage, devAuth: true });
+        server ??= await startSyncServer({ port: SYNC_PORT, storage, devAuth: true, ...FAST });
       } else if (url.pathname === '/drop') {
         server?.dropConnections();
       } else if (url.pathname === '/stored') {

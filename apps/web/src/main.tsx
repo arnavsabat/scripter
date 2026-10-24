@@ -10,9 +10,14 @@ const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
 
 // Development: ?as=Maya picks the writer, ?ep=pilot picks the episode (D-018 item 8).
+// VITE_SYNC_URLS: comma-separated sync servers (the local 3-node cluster); default: one on :4000.
+const urls = (import.meta.env.VITE_SYNC_URLS as string | undefined)
+  ?.split(',')
+  .map((u) => u.trim())
+  .filter(Boolean);
 const session = sessionFromUrl(
   new URL(location.href),
-  (import.meta.env.VITE_SYNC_URL as string | undefined) ?? `ws://${location.hostname}:4000`,
+  urls?.length ? urls : `ws://${location.hostname}:4000`,
 );
 
 createRoot(root).render(
