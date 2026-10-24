@@ -44,6 +44,6 @@ const server = await startSyncServer({
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
     logger.info('shutting down gracefully', { signal });
-    void server.close().then(() => process.exit(0));
+    void server.close().then(() => process.stdout.write('', () => process.exit(0))); // flush logs first
   });
 }

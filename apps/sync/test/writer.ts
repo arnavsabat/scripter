@@ -31,7 +31,8 @@ export function writer(
   const typedAt = new Map<string, number>();
   const durableAt = new Map<string, number>();
   const words: string[] = [];
-  let pending: string[] = [];
+  /** Each unconfirmed word: the connection it went out on, and its message number there. */
+  let pending: { word: string; gen: number; index: number }[] = [];
   const client = new SyncClient({
     serverUrl: typeof urls === 'function' ? urls() : urls,
     docId,
@@ -41,12 +42,20 @@ export function writer(
     ...(opts.heartbeat ? { heartbeat: opts.heartbeat } : {}),
     socket: (url) => new WebSocket(url) as unknown as SocketLike,
   });
-  // A word is durable once the client has nothing unacknowledged left after typing it.
+  // A word is durable when the server acknowledges its own message, or, if its connection was
+  // lost first (or it was typed offline), when a later connection's handshake (which resends
+  // everything the server lacked) is acknowledged.
   client.onChange(() => {
-    if (!client.synced) return;
     const now = Date.now();
-    for (const w of pending) durableAt.set(w, now);
-    pending = [];
+    pending = pending.filter((p) => {
+      const sameConnection = p.gen === client.generation && client.stored >= p.index;
+      const resent =
+        p.gen < client.generation &&
+        client.handshakeIndex !== null &&
+        client.stored >= client.handshakeIndex;
+      if (sameConnection || resent) durableAt.set(p.word, now);
+      return !(sameConnection || resent);
+    });
   });
   return {
     name,
@@ -61,8 +70,13 @@ export function writer(
         const w = `${name}${words.length}`;
         words.push(w);
         typedAt.set(w, Date.now());
-        pending.push(w);
-        text.insert(text.length, `${w} `);
+        text.insert(text.length, `${w} `); // sent at once if online (sent += 1)
+        const online = client.connection === 'online';
+        pending.push({
+          word: w,
+          gen: online ? client.generation : client.generation - 0.5,
+          index: online ? client.sent : Infinity,
+        });
         await new Promise((r) => setTimeout(r, everyMs));
       }
     },
@@ -88,6 +102,8 @@ export interface PauseReport {
   worstUnconfirmedMs: number;
   /** Longest time a co-writer waited to see a typed word. */
   worstPropagationMs: number;
+  /** When the word that waited longest to be confirmed was typed (wall clock). */
+  worstAt?: number;
 }
 
 export function report(
@@ -99,9 +115,12 @@ export function report(
   const finalWords = new Set(observer.text().split(' '));
   let worstUnconfirmed = 0;
   let worstPropagation = 0;
+  let worstAt = 0;
   for (const w of author.words) {
     const t = author.typedAt.get(w)!;
-    worstUnconfirmed = Math.max(worstUnconfirmed, (author.durableAt.get(w) ?? Infinity) - t);
+    const wait = (author.durableAt.get(w) ?? Infinity) - t;
+    if (wait > worstUnconfirmed) worstAt = t;
+    worstUnconfirmed = Math.max(worstUnconfirmed, wait);
     worstPropagation = Math.max(worstPropagation, (seenAt.get(w) ?? Infinity) - t);
   }
   const r = {
@@ -110,6 +129,7 @@ export function report(
     lost: author.words.filter((w) => !finalWords.has(w)).length,
     worstUnconfirmedMs: Math.round(worstUnconfirmed),
     worstPropagationMs: Math.round(worstPropagation),
+    worstAt,
   };
   console.log(`[PAUSE] ${JSON.stringify(r)}`);
   return r;

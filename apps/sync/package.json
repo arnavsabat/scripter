@@ -12,7 +12,8 @@
     "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
     "start": "tsx --env-file-if-exists=../../.env src/main.ts",
     "typecheck": "tsc --noEmit -p .",
-    "test:services": "WR_TEST_SERVICES=1 vitest run test/aws-storage.test.ts"
+    "test:services": "WR_TEST_SERVICES=1 vitest run test/aws-storage.test.ts",
+    "test:chaos": "WR_TEST_SERVICES=1 vitest run test/chaos.test.ts --silent=false --testTimeout=180000 --hookTimeout=60000"
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "3.1156.0",

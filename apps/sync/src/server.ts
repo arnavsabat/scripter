@@ -210,11 +210,16 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
     const identity = forwarded ?? authenticate(url.searchParams.get('token') ?? '', { devAuth });
     if (!identity) return ws.close(CLOSE.UNAUTHORIZED, 'unauthorized');
     if (!DOC_ID.test(docId)) return ws.close(CLOSE.BAD_DOCUMENT, 'bad episode id');
-    if (closing) return ws.close(CLOSE.GOING_AWAY, 'server shutting down');
-
     const local = rooms.get(docId);
+    // Shutting down: keep serving the episodes we still hold until they're handed off; refuse the rest.
+    if (closing && !(local && local.state === 'open'))
+      return ws.close(CLOSE.GOING_AWAY, 'server shutting down');
     const home = cluster.homeOf(docId);
-    if ((local && local.state !== 'closed') || home === serverId) return serve(ws, docId, identity);
+    // Serve here if we hold the episode (open, or still loading) or the ring says we're its home.
+    // A room that's closing (being handed off) doesn't count: route by the ring instead, or the
+    // writer would re-open it here and take the lease straight back.
+    const holding = local && (local.state === 'open' || local.state === 'loading');
+    if (holding || home === serverId) return serve(ws, docId, identity);
     // A forwarded writer reached a server that doesn't think it's the home (the ring is still
     // settling): send it round again rather than forwarding twice.
     if (forwarded) return ws.close(CLOSE.MOVED, 'not home');
@@ -229,6 +234,8 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
    * If the home can't be reached when the writer first connects (it just died, and the ring
    * hasn't caught up yet), the writer is held rather than turned away: this server answers its
    * heartbeat pings and retries every 500 ms, re-resolving the home each time, for up to 15 s.
+   * The same goes for a home that turns the hop away before the session begins (it's shutting
+   * down, or its view of the ring is a moment behind ours).
    * That way a failover costs the writer one reconnect, not a growing client backoff. Once a
    * session with a home has started, losing it closes the writer's socket instead: a fresh
    * handshake with the next home is what keeps the acknowledgment counts honest.
@@ -244,15 +251,21 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
     const pending: { data: RawData; binary: boolean }[] = [];
     let upstream: WebSocket | null = null;
     let opened = false;
+    let started = false; // the home has sent something: a session with it has begun
     let retry: ReturnType<typeof setTimeout> | undefined;
 
     client.on('message', (data, binary) =>
       later(() => {
-        if (upstream && opened && upstream.readyState === WebSocket.OPEN)
-          return upstream.send(data, { binary });
+        const isPing = toBytes(data)[0] === MSG_PING;
+        if (upstream && opened && upstream.readyState === WebSocket.OPEN) {
+          upstream.send(data, { binary });
+          // Until the home has started the session, keep a copy: if it turns us away, the next
+          // home must get the writer's opening messages too (its state vector above all).
+          if (!started && !isPing) pending.push({ data, binary });
+          return;
+        }
         // No home yet: keep the writer's heartbeat alive ourselves, and hold everything else.
-        if (toBytes(data)[0] === MSG_PING && client.readyState === WebSocket.OPEN)
-          return client.send(encodePong());
+        if (isPing && client.readyState === WebSocket.OPEN) return client.send(encodePong());
         pending.push({ data, binary });
       }),
     );
@@ -284,11 +297,14 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
       up.on('open', () =>
         later(() => {
           opened = true;
-          for (const m of pending.splice(0)) up.send(m.data, { binary: m.binary });
+          // Replay everything held so far (kept until the session starts, see above).
+          for (const m of pending) up.send(m.data, { binary: m.binary });
         }),
       );
       up.on('message', (data, binary) =>
         later(() => {
+          if (!started) pending.length = 0; // the session has begun: nothing left to replay
+          started = true;
           if (client.readyState === WebSocket.OPEN) client.send(data, { binary });
         }),
       );
@@ -296,7 +312,12 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
       up.on('close', (code) => {
         sockets.delete(up);
         if (upstream !== up) return;
-        if (!opened) return tryAgainLater(); // never reached the home: hold the writer and retry
+        // Never reached the home, or it turned us away before the session began: hold the writer
+        // and retry (re-resolving the home), instead of bouncing the writer.
+        if (!started) {
+          opened = false;
+          return tryAgainLater();
+        }
         if (client.readyState === WebSocket.OPEN)
           client.close(passThrough(code), 'upstream closed');
       });
@@ -430,7 +451,11 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
     async close() {
       closing = true;
       stopTimers();
-      await cluster.leave(); // others stop routing here within one heartbeat
+      await cluster.leave();
+      // Give every other server one heartbeat interval to notice we've left, so the writers we
+      // hand off are routed straight to their new homes rather than back here. We keep serving
+      // our episodes meanwhile.
+      await new Promise((r) => setTimeout(r, heartbeatMs + 250));
       await rebalance(); // every room now "belongs elsewhere": hand each off, idle first
       for (const ws of sockets) ws.close(CLOSE.GOING_AWAY, 'server shutting down');
       await stopListening();

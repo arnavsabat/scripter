@@ -236,7 +236,7 @@ export class Room {
 
   /**
    * Compacts the document into a new snapshot, moves the pointer to it (fenced), and only then
-   * truncates the log below it. The state and its seq are captured together, synchronously, so
+   * truncates the log below it (in the background: nothing waits for the deletes). The state and its seq are captured together, synchronously, so
    * the snapshot covers exactly the entries below `seq`.
    */
   snapshot(): Promise<void> {
@@ -252,7 +252,13 @@ export class Room {
     this.snapshotting = (async () => {
       try {
         await snapshots.save(this.docId, { seq, state }, fence);
-        await log.truncateBelow(this.docId, seq);
+        // Once the pointer has moved past seq, deleting the log below it is safe at any time and
+        // by anyone, so it never needs to hold anything up: run it in the background.
+        void log
+          .truncateBelow(this.docId, seq)
+          .catch((err: unknown) =>
+            this.opts.logger.error('truncate failed', { docId: this.docId, err: String(err) }),
+          );
         this.opts.logger.info('snapshot saved', {
           docId: this.docId,
           seq,

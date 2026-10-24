@@ -61,6 +61,11 @@ export interface SyncClientOptions {
   syncingCueAfterMs?: number;
   /** Heartbeat (D-022): ping every `everyMs`; if nothing arrives for `deadAfterMs`, reconnect. */
   heartbeat?: { everyMs: number; deadAfterMs: number };
+  /**
+   * Give up on a connection that hasn't opened within this long and try again (a frozen server's
+   * operating system still accepts the TCP connection, but the WebSocket handshake never finishes).
+   */
+  connectTimeoutMs?: number;
   /** Reconnect backoff: random(0, min(capMs, baseMs × 2^attempt)), "full jitter" (SPEC 5.4). */
   backoff?: { baseMs: number; capMs: number };
   random?: () => number;
@@ -77,16 +82,28 @@ export class SyncClient {
   caughtUp = false;
   /** Set when the server rejects us for good (4401, 4404). */
   fatal: string | null = null;
+  /** Counts connections; with `sent`/`stored`, lets a caller tell exactly which edits are durable. */
+  generation = 0;
+  /**
+   * On this connection, the `sent` count at which the handshake's step 2 went out. Step 2 carries
+   * everything the server lacked, so once `stored` reaches it, every edit made before this
+   * connection is durable too.
+   */
+  handshakeIndex: number | null = null;
   private socket: SocketLike | null = null;
   private attempt = 0;
   private retryTimer: unknown = null;
   private heartbeatTimer: unknown = null;
+  private connectTimer: unknown = null;
   private lastHeard = 0;
   private cueTimer: unknown = null;
   private unsavedSince: number | null = null;
   private listeners = new Set<() => void>();
   private readonly opts: Required<
-    Pick<SyncClientOptions, 'syncingCueAfterMs' | 'backoff' | 'random' | 'heartbeat'>
+    Pick<
+      SyncClientOptions,
+      'syncingCueAfterMs' | 'backoff' | 'random' | 'heartbeat' | 'connectTimeoutMs'
+    >
   > &
     SyncClientOptions;
 
@@ -94,6 +111,7 @@ export class SyncClient {
     this.opts = {
       syncingCueAfterMs: 1500,
       heartbeat: { everyMs: 5_000, deadAfterMs: 10_000 },
+      connectTimeoutMs: 5_000,
       backoff: { baseMs: 250, capMs: 10_000 },
       random: Math.random,
       ...options,
@@ -152,11 +170,21 @@ export class SyncClient {
     socket.binaryType = 'arraybuffer';
     this.socket = socket;
     this.lastHeard = Date.now();
+    this.generation += 1;
+    this.handshakeIndex = null;
+    clearTimeout(this.connectTimer);
+    this.connectTimer = setTimeout(() => {
+      if (this.socket === socket && socket.readyState !== 1) {
+        socket.close();
+        this.disconnected(socket, 4000);
+      }
+    }, this.opts.connectTimeoutMs);
     this.sent = 0;
     this.stored = 0;
     this.caughtUp = false;
     this.unsavedSince = null;
     socket.onopen = () => {
+      clearTimeout(this.connectTimer);
       this.connection = 'online';
       // Handshake: our state vector (the server replies with what we lack), then our presence.
       const e = encoding.createEncoder();
@@ -184,21 +212,32 @@ export class SyncClient {
   private startHeartbeat(socket: SocketLike) {
     clearInterval(this.heartbeatTimer);
     const { everyMs, deadAfterMs } = this.opts.heartbeat;
-    this.heartbeatTimer = setInterval(() => {
-      if (this.socket !== socket) return clearInterval(this.heartbeatTimer);
-      if (Date.now() - this.lastHeard > deadAfterMs) {
-        socket.close();
-        this.disconnected(socket, 4000);
-        return;
-      }
-      if (socket.readyState === 1) socket.send(encodePing());
-    }, everyMs);
+    // Ping every `everyMs`, but check the deadline every second, so a silent server is noticed
+    // 10 s after its last message rather than at the next ping (up to 15 s).
+    let lastPing = Date.now();
+    this.heartbeatTimer = setInterval(
+      () => {
+        if (this.socket !== socket) return clearInterval(this.heartbeatTimer);
+        const now = Date.now();
+        if (now - this.lastHeard > deadAfterMs) {
+          socket.close();
+          this.disconnected(socket, 4000);
+          return;
+        }
+        if (now - lastPing >= everyMs && socket.readyState === 1) {
+          socket.send(encodePing());
+          lastPing = now;
+        }
+      },
+      Math.min(1000, everyMs),
+    );
   }
 
   private disconnected(socket: SocketLike, code: number) {
     if (this.socket !== socket) return;
     this.socket = null;
     clearInterval(this.heartbeatTimer);
+    clearTimeout(this.connectTimer);
     // Co-writers' carets and avatars go away while we can't see them.
     if (this.awareness) {
       const others = [...this.awareness.getStates().keys()].filter(
@@ -295,6 +334,7 @@ export class SyncClient {
         // The server's state vector: send everything it lacks (this is the resend).
         const sv = decoding.readVarUint8Array(decoder);
         this.sendUpdate(SYNC_STEP2, Y.encodeStateAsUpdate(this.doc, sv));
+        this.handshakeIndex = this.sent;
       } else if (sub === SYNC_STEP2 || sub === SYNC_UPDATE) {
         Y.applyUpdate(this.doc, decoding.readVarUint8Array(decoder), this);
         if (sub === SYNC_STEP2) {

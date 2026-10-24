@@ -207,7 +207,11 @@ describe('rebalancing', () => {
       const words = new Set(writers[i]!.text().split(' '));
       for (const w of writers[i]!.words) expect(words.has(w), w).toBe(true);
     }
-    for (const d of owned) expect(stay.some((s) => s.rooms.has(d))).toBe(true);
+    // Every episode the leaving server held is open again on one of the servers that stayed.
+    await until(
+      () => owned.every((d) => stay.some((s) => s.rooms.get(d)?.state === 'open')),
+      10_000,
+    );
     console.log(
       `[REBALANCE] removed ${leaving.serverId}: ${owned.length} episodes handed off, no lost words`,
     );
