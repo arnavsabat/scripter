@@ -37,6 +37,11 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase libraries and security model (D-031):**
+  - **Postgres:** `pg` with hand-written SQL, and numbered `.sql` migrations applied by our own small runner.
+  - **Auth libraries:** `jose` to verify JWTs (and to sign test tokens), and plain `fetch` for Cognito's JSON API.
+  - **Tokens:** the refresh token lives in an httpOnly cookie set by our API, which makes the Cognito calls; the access token is kept in memory only.
+  - **Permissions:** the home sync server reads roles and assignments from Postgres on connect and checks them through the shared `canEdit`. The API's `NOTIFY` makes home servers re-check open connections when a role or assignment changes.
 - **Accounts phase choices (D-030):**
   - **Members** opens a collapsible 340 px right panel on the home screen, using Compare's component. "Members" is an opener (bold while open), and the × or Esc also closes it.
   - **Email:** SES with DKIM on a domain Arnav buys.
@@ -193,6 +198,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Known risks
 
+- New (D-031): the sync servers depend on Postgres to authorize *new* connections. If it's unavailable, writers already connected keep editing, but reconnecting writers (after a failover, say) are refused until it returns. Mitigations to consider later: caching recent decisions for a short time, and a Postgres replica.
 - Mid-line paragraph splits under concurrent editing (Yjs binding). Measured in the spike (D-012, test 2): nothing is lost and the structure never corrupts, but text typed concurrently in the second half of a line lands on the first half, and an in-progress word can tear. The risk is accepted pending P2.
 - Cursor stability when nodes are deleted by other users. Tested in the spike: the cursor moves to the start of the next line. Low risk now.
 - Page-break markers must survive remote updates (annotation handling in the Yjs binding). Resolved by design (D-012, F3): y-prosemirror replaces the whole document on every remote change, so decorations must be recomputed from the document. Mapped decorations vanish (20 → 0 in the control test).
@@ -212,6 +218,32 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-031 · 2026-10-24 · Accounts libraries and security model: pg + SQL migrations, jose + fetch, httpOnly refresh cookie, Postgres-backed permissions with NOTIFY
+
+- **Decisions (Arnav's calls):**
+  1. **Postgres access:** `pg` (node-postgres), with hand-written SQL in one data module per app, and with the types written by hand.
+     - Migrations are numbered `.sql` files (`apps/api/migrations/001_….sql`, …), applied in order by a small runner of ours. Each runs in a transaction and is recorded in a `schema_migrations` table.
+     - Rejected: Kysely (one more layer to learn and explain) and Drizzle (generated SQL nobody wrote, which is hard to defend in an interview).
+  2. **JWT and Cognito:** `jose` verifies tokens in the API and the sync servers (Cognito's public keys come from its JWKS URL and are cached) and signs the test tokens (D-030).
+     - Every token check is the same: the signature, the issuer, the client ID, `token_use: "access"` and expiry.
+     - Cognito's sign-in API (InitiateAuth with `USER_AUTH` and the `EMAIL_OTP` challenge, RespondToAuthChallenge, SignUp without a password, refresh) is called with plain JSON `fetch` requests. Unsigned calls from a public app client need no SDK.
+     - Google sign-in goes to Cognito's `/oauth2/authorize?identity_provider=Google` with PKCE, so Cognito's own pages never show, and the code is exchanged at `/oauth2/token`.
+     - Rejected: AWS's `aws-jwt-verify` plus the Cognito SDK (two packages and a heavier bundle, with tests still needing a signer), and Amplify (it hides the mechanics and decides where tokens live).
+  3. **Where tokens live:** the API acts as the browser's go-between for Cognito.
+     - The long-lived refresh token is stored in a cookie that is `httpOnly` (page scripts can't read it), `Secure` (HTTPS only, except on localhost in development) and `SameSite=Strict`, scoped to the API's auth path.
+     - The browser keeps only the short-lived (1 hour) access token, in memory. It sends that token to the API as `Authorization: Bearer` and to the sync server on connect, and gets a fresh one from the API's refresh endpoint before it expires or after a page reload.
+     - The web app and the API share an origin: the Vite dev proxy in development, CloudFront path routing on AWS. So the cookie is first-party and no CORS is needed.
+     - Rejected: tokens in localStorage, since any script that ever ran in the page could take a lasting session.
+  4. **Permissions at the sync server:**
+     - On connect, the home server loads the user's series role and episode assignment from Postgres (read-only) and decides through the shared `canEdit(user, scope)`, as SPEC 5.3 requires. The entry server only verifies the token; the identity reaches the home through the signed forward header (D-022).
+     - A read-only connection still receives updates and presence, but its updates are rejected.
+     - When the API changes a role, an assignment or a membership, it runs `NOTIFY wr_access, '<episodeId>'` in the same transaction. Each sync server `LISTEN`s and re-checks only that episode's open connections, so revocation takes effect in about a second, without a reconnect.
+     - Rejected: an API-signed ticket (a removed co-writer keeps editing until they reconnect) and asking the API on every connect (the API would sit in the path of every failover's reconnect burst).
+- **What changes for writers:** they stay signed in for weeks. Removing someone from an episode or the series takes effect within about a second. **For the system:**
+  - **New libraries:** `pg`, `jose`, and (proposed in this round) a cookie plugin for Fastify. The sync servers gain a Postgres connection.
+  - **Coupling:** Postgres is now required on the connect path. If Postgres is down, new connections can't be authorized; open ones keep working. This is logged as a known risk.
+- **Status:** Arnav's call.
 
 ### D-030 · 2026-10-24 · Members panel collapsible; SES on our own domain; ca-central-1; how dev and tests sign in
 
