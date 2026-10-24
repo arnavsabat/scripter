@@ -43,7 +43,41 @@ services:
       - s3-data:/data
       - ./infra/local/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
 
-  # The three local sync nodes (SPEC 5.1) are added here in Phase 1, once apps/sync exists.
+  # Three sync servers forming a cluster (SPEC 5.1, D-022). Start with `pnpm cluster:up`.
+  # Browsers reach them on localhost:4001-4003; the servers reach each other by service name.
+  sync-1: &sync
+    profiles: [cluster]
+    build: { context: ., dockerfile: apps/sync/Dockerfile }
+    image: writers-room-sync
+    depends_on: [dynamodb, s3]
+    environment: &sync-env
+      WR_SERVER_ID: sync-1
+      WR_INTERNAL_URL: ws://sync-1:4000
+      PORT: '4000'
+      WR_DEV_AUTH: '1'
+      WR_CLUSTER_SECRET: dev-only-cluster-secret
+      AWS_REGION: us-east-1
+      DYNAMODB_ENDPOINT: http://dynamodb:8000
+      S3_ENDPOINT: http://s3:8333
+      S3_ACCESS_KEY_ID: wr_local
+      S3_SECRET_ACCESS_KEY: wr_local_secret
+      S3_SNAPSHOT_BUCKET: wr-snapshots
+    ports: ['4001:4000']
+    restart: 'no'
+  sync-2:
+    <<: *sync
+    environment:
+      <<: *sync-env
+      WR_SERVER_ID: sync-2
+      WR_INTERNAL_URL: ws://sync-2:4000
+    ports: ['4002:4000']
+  sync-3:
+    <<: *sync
+    environment:
+      <<: *sync-env
+      WR_SERVER_ID: sync-3
+      WR_INTERNAL_URL: ws://sync-3:4000
+    ports: ['4003:4000']
 
 volumes:
   postgres-data:

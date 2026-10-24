@@ -220,40 +220,88 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
     if (forwarded) return ws.close(CLOSE.MOVED, 'not home');
     const homeUrl = home ? cluster.urlOf(home) : null;
     if (!homeUrl) return ws.close(CLOSE.TRY_AGAIN, 'no home server');
-    forward(ws, `${url.pathname}${url.search}`, homeUrl, identity);
+    forward(ws, `${url.pathname}${url.search}`, homeUrl, identity, docId);
   }
 
-  /** The forwarding hop: a WebSocket to the home server, with messages piped both ways. */
-  function forward(client: WebSocket, path: string, homeUrl: string, identity: Identity) {
-    const upstream = new WebSocket(`${homeUrl}${path}`, {
-      headers: { [FORWARD_HEADER]: signForward(identity, clusterSecret) },
-    });
-    sockets.add(upstream);
+  /**
+   * The forwarding hop: a WebSocket to the home server, with messages piped both ways.
+   *
+   * If the home can't be reached when the writer first connects (it just died, and the ring
+   * hasn't caught up yet), the writer is held rather than turned away: this server answers its
+   * heartbeat pings and retries every 500 ms, re-resolving the home each time, for up to 15 s.
+   * That way a failover costs the writer one reconnect, not a growing client backoff. Once a
+   * session with a home has started, losing it closes the writer's socket instead: a fresh
+   * handshake with the next home is what keeps the acknowledgment counts honest.
+   */
+  function forward(
+    client: WebSocket,
+    path: string,
+    firstHomeUrl: string,
+    identity: Identity,
+    docId: string,
+  ) {
+    const deadline = Date.now() + 15_000;
     const pending: { data: RawData; binary: boolean }[] = [];
+    let upstream: WebSocket | null = null;
+    let opened = false;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+
     client.on('message', (data, binary) =>
       later(() => {
-        if (upstream.readyState === WebSocket.OPEN) upstream.send(data, { binary });
-        else pending.push({ data, binary });
+        if (upstream && opened && upstream.readyState === WebSocket.OPEN)
+          return upstream.send(data, { binary });
+        // No home yet: keep the writer's heartbeat alive ourselves, and hold everything else.
+        if (toBytes(data)[0] === MSG_PING && client.readyState === WebSocket.OPEN)
+          return client.send(encodePong());
+        pending.push({ data, binary });
       }),
     );
-    upstream.on('open', () =>
-      later(() => {
-        for (const m of pending.splice(0)) upstream.send(m.data, { binary: m.binary });
-      }),
-    );
-    upstream.on('message', (data, binary) =>
-      later(() => {
-        if (client.readyState === WebSocket.OPEN) client.send(data, { binary });
-      }),
-    );
-    upstream.on('close', (code) => {
-      sockets.delete(upstream);
-      if (client.readyState === WebSocket.OPEN) client.close(passThrough(code), 'upstream closed');
+    client.on('close', () => {
+      clearTimeout(retry);
+      upstream?.close();
     });
-    upstream.on('error', () => {
-      if (client.readyState === WebSocket.OPEN) client.close(CLOSE.TRY_AGAIN, 'home unreachable');
-    });
-    client.on('close', () => upstream.close());
+
+    const tryAgainLater = () => {
+      upstream = null;
+      if (client.readyState !== WebSocket.OPEN) return;
+      if (Date.now() > deadline || closing)
+        return client.close(CLOSE.TRY_AGAIN, 'home unreachable');
+      retry = setTimeout(() => {
+        const home = cluster.homeOf(docId);
+        if (home === serverId) return client.close(CLOSE.MOVED, 'home is here now'); // reconnect: served here
+        const url = home ? cluster.urlOf(home) : null;
+        if (url) connect(url);
+        else tryAgainLater();
+      }, 500);
+    };
+
+    const connect = (homeUrl: string) => {
+      const up = new WebSocket(`${homeUrl}${path}`, {
+        headers: { [FORWARD_HEADER]: signForward(identity, clusterSecret) },
+      });
+      upstream = up;
+      sockets.add(up);
+      up.on('open', () =>
+        later(() => {
+          opened = true;
+          for (const m of pending.splice(0)) up.send(m.data, { binary: m.binary });
+        }),
+      );
+      up.on('message', (data, binary) =>
+        later(() => {
+          if (client.readyState === WebSocket.OPEN) client.send(data, { binary });
+        }),
+      );
+      up.on('error', () => {}); // 'close' follows and decides
+      up.on('close', (code) => {
+        sockets.delete(up);
+        if (upstream !== up) return;
+        if (!opened) return tryAgainLater(); // never reached the home: hold the writer and retry
+        if (client.readyState === WebSocket.OPEN)
+          client.close(passThrough(code), 'upstream closed');
+      });
+    };
+    connect(firstHomeUrl);
   }
 
   function serve(ws: WebSocket, docId: string, identity: Identity) {

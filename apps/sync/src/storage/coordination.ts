@@ -15,6 +15,7 @@ import {
   DynamoDBClient,
   GetItemCommand,
   PutItemCommand,
+  ResourceInUseException,
   ResourceNotFoundException,
   ScanCommand,
   UpdateItemCommand,
@@ -43,21 +44,45 @@ export function leaseCheck(table: string, docId: string, fence: Fence): Transact
   };
 }
 
-export async function ensureTable(client: DynamoDBClient, table: string, hashKey: string) {
+/**
+ * Creates a table if it doesn't exist (local development; AWS tables come from CDK). Several
+ * servers start at once, so losing the creation race (ResourceInUseException) is fine: wait for
+ * the winner's table to become active.
+ */
+export async function ensureTable(
+  client: DynamoDBClient,
+  table: string,
+  keys: { hash: string; range?: string },
+) {
+  const describe = async () => {
+    try {
+      return (await client.send(new DescribeTableCommand({ TableName: table }))).Table?.TableStatus;
+    } catch (err) {
+      if (err instanceof ResourceNotFoundException) return null;
+      throw err;
+    }
+  };
+  if ((await describe()) === 'ACTIVE') return;
   try {
-    await client.send(new DescribeTableCommand({ TableName: table }));
-    return;
+    await client.send(
+      new CreateTableCommand({
+        TableName: table,
+        BillingMode: 'PAY_PER_REQUEST',
+        AttributeDefinitions: [
+          { AttributeName: keys.hash, AttributeType: 'S' },
+          ...(keys.range ? [{ AttributeName: keys.range, AttributeType: 'S' as const }] : []),
+        ],
+        KeySchema: [
+          { AttributeName: keys.hash, KeyType: 'HASH' },
+          ...(keys.range ? [{ AttributeName: keys.range, KeyType: 'RANGE' as const }] : []),
+        ],
+      }),
+    );
   } catch (err) {
-    if (!(err instanceof ResourceNotFoundException)) throw err;
+    if (!(err instanceof ResourceInUseException)) throw err; // another server is creating it
   }
-  await client.send(
-    new CreateTableCommand({
-      TableName: table,
-      BillingMode: 'PAY_PER_REQUEST',
-      AttributeDefinitions: [{ AttributeName: hashKey, AttributeType: 'S' }],
-      KeySchema: [{ AttributeName: hashKey, KeyType: 'HASH' }],
-    }),
-  );
+  for (let i = 0; i < 100 && (await describe()) !== 'ACTIVE'; i++)
+    await new Promise((r) => setTimeout(r, 100));
 }
 
 export class DynamoLeaseStore implements LeaseStore {

@@ -16,7 +16,9 @@
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "dev:web": "pnpm --filter @wr/web dev",
     "services:up": "docker compose up -d",
-    "services:down": "docker compose down"
+    "services:down": "docker compose down",
+    "cluster:up": "docker compose --profile cluster up -d --build",
+    "cluster:down": "docker compose --profile cluster down"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

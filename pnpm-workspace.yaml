@@ -6,3 +6,8 @@ packages:
 minimumReleaseAgeExclude:
   - '@aws-sdk/client-dynamodb@3.1156.0'
   - '@aws-sdk/client-s3@3.1156.0'
+
+# Install scripts are off by default (pnpm 12). esbuild's (via tsx) only re-checks a platform
+# binary that pnpm already installs as an optional dependency, so it stays off on purpose.
+allowBuilds:
+  esbuild: false

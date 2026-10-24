@@ -42,8 +42,8 @@ export async function awsStorage(cfg: AwsStorageConfig): Promise<Storage> {
   );
   if (cfg.dynamoEndpoint) {
     await log.ensureTable();
-    await ensureTable(dynamo, cfg.coordinationTable, 'pk');
-    await ensureTable(dynamo, cfg.membersTable, 'id');
+    await ensureTable(dynamo, cfg.coordinationTable, { hash: 'pk' });
+    await ensureTable(dynamo, cfg.membersTable, { hash: 'id' });
   }
   if (cfg.s3Endpoint) await snapshots.ensureBucket();
   return {

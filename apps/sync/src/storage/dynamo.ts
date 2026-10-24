@@ -11,17 +11,14 @@
 // written with attribute_not_exists, so a seq can never be written twice.
 import {
   BatchWriteItemCommand,
-  CreateTableCommand,
-  DescribeTableCommand,
   DynamoDBClient,
   QueryCommand,
-  ResourceNotFoundException,
   TransactWriteItemsCommand,
   TransactionCanceledException,
   type AttributeValue,
   type TransactWriteItem,
 } from '@aws-sdk/client-dynamodb';
-import { leaseCheck } from './coordination';
+import { ensureTable, leaseCheck } from './coordination';
 import { FencedError, type EditLog, type Fence, type LogEntry, type LogTail } from './types';
 
 const CHUNK_BYTES = 350_000;
@@ -50,27 +47,8 @@ export class DynamoEditLog implements EditLog {
   ) {}
 
   /** Creates the table if it doesn't exist (local development; AWS tables come from CDK). */
-  async ensureTable() {
-    try {
-      await this.client.send(new DescribeTableCommand({ TableName: this.table }));
-      return;
-    } catch (err) {
-      if (!(err instanceof ResourceNotFoundException)) throw err;
-    }
-    await this.client.send(
-      new CreateTableCommand({
-        TableName: this.table,
-        BillingMode: 'PAY_PER_REQUEST',
-        AttributeDefinitions: [
-          { AttributeName: 'docId', AttributeType: 'S' },
-          { AttributeName: 'k', AttributeType: 'S' },
-        ],
-        KeySchema: [
-          { AttributeName: 'docId', KeyType: 'HASH' },
-          { AttributeName: 'k', KeyType: 'RANGE' },
-        ],
-      }),
-    );
+  ensureTable() {
+    return ensureTable(this.client, this.table, { hash: 'docId', range: 'k' });
   }
 
   async append(docId: string, seq: number, update: Uint8Array, fence: Fence) {
