@@ -66,7 +66,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - No toolbar on this page (a named exception to SPEC 3.5). The template's own sizes apply (a 400 px column, a 28 px heading, 15 px text and 44-46 px controls), as an exception to SPEC 3.3's tiers for this page only.
   - The legal line links to short Terms and Privacy pages, built in this phase.
 - **Invite row controls (D-027):** in the Members invite row, the role picker and "Invite" look like the email field beside them: 30 px, a 1 px `--line` border, 6 px radius, `--bg` fill, 13 px text-color. The role picker is the app's own "Writer ▾" opening the shared menu, not a native select. "Invite" isn't blue.
-- **Home header text actions hover (D-026):** "+ New episode" and "Members" get the sidebar rows' hover background (`--hover`, 6 px radius), with the padding offset by an equal negative margin so nothing moves. They still bold on click like every text action.
+- **Home text actions hover (D-026, D-035):** "+ New episode", "Members" and the toolbar's "+ New script" get the sidebar rows' hover background (`--hover`, 6 px radius), with the padding offset by an equal negative margin so nothing moves. They still bold on click like every text action.
 - **Cluster phase built (D-023) and its choices confirmed (D-024, D-025):** membership, the hash ring, forwarding, fenced leases and snapshots, failover, graceful rebalancing, three nodes in docker compose, and a chaos suite with zero lost edits. The design reference is `docs/sync-cluster.md`.
 - **Cluster phase (D-022):**
   - Leases renew every 2 s and expire after 6 s; membership heartbeats run on the same schedule.
@@ -150,7 +150,7 @@ Phase 2:
 19. ~~The sign-in screen design~~: decided in D-028 and D-029.
 20. ~~Email delivery~~ and ~~the invite link flow~~: SES on our own domain (D-030); one-time links (D-032).
 21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
-- New (D-026): should the hover background extend to every text action (+ New script, Accept, + New what-if, + Snapshot), or stay on the home header's two?
+- New (D-026; + New script settled in D-035): should the hover background extend to the remaining text actions (Accept, + New what-if, + Snapshot)?
 22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
 23. Fountain and .fdx import edge cases: title pages, notes, boneyard, dual dialogue, and unsupported element types.
 24. PDF library: pdf-lib is the spec's example, so confirm it. Courier Prime will need to be bundled locally for PDF embedding, alongside the Google Fonts link.
@@ -231,6 +231,12 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-035 · 2026-10-24 · "+ New script" gets the same hover
+
+- **Decision (Arnav's call):** the home toolbar's "+ New script" gets the D-026 hover: a `--hover` background, 6 px radius, and padding offset by an equal negative margin so nothing moves. This extends D-026 by one control. The other text actions (Accept, + New what-if, + Snapshot) still have no hover; that part of D-026's open question stays open.
+- **What changes for writers:** all three of home's create and open actions now respond the same way under the pointer. **For the system:** one class in prototype v2 (`ta hv`).
+- **Status:** Arnav's call.
 
 ### D-034 · 2026-10-24 · Prototype v2: the accounts phase, clickable end to end
 
