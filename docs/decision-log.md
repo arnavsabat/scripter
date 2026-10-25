@@ -37,6 +37,11 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Deleting and + New series (D-037):**
+  - **Deleting:** the showrunner can delete episodes, scripts and series. A × appears at the right end of the hovered row (home episode rows; sidebar script and series rows), and the row turns into an inline confirm ("Delete “…” for everyone?", Cancel, Delete). A series also needs its name typed first.
+  - **Restoring:** deleted items wait 30 days under a RECENTLY DELETED sidebar section with Restore, then they're erased.
+  - **+ New series** sits in the home toolbar before + New script. It creates an empty series with its title ready to type.
+  - **A series stays a series** at one episode or none.
 - **Prototype v2 (D-034):** `docs/prototype/writers-room-prototype-v2.html` is the visual and interaction source of truth from the accounts phase on. It's v1 plus D-026 to D-033. v1 stays unchanged as the record of what the earlier phases matched.
 - **Home, naming and access cues (D-033):**
   - **Invitation email:** wording 1, Plain.
@@ -242,6 +247,36 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-037 · 2026-10-24 · Deleting episodes, scripts and series; Recently deleted; + New series
+
+- **Context:** reviewing prototype v2, Arnav asked for two things. The showrunner should be able to delete episodes, scripts and whole series, behind more confirmation because those are bigger decisions, shown as a minimal × at the right end of the hovered row. And there should be a way to create a series, not only a script.
+- **Decisions (Arnav's calls):**
+  1. **The ×** is shown to the showrunner only, at the very right of home's episode rows and the sidebar's SCRIPTS and SERIES rows (not RECENT, which is a list of shortcuts). It's hidden until the row is hovered or focused, drawn as the 14 px line × in the icon color, turning text-colored under the pointer, with no box of its own. Its 24 px of space is always reserved, so the row's "Maya · edited Oct 12" never moves.
+     - In a one-episode script, the episode row's × deletes the script.
+  2. **Confirming is inline, in the row**; no popup, nothing over the page.
+     - **An episode or a script:** the row becomes "Delete “Ep 2 · Undertow” for everyone?" with Cancel and Delete. Delete is a text action in `--del-fg`.
+     - **A series** asks for more: "Delete “The Long Night” and its 3 episodes for everyone?", a field "Type “The Long Night” to confirm", and Cancel / Delete. Delete stays faded and does nothing until the typed name matches.
+     - Esc or Cancel backs out, and clicking anything else cancels too.
+     - Rejected: a small menu at the × (it would float over the list), and typing the name for every delete (tedious when cleaning up several "Untitled" episodes).
+  3. **Recently deleted, 30 days:**
+     - Deleted items move to a RECENTLY DELETED section at the bottom of the sidebar, visible to the series' showrunner. Each row shows the name, what it was ("The Long Night", "Script", or "Series · 2 episodes") and "30 days left", plus a "Restore" text action, styled like Accept.
+     - Restoring puts an episode back in its old position. An episode whose series was also deleted asks for the series to be restored first.
+     - The toast says "“Ep 2 · Undertow” deleted · restore it from Recently deleted for 30 days".
+     - **For the system:** deleting is a soft delete (`deleted_at` on `episodes` and `series`). After 30 days a cleanup job permanently erases the row, its Y.Doc edit log, its snapshots, and its drafts. Anyone writing in a deleted episode is moved out with "This episode was deleted." A deleted series disappears from every member's home.
+     - Rejected: an Undo toast with a purge within a day (less time to notice a mistake), and erasing immediately (one wrong click would lose an episode forever).
+  4. **"+ New series"** sits in the home toolbar before "+ New script", in the same text-action style with the D-036 hover box. It creates "Untitled series" with no episodes, you as showrunner, selected, and the title ready to type. The empty series shows "No episodes yet. Add one with + New episode." Anyone can create a series and becomes its showrunner (SPEC 5.3).
+     - Rejected: a "+ New ▾" menu (an extra click for the most common action) and "+ New series" on the SERIES label (hidden until you already have a series).
+     - Note: solo writers now see the word "series" in the toolbar. Their own scripts still look like plain scripts (D-033).
+  5. **A series stays a series.** Each series now has a flag. Something created as a series, or a script that gained a second episode, keeps the series layer even at one episode ("The Long Night · 1 episode", "Ep 1 · Pilot") or none. A plain script (created by + New script, never given a second episode) keeps its one shared name.
+     - Rejected: turning back into a script at one episode, where the series name would vanish and the room's home would jump sections.
+- **What changes for writers:** a showrunner can clean up the room, two deliberate clicks for an episode and a typed name for a series, and has 30 days to change their mind. Showrunners can set up a series and its members before writing a page.
+- **For the system:**
+  - `series.is_series` (or a `kind` column), and `deleted_at` on `series` and `episodes`.
+  - A daily purge job that also deletes DynamoDB edit-log items and S3 snapshots.
+  - A close code that tells connected writers "deleted".
+  - The API checks the showrunner role for deleting and restoring.
+- **Status:** Arnav's call. Built into prototype v2 and walked through in Chromium (episode, script and series deletes, the typed-name rule, Esc, Restore, + New series, dark mode) with no script errors.
 
 ### D-036 · 2026-10-24 · The "+ New script" hover box matches the toolbar's icon slots
 

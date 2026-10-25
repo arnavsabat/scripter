@@ -186,6 +186,21 @@ del{background:var(--del-bg);color:var(--del-fg)}
 .lg ul{padding-left:20px;margin:0 0 10px}
 .lg .draft{font-size:12px;color:var(--muted);border:1px dashed var(--line);border-radius:6px;padding:8px 10px;margin:0 0 24px}
 /* Prototype-only controls: not part of the app */
+/* Delete × and inline confirms (D-037) */
+div.ep{cursor:pointer}.ep .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.epr{display:flex;align-items:center;flex-shrink:0;margin-left:12px}
+.row .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rx{width:24px;height:22px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin:0 -6px 0 6px;border-radius:6px;color:var(--icon);opacity:0}
+.rx svg{width:14px;height:14px}
+.hasx:hover .rx,.hasx:focus-within .rx,.rx:focus-visible{opacity:1}
+.rx:hover{color:var(--text)}
+.cf,.cf:hover{background:var(--hover);cursor:default}
+.cfq{font-size:13px;font-weight:400;color:var(--text);line-height:1.4}
+.cfa{display:flex;gap:16px;justify-content:flex-end;flex-shrink:0;margin-left:12px}
+.ta.del,.ta.del.flash{color:var(--del-fg)}
+.ta.del.dis{opacity:.45;cursor:default}
+.row.cfs{flex-direction:column;align-items:stretch;gap:8px}
+.cfs .cfa{margin-left:0}.cfs .fld{flex:none;width:100%}
 #proto{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:70;font-size:12px;color:var(--muted)}
 #proto .chip{border:1px dashed var(--line);background:var(--menu);border-radius:6px;padding:5px 9px;font-size:12px;color:var(--muted)}
 #proto .pp{position:absolute;left:50%;transform:translateX(-50%);top:34px;width:260px;background:var(--menu);border:1px dashed var(--line);border-radius:8px;padding:10px 12px;box-shadow:0 6px 20px rgba(0,0,0,.12);line-height:1.45}
@@ -243,23 +258,23 @@ const ARNAV='arnav@example.com';
 let ME=null,D=null,uid=0;
 const accounts={};
 function sample(){return{me:'ar',series:[
- {id:'ln',name:'The Long Night',members:{ar:'showrunner',ma:'writer',sj:'writer',pn:'viewer'},invited:[{email:'jo@example.com',role:'writer',when:'Oct 22'}],
+ {id:'ln',name:'The Long Night',isSeries:true,members:{ar:'showrunner',ma:'writer',sj:'writer',pn:'viewer'},invited:[{email:'jo@example.com',role:'writer',when:'Oct 22'}],
   eps:[{id:'e1',name:'Pilot',w:['ma'],ed:'Oct 12'},{id:'e2',name:'Undertow',w:['sj'],ed:'Oct 16'},{id:'e3',name:'The Long Night',w:['ma','sj','ar'],ed:'Oct 22',live:['ma','sj']}]},
- {id:'hl',name:'Harbor Lights',members:{sj:'showrunner',ar:'writer',ma:'writer'},invited:[],eps:[{id:'h1',name:'Pilot',w:['ar'],ed:'Sep 30'},{id:'h2',name:'Low Tide',w:['ma'],ed:'Oct 3'}]},
+ {id:'hl',name:'Harbor Lights',isSeries:true,members:{sj:'showrunner',ar:'writer',ma:'writer'},invited:[],eps:[{id:'h1',name:'Pilot',w:['ar'],ed:'Sep 30'},{id:'h2',name:'Low Tide',w:['ma'],ed:'Oct 3'}]},
  {id:'ns',name:'Night Shift',members:{ar:'showrunner'},invited:[],eps:[{id:'n1',name:'Night Shift',w:['ar'],ed:'Oct 20'}]}],
- invitations:[{id:'fg',name:'Fogline',from:'Sam',role:'writer'}],recent:['e3']}}
-const fogline=()=>({id:'fg',name:'Fogline',members:{sj:'showrunner',[ME]:'writer'},invited:[],eps:[{id:'f1',name:'Pilot',w:['sj'],ed:'Oct 18'},{id:'f2',name:'Breakwater',w:['sj'],ed:'Oct 21'}]});
+ invitations:[{id:'fg',name:'Fogline',from:'Sam',role:'writer'}],recent:['e3'],trash:[]}}
+const fogline=()=>({id:'fg',name:'Fogline',isSeries:true,members:{sj:'showrunner',[ME]:'writer'},invited:[],eps:[{id:'f1',name:'Pilot',w:['sj'],ed:'Oct 18'},{id:'f2',name:'Breakwater',w:['sj'],ed:'Oct 21'}]});
 const ser=id=>D&&D.series.find(s=>s.id===id);
 function findEp(id){if(D)for(const s of D.series){const e=s.eps.find(x=>x.id===id);if(e)return[s,e]}return[]}
 const role=s=>s.members[ME];
 const isSR=s=>role(s)==='showrunner';
 const canEdit=(s,e)=>isSR(s)||(role(s)==='writer'&&e.w.includes(ME)); // the shared canEdit(user, scope) rule, SPEC 5.3
-const num=(s,e)=>s.eps.length>1?`Ep ${s.eps.indexOf(e)+1} · `:'';
+const num=(s,e)=>s.isSeries?`Ep ${s.eps.indexOf(e)+1} · `:'';
 const lbl=(s,e)=>num(s,e)+e.name;
 const first=id=>id===ME?'you':PEOPLE[id].f;
 const av=(id,plain)=>`<span class="av ${PEOPLE[id].c}"${plain?' style="border:0"':''}>${PEOPLE[id].i}</span>`;
 const PHRASE={showrunner:'you’re the showrunner',writer:'you’re a writer',viewer:'you’re a viewer'};
-function meta(s){if(s.eps.length===1){const o=Object.keys(s.members).filter(id=>id!==ME);return 'Script · '+(o.length?'you and '+o.map(first).join(', '):'just you')}return `${s.eps.length} episodes · ${PHRASE[role(s)]}`}
+function meta(s){if(!s.isSeries){const o=Object.keys(s.members).filter(id=>id!==ME);return 'Script · '+(o.length?'you and '+o.map(first).join(', '):'just you')}return `${s.eps.length} episode${s.eps.length===1?'':'s'} · ${PHRASE[role(s)]}`}
 function rowMeta(e){if(e.live&&e.live.length)return `<span class="live">●</span> ${e.live.map(first).join(', ')} · editing now`;return `${e.w.map(first).join(', ')} · edited ${e.ed}`}
 function initials(name){const w=name.trim().split(/\s+/).filter(Boolean);return(w.length>1?w[0][0]+w[1][0]:(w[0]||'?').slice(0,2)).toUpperCase()}
 
@@ -298,7 +313,7 @@ return `<div class="lg">${top}<h1>Terms of Service</h1><p class="upd">Last updat
 <h2>Changes</h2><p>If these terms change, we’ll email you before they take effect.</p>${back}</div>`}
 function finishSignIn(email,name){
  if(email===ARNAV){accounts[ARNAV]=accounts[ARNAV]||sample()}
- else if(!accounts[email]){const id='u'+(++uid);PEOPLE[id]={n:name||email.split('@')[0],f:(name||email).split(/[\s@]/)[0],i:initials(name||email),c:'a3'};accounts[email]={me:id,series:[],invitations:[],recent:[]}}
+ else if(!accounts[email]){const id='u'+(++uid);PEOPLE[id]={n:name||email.split('@')[0],f:(name||email).split(/[\s@]/)[0],i:initials(name||email),c:'a3'};accounts[email]={me:id,series:[],invitations:[],recent:[],trash:[]}}
  D=accounts[email];ME=D.me;
  if(st.si.invite){if(!ser('fg'))D.series.push(fogline());D.invitations=D.invitations.filter(i=>i.id!=='fg');st.sel='fg'}
  else if(!ser(st.sel))st.sel=D.series[0]&&D.series[0].id;
@@ -307,22 +322,38 @@ function signOut(invite){$('#toast').classList.remove('show');Object.assign(st,{
 
 // ---------- Home (SPEC 3.10 with D-026, D-030, D-033) ----------
 function tbHome(){if(!D)return '';const l=theme==='dark'?'Switch to light mode':'Switch to dark mode';
-return `<span class="title">Home</span><span class="grp" style="gap:14px"><span class="ta hv tbh" data-t="+ New script" data-act="newscript" tabindex="0">+ New script</span><button class="ib" data-act="theme" title="${l}" aria-label="${l}">${svg(theme==='dark'?'sun':'moon')}</button><span class="acw"><button class="ib" data-act="menu" data-v="acct" title="Account" aria-label="Account" aria-haspopup="menu">${av(ME,true)}</button>${st.menu==='acct'?`<div class="menu" style="right:0;top:36px" role="menu"><div class="mh">${esc(PEOPLE[ME].n)}<small>${esc(st.si.email)}</small></div><div class="sep"></div><button class="mi" data-act="signout">Sign out</button></div>`:''}</span></span>`}
+return `<span class="title">Home</span><span class="grp" style="gap:14px"><span class="ta hv tbh" data-t="+ New series" data-act="newseries" tabindex="0">+ New series</span><span class="ta hv tbh" data-t="+ New script" data-act="newscript" tabindex="0">+ New script</span><button class="ib" data-act="theme" title="${l}" aria-label="${l}">${svg(theme==='dark'?'sun':'moon')}</button><span class="acw"><button class="ib" data-act="menu" data-v="acct" title="Account" aria-label="Account" aria-haspopup="menu">${av(ME,true)}</button>${st.menu==='acct'?`<div class="menu" style="right:0;top:36px" role="menu"><div class="mh">${esc(PEOPLE[ME].n)}<small>${esc(st.si.email)}</small></div><div class="sep"></div><button class="mi" data-act="signout">Sign out</button></div>`:''}</span></span>`}
 function navH(){if(!D)return '';let h='';const sec=(lab,rows)=>rows?`<div class="lab">${lab}</div><div class="list" style="padding-top:0">${rows}</div>`:'';
 h+=sec('RECENT',D.recent.map(findEp).filter(x=>x[0]).slice(0,3).map(([s,e])=>`<button class="row" data-act="open" data-id="${e.id}">${esc(lbl(s,e))}</button>`).join(''));
-const row=s=>`<button class="row${st.sel===s.id?' sel':''}" data-act="series" data-id="${s.id}">${esc(s.name)}</button>`;
-h+=sec('SCRIPTS',D.series.filter(s=>s.eps.length===1).map(row).join(''));
-h+=sec('SERIES',D.series.filter(s=>s.eps.length>1).map(row).join(''));
+const row=s=>{const k=s.isSeries?'series':'script';if(st.del&&st.del.at==='side'&&st.del.id===s.id)return confirmSide(s);return `<div class="row${isSR(s)?' hasx':''}${st.sel===s.id?' sel':''}" data-act="series" data-id="${s.id}" role="button" tabindex="0"><span class="nm">${esc(s.name)}</span>${isSR(s)?xbtn(k,s.id,'side',s.name):''}</div>`};
+h+=sec('SCRIPTS',D.series.filter(s=>!s.isSeries).map(row).join(''));
+h+=sec('SERIES',D.series.filter(s=>s.isSeries).map(row).join(''));
 h+=sec('INVITATIONS',D.invitations.map(i=>`<div class="row" style="cursor:default"><span style="display:flex;flex-direction:column">${esc(i.name)}<small>from ${esc(i.from)}</small></span><span class="ta" data-t="Accepted ✓" data-act="${i.done?'':'accept'}" data-id="${i.id}" tabindex="0">${i.done?'Accepted ✓':'Accept'}</span></div>`).join(''));
+h+=sec('RECENTLY DELETED',(D.trash||[]).map(t=>`<div class="row" style="cursor:default"><span style="display:flex;flex-direction:column;min-width:0">${esc(t.name)}<small>${esc(t.sub)} · 30 days left</small></span><span class="ta" data-t="Restore" data-act="restore" data-id="${t.tid}" tabindex="0">Restore</span></div>`).join(''));
 return h}
+const X='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const xbtn=(k,id,at,name)=>`<button class="rx" data-act="askdel" data-v="${k}" data-id="${id}" data-at="${at}" title="Delete" aria-label="Delete ${esc(name)}">${X}</button>`;
+const cfa=(dis)=>`<span class="cfa"><span class="ta" data-t="Cancel" data-act="nodel" tabindex="0">Cancel</span><span class="ta del${dis?' dis':''}" id="delGo" data-t="Delete" data-act="dodel" tabindex="0">Delete</span></span>`;
+function confirmSide(s){if(!s.isSeries)return `<div class="row cf cfs"><span class="cfq">Delete “${esc(s.name)}” for everyone?</span>${cfa()}</div>`;const n=s.eps.length;
+return `<div class="row cf cfs"><span class="cfq">Delete “${esc(s.name)}”${n?` and its ${n} episode${n===1?'':'s'}`:''} for everyone?</span><input class="fld" id="delT" data-keep data-enter="dodel" placeholder="Type “${esc(s.name)}” to confirm" aria-label="Type the series name to confirm">${cfa(true)}</div>`}
 function homeC(){if(!D)return '';const s=ser(st.sel);if(!s)return '<div class="home"><div class="emptyh">No scripts yet.<br>Start one with + New script.</div></div>';
 const t=st.ren==='series'?`<span><input class="ren" id="renI" value="${esc(s.name)}" aria-label="Rename"></span>`:isSR(s)?`<span class="title rn" data-act="renS" title="Rename" role="button" tabindex="0">${esc(s.name)}</span>`:`<span class="title">${esc(s.name)}</span>`;
 return `<div class="home"><div class="sh"><span>${t}<small>${meta(s)}</small></span><span class="grp" style="gap:16px">${isSR(s)?'<span class="ta hv" data-t="+ New episode" data-act="newep" tabindex="0">+ New episode</span>':''}<span class="ta hv${st.members?' hold':''}" data-t="Members" data-act="members" tabindex="0" aria-expanded="${st.members}">Members</span></span></div>
-<div class="eps">${s.eps.map(e=>`<button class="ep" data-act="open" data-id="${e.id}">${esc(lbl(s,e))}<small>${rowMeta(e)}</small></button>`).join('')}</div></div>`}
+<div class="eps">${s.eps.map(e=>{const k=s.isSeries?'ep':'script',id=s.isSeries?e.id:s.id,name=lbl(s,e);
+ if(st.del&&st.del.at==='home'&&st.del.id===id)return `<div class="ep cf"><span class="cfq">Delete “${esc(name)}” for everyone?</span>${cfa()}</div>`;
+ return `<div class="ep${isSR(s)?' hasx':''}" data-act="open" data-id="${e.id}" role="button" tabindex="0"><span class="nm">${esc(name)}</span><span class="epr"><small>${rowMeta(e)}</small>${isSR(s)?xbtn(k,id,'home',name):''}</span></div>`}).join('')}</div>${s.eps.length?'':`<div class="emptyh" style="padding-top:48px">No episodes yet.${isSR(s)?'<br>Add one with + New episode.':''}</div>`}</div>`}
+function doDelete(){const d=st.del;if(!d)return;D.trash=D.trash||[];
+ if(d.k==='ep'){const[s,e]=findEp(d.id);const idx=s.eps.indexOf(e),name=lbl(s,e);s.eps.splice(idx,1);D.trash.unshift({tid:'t'+(++uid),k:'ep',sid:s.id,e,idx,name,sub:s.name});st.del=null;render();toast(`“${esc(name)}” deleted · restore it from Recently deleted for 30 days`);return}
+ const s=ser(d.id);if(d.k==='series'){const i=$('#delT');if(!i||i.value.trim()!==s.name){if(i)i.focus();return}}
+ const idx=D.series.indexOf(s),n=s.eps.length;D.series.splice(idx,1);D.trash.unshift({tid:'t'+(++uid),k:d.k,s,idx,name:s.name,sub:s.isSeries?`Series · ${n} episode${n===1?'':'s'}`:'Script'});
+ if(st.sel===s.id){st.sel=D.series[0]&&D.series[0].id;st.members=false}st.del=null;render();toast(`“${esc(s.name)}” deleted · restore it from Recently deleted for 30 days`)}
+function restore(tid){const i=D.trash.findIndex(t=>t.tid===tid),t=D.trash[i];
+ if(t.k==='ep'){const s=ser(t.sid);if(!s){toast(`Restore “${esc(t.sub)}” first`);return}s.eps.splice(Math.min(t.idx,s.eps.length),0,t.e)}else{D.series.splice(Math.min(t.idx,D.series.length),0,t.s)}
+ D.trash.splice(i,1);render();toast(`“${esc(t.name)}” restored`)}
 function pick(key){const v=st.pick[key];return `<span class="pick"><button class="fbtn" data-act="menu" data-v="pick:${key}" aria-haspopup="menu" aria-label="Role for the invitation">${cap(v)}<span class="car">▾</span></button>${st.menu==='pick:'+key?`<span class="menu" role="menu">${['writer','viewer'].map(r=>`<button class="mi" data-act="pickset" data-id="${key}" data-v="${r}">${cap(r)}<span>${v===r?'✓':''}</span></button>`).join('')}</span>`:''}</span>`}
 function membersP(){const s=ser(st.sel);if(!s)return '';const sr=isSR(s);
 const order=Object.keys(s.members).sort((a,b)=>(a===ME?-1:b===ME?1:0)||['showrunner','writer','viewer'].indexOf(s.members[a])-['showrunner','writer','viewer'].indexOf(s.members[b]));
-const epsOf=id=>{const r=s.members[id];if(r==='showrunner')return 'All episodes';if(r==='viewer')return 'Reads everything';const l=s.eps.filter(e=>e.w.includes(id)).map(e=>s.eps.length>1?'Ep '+(s.eps.indexOf(e)+1):e.name);return l.join(', ')||'No episodes yet'};
+const epsOf=id=>{const r=s.members[id];if(r==='showrunner')return 'All episodes';if(r==='viewer')return 'Reads everything';const l=s.eps.filter(e=>e.w.includes(id)).map(e=>s.isSeries?'Ep '+(s.eps.indexOf(e)+1):e.name);return l.join(', ')||'No episodes yet'};
 let h=order.map(id=>{const r=s.members[id];const ctl=sr&&id!==ME?`<button class="role" data-act="menu" data-v="role:${id}" aria-haspopup="menu">${cap(r)} ▾</button>${st.menu==='role:'+id?`<div class="menu" role="menu">${['showrunner','writer','viewer'].map(x=>`<button class="mi" data-act="setrole" data-id="${id}" data-v="${x}">${cap(x)}<span>${r===x?'✓':''}</span></button>`).join('')}<div class="sep"></div><button class="mi" data-act="rmmember" data-id="${id}">Remove from series</button></div>`:''}`:`<span class="role">${cap(r)}</span>`;
  return `<div class="mrow">${av(id)}<span class="n">${esc(PEOPLE[id].n)}${id===ME?' (you)':''}<small>${epsOf(id)}</small></span>${ctl}</div>`}).join('');
 if(s.invited.length)h+='<div class="lab">INVITED</div>'+s.invited.map((v,i)=>{const ctl=sr?`<button class="role" data-act="menu" data-v="inv:${i}" aria-haspopup="menu">${cap(v.role)} ▾</button>${st.menu==='inv:'+i?`<div class="menu" role="menu">${['writer','viewer'].map(x=>`<button class="mi" data-act="setinv" data-id="${i}" data-v="${x}">${cap(x)}<span>${v.role===x?'✓':''}</span></button>`).join('')}<div class="sep"></div><button class="mi" data-act="cancelinv" data-id="${i}">Cancel invitation</button></div>`:''}`:`<span class="role">${cap(v.role)}</span>`;
@@ -376,7 +407,7 @@ function trySend(id){const s=sc(id);if(s.conflict){compare(id);toast('Main chang
 function open(id,ren){const[s]=findEp(id);Object.assign(st,{ep:id,screen:'script',left:true,right:false,members:false,ren:ren?'ep':null,tab:'scenes',menu:null,pop:null,draft:'main'});st.sel=s.id;D.recent=[id,...D.recent.filter(x=>x!==id)];render();if(ren)focusRen()}
 const focusSoon=id=>setTimeout(()=>{const i=document.getElementById(id);if(i)i.focus()},30);
 function focusRen(){const i=$('#renI');if(i){i.focus();i.select()}}
-function saveRen(raw){const v=raw.trim(),k=st.ren;st.ren=null;if(!v)return;if(k==='ep'){const[s,e]=curEp();e.name=v;if(s.eps.length===1)s.name=v}else{const s=ser(st.sel);s.name=v;if(s.eps.length===1)s.eps[0].name=v}}
+function saveRen(raw){const v=raw.trim(),k=st.ren;st.ren=null;if(!v)return;if(k==='ep'){const[s,e]=curEp();e.name=v;if(!s.isSeries)s.name=v}else{const s=ser(st.sel);s.name=v;if(!s.isSeries&&s.eps[0])s.eps[0].name=v}}
 function commitRen(){const i=$('#renI');if(!i||!st.ren)return;saveRen(i.value);render()}
 function invite(input,key,ep){const s=ser(st.sel)||curEp()[0];const i=$('#'+input);const v=i&&i.value.trim();if(!v||!v.includes('@')){if(i)i.focus();return}s.invited.push({email:v,role:st.pick[key],when:'just now',ep});i.value='';render();toast(`Invitation sent to ${esc(v)}`)}
 
@@ -385,6 +416,7 @@ if(e.target.closest('#proto')&&!e.target.closest('[data-act]'))return;
 const el=e.target.closest('[data-act]');const a=el&&el.dataset.act,id=el&&el.dataset.id,v=el&&el.dataset.v;
 if(!el){if(e.target.closest('.menu,input,.gate'))return;const s=e.target.closest('.sc');let ch=false;if(st.pop||st.menu||st.review){st.pop=null;st.menu=null;st.review=false;ch=true}if(s&&st.cur!==s.dataset.scene){st.cur=s.dataset.scene;ch=true}if(ch)render();return}
 if(!['menu','dot','rvt','cwt','proto','as'].includes(a))st.menu=null;
+if(a!=='askdel'&&a!=='dodel')st.del=null;
 if(a!=='review'&&a!=='rvt')st.review=false;
 switch(a){
 // sign-in
@@ -403,7 +435,12 @@ case'as':ser('ln').members[ME]=v;render();break;
 // home
 case'series':st.sel=id;st.ren=null;render();break;
 case'newscript':{const n=++uid,s={id:'s'+n,name:'Untitled script',members:{[ME]:'showrunner'},invited:[],eps:[{id:'x'+n,name:'Untitled script',w:[ME],ed:'just now',blank:true}]};D.series.unshift(s);flash(el);setTimeout(()=>open(s.eps[0].id,true),250);break}
-case'newep':{const s=ser(st.sel),n=++uid,ep={id:'x'+n,name:'Untitled',w:[ME],ed:'just now',blank:true};s.eps.push(ep);flash(el);setTimeout(()=>open(ep.id,true),250);break}
+case'newseries':{const n=++uid,s={id:'s'+n,name:'Untitled series',isSeries:true,members:{[ME]:'showrunner'},invited:[],eps:[]};D.series.unshift(s);flash(el);setTimeout(()=>{Object.assign(st,{sel:s.id,members:false,ren:'series'});render();focusRen()},250);break}
+case'newep':{const s=ser(st.sel),n=++uid,ep={id:'x'+n,name:'Untitled',w:[ME],ed:'just now',blank:true};s.isSeries=true;s.eps.push(ep);flash(el);setTimeout(()=>open(ep.id,true),250);break}
+case'askdel':st.del={k:v,id,at:el.dataset.at};render();focusSoon('delT');break;
+case'nodel':render();break;
+case'dodel':doDelete();break;
+case'restore':restore(id);break;
 case'members':st.members=!st.members;render();break;
 case'closeM':st.members=false;render();break;
 case'renS':st.ren='series';render();focusRen();break;
@@ -446,12 +483,12 @@ document.addEventListener('keydown',e=>{const t=e.target;
 if(t.id==='renI'){if(e.key==='Enter'){e.preventDefault();commitRen()}else if(e.key==='Escape'){e.preventDefault();st.ren=null;render()}return}
 if(e.key==='Enter'&&t.dataset&&t.dataset.enter){e.preventDefault();const b=document.createElement('button');b.dataset.act=t.dataset.enter;document.body.appendChild(b);b.click();b.remove();return}
 if((e.key==='Enter'||e.key===' ')&&t.dataset&&t.dataset.act&&(t.getAttribute('role')==='button'||t.classList.contains('ta'))){e.preventDefault();t.click();return}
-if(e.key==='Escape'){if(st.menu||st.pop){st.pop=null;st.menu=null;render();return}if(st.legal){st.legal=null;render();return}if(st.screen==='home'&&st.members){st.members=false;render();return}}
+if(e.key==='Escape'){if(st.del){st.del=null;render();return}if(st.menu||st.pop){st.pop=null;st.menu=null;render();return}if(st.legal){st.legal=null;render();return}if(st.screen==='home'&&st.members){st.members=false;render();return}}
 if(st.screen!=='script')return;
 if(e.key==='Escape'){if(st.review){st.review=false;render()}else if(st.right)closeR();return}
 if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();const s=sc(st.cur);if(!status(s)){toast('This scene has nothing to send');return}if(e.shiftKey)compare(s.id);else trySend(s.id)}});
 document.addEventListener('focusout',e=>{if(e.target.id==='renI'&&st.ren){saveRen(e.target.value);setTimeout(render,200)}});
-document.addEventListener('input',e=>{if(e.target.id==='siC'){e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);if(e.target.value.length===6)$('[data-act="siCode"]').click()}});
+document.addEventListener('input',e=>{if(e.target.id==='delT'){const s=ser(st.del&&st.del.id),g=$('#delGo');if(s&&g)g.classList.toggle('dis',e.target.value.trim()!==s.name)}if(e.target.id==='siC'){e.target.value=e.target.value.replace(/\D/g,'').slice(0,6);if(e.target.value.length===6)$('[data-act="siCode"]').click()}});
 let theme;try{theme=localStorage.getItem('wr-theme')}catch(err){}
 if(theme!=='light'&&theme!=='dark')theme=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
 function applyTheme(t){document.documentElement.dataset.theme=t}

@@ -56,6 +56,7 @@ Presence avatar pairs (bg/fg): #C9D8EE/#1F3F6B, #E2D4EC/#4A2A63, #D9E6D3/#2E4A25
 - Left, on script screens: back arrow (to home), sidebar toggle icon, the bold title, then the draft switcher as quiet text ("Main ▾", or "Main › Darker ending ▾" in a what-if).
 - Right: presence avatars (24 px circles, 10 px initials weight 600, 2px bg-colored border, overlapping by 6 px), a 1px x 22 px divider, then icon buttons. Inside a what-if only, add the Changes toggle and Review all. Share is always last.
 - On the home screen: "Home" on the left; on the right, + New script, the theme toggle, and the account avatar.
+  - Decided (D-037): "+ New series" sits before "+ New script" on the home toolbar.
 - Every icon has a hover label and an aria-label.
 - One control rule: no action ever has two controls. The sidebar icon is the only way to collapse and restore the sidebar.
 
@@ -123,6 +124,7 @@ Presence avatar pairs (bg/fg): #C9D8EE/#1F3F6B, #E2D4EC/#4A2A63, #D9E6D3/#2E4A25
 - Sidebar: RECENT (recently opened episodes), SERIES (the selected series uses the sel background), INVITATIONS (series name, "from NAME", and an Accept text action that becomes "Accepted ✓").
 - Main area: content centered at max-width 760 px, 40/48 px padding. The series header shows the title in 15 px semibold, with meta underneath ("3 episodes · you're the showrunner"); the right side has + New episode and Members. Below are episode rows, 48 px tall with line2 dividers and hover backgrounds: episode name on the left, "names · edited DATE" on the right in 12 px muted. A live episode shows a green ● and "editing now".
 - Clicking an episode is a handoff, not a page load. The sidebar stays in place while its contents crossfade from series to that episode's scenes (opacity plus a 10 px slide, 220 ms), the toolbar swaps to the script's toolbar, and the script fades in. The back arrow reverses it.
+- Decided (D-037): the showrunner can delete episodes, scripts and series. A × appears at the right end of the row on hover; the row turns into an inline confirm, and a series also needs its name typed. Deleted items wait 30 days in a RECENTLY DELETED sidebar section with Restore. A series stays a series even when it's down to one episode or none.
 - Theme toggle: a sun/moon icon button beside the avatar. On first launch the app follows the system's light or dark mode. The toggle overrides it within the app (setting the data-theme attribute), and the choice is remembered on that device (localStorage). The icon shows the mode you'd switch to, and its hover label says so.
 
 3.11 Accessibility and motion. Every icon has an aria-label and hover label. Focus states are visible. Menus are keyboard-navigable. Text contrast is at least 4.5:1 in both themes. prefers-reduced-motion disables all transitions and animations.
