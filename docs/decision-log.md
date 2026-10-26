@@ -37,7 +37,12 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 1 built (D-040):** the permission rules (`packages/shared/src/permissions.ts`), the first Postgres migration, and the migration runner. Choices awaiting Arnav are under Proposed.
+- **Accounts phase step 1 built (D-040), choices confirmed (D-041):**
+  - **Built:** the permission rules (`packages/shared/src/permissions.ts`), the first Postgres migration, and the migration runner.
+  - **One person per verified email:** `users` plus `user_identities`, linked by the API at sign-in.
+  - **Deleted items** are never loaded, so they have no access.
+  - **Episode positions** are never reused; "Ep N" is the rank.
+  - **Tests:** `pnpm check` runs without services, `pnpm test:services` runs with them, and each test file gets a throwaway database.
 - **Prototype v2 approved (D-039)** as what the accounts phase builds to. The Privacy page's contact address is sabat.arnav@gmail.com, and account deletion is "within 30 days".
 - **AWS account plan (D-038):**
   - **Plan:** the AWS account is created only at step 8 of the accounts phase, on the **free plan**. That makes it $0 with no possible charges, and the 6-month clock starts as late as possible. It's upgraded to the paid plan when the closed beta starts.
@@ -106,8 +111,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building accounts step 1 (D-040):**
-  - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
+- **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
   - **(d)** Episode positions are never reused, and "Ep N" is the episode's rank.
@@ -261,6 +265,14 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-041 · 2026-10-25 · D-040's choices confirmed, including one person per verified email
+
+- **Decision (Arnav's call):** all of D-040 (a)-(f) stand.
+  - **(a)** Our database keeps one person per verified email. `user_identities` maps each Cognito sign-in (`sub`) to that person, and the API links it at sign-in. Google one day and an email code the next reach the same scripts.
+    - Rejected: linking inside Cognito with a pre-sign-up Lambda (an extra AWS piece that can't run locally), and keeping the accounts separate (someone would find an empty home).
+  - **(b)-(f)** as described in D-040.
+- **Status:** Arnav's call. Step 2 (the API) builds on it.
 
 ### D-040 · 2026-10-25 · Accounts phase step 1: permission rules, schema, migrations
 
