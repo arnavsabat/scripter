@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 6 built (D-051): Home, the handoff, Members, deleting, renaming, the theme, "View only", losing access, and the safe sign-out, all in the real web app.**
+- **Accounts phase step 6 built (D-051), choices confirmed (D-052): Home, the handoff, Members, deleting, renaming, the theme, "View only", losing access, and the safe sign-out, all in the real web app.**
   - **Removing a member** uses the inline confirm ("Remove Maya from The Long Night?" with Cancel / Remove), not an Undo toast. Prototype v2 is updated to match.
 - **Signing out clears this browser's local script copies, safely (D-050).** It first checks that every edit reached the server. If any haven't (the writer is offline), a toast warns, with "Sign out anyway" and "Cancel".
 - **Accounts phase step 5 built (D-048), choices confirmed (D-049): the web app's signed-out side.**
@@ -139,18 +139,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building accounts step 6 (D-051):**
-  - **(a)** The handoff is two stacked layers.
-  - **(b)** New scripts open with `?new=1`.
-  - **(c)** The editor takes the keyboard only if nothing else has it.
-  - **(d)** "edited just now" or "Oct 12".
-  - **(e)** A plain script's meta uses its writers.
-  - **(f)** "You can edit this episode now." on an upgrade.
-  - **(g)** "Accepted ✓", then the series moves 0.8 s later.
-  - **(h)** Avatar colors come from the person's ID.
-  - **(i)** Members lists you first, then by role.
-  - **(j)** Toasts can carry labeled actions.
-  - **(k)** The fake API keeps an in-memory room, with test-only controls.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -312,6 +300,22 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-052 · 2026-10-26 · D-051's Home choices confirmed
+
+- **Decision (Arnav's call):** D-051 (a)-(k) stand:
+  - the two-layer handoff;
+  - `?new=1` for new scripts;
+  - the editor takes the keyboard only if nothing else has it;
+  - "just now" or "Oct 12";
+  - a plain script's meta names its writers;
+  - the upgrade toast;
+  - "Accepted ✓" with the 0.8 s move;
+  - avatar colors from the person;
+  - Members ordering and count;
+  - labeled toast actions;
+  - the fake API's in-memory room.
+- **Status:** Arnav's call. Step 7 (the Share menu) is next.
 
 ### D-051 · 2026-10-26 · Accounts phase step 6: Home, the handoff, Members, deleting and renaming in the web app
 
