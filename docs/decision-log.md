@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 4 built (D-046): the sync server enforces roles.**
+- **Accounts phase step 4 built (D-046), choices confirmed (D-047): the sync server enforces roles.**
   - **No dev stub.** The development stub is removed from the servers; they trust Cognito tokens only (the test key in tests).
   - **Access check at the home server.** It uses `canEdit` / `canView` through a pluggable access source (Postgres in production). View-only connections see everything, but their edits close with 4403.
   - **Access changes.** `NOTIFY wr_access` triggers a re-check: a changed connection gets 4403, a deleted one 4410.
@@ -129,17 +129,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building accounts step 4 (D-046):**
-  - **(a)** Close codes: 4403 for no access or changed access (an upgrade too), 4410 for deleted.
-  - **(b)** View-only connections: an empty handshake reply is acknowledged; any edit closes the connection.
-  - **(c)** A fresh token per connect; one 4401 is retried.
-  - **(d)** Messages are held during the token check.
-  - **(e)** Live status: written on join and every 10 s, deleted on leave; "edited" is written at most once a minute.
-  - **(f)** The document ID is the draft ID.
-  - **(g)** The chaos suite has its own test-only server entry.
-  - **(h)** `WR_CLUSTER_SECRET` is always required. This supersedes D-025 (e).
-  - **(i)** `devAuth.ts` stays until step 5, for display names only.
-  - **(j)** The purge job moves to the deploy phase.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -296,6 +285,21 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-047 · 2026-10-26 · D-046's sync choices confirmed
+
+- **Decision (Arnav's call):** D-046 (a)-(j) stand:
+  - 4403 means "ask the API" (upgrades included), and 4410 means deleted;
+  - view-only connections are refused only when they actually edit;
+  - a fresh token on every connect, with one 4401 retried;
+  - messages are held during the token check;
+  - live-status and "edited" write rates as described;
+  - the document ID is the draft ID;
+  - a test-only chaos server entry;
+  - the cluster secret is always required (superseding D-025 (e));
+  - `devAuth.ts` stays until step 5;
+  - the purge job moves to the deploy phase.
+- **Status:** Arnav's call. Step 5 (the web app's signed-out pages and session) is next.
 
 ### D-046 · 2026-10-26 · Accounts phase step 4: the sync server enforces roles; no development stub
 
