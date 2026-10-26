@@ -37,6 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Prototype v2 approved (D-039)** as what the accounts phase builds to. The Privacy page's contact address is sabat.arnav@gmail.com, and account deletion is "within 30 days".
 - **AWS account plan (D-038):**
   - **Plan:** the AWS account is created only at step 8 of the accounts phase, on the **free plan**. That makes it $0 with no possible charges, and the 6-month clock starts as late as possible. It's upgraded to the paid plan when the closed beta starts.
   - **Admin access:** a plain IAM admin user, not IAM Identity Center, because setting up Organizations would force the upgrade.
@@ -251,6 +252,15 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-039 · 2026-10-25 · Prototype v2 approved; Privacy contact address
+
+- **Decision (Arnav's call):**
+  - Prototype v2, with D-035 to D-037, is approved "for now" as what the accounts phase builds to. Later visual edits go through the log as usual.
+  - The Privacy page's contact address for deletion requests is **sabat.arnav@gmail.com** until there's a domain (D-038).
+  - Arnav left the deletion window unchanged, so it stays "within 30 days", matching the 30-day Recently deleted list (D-037). "Last updated" gets the date the pages ship.
+- **What changes for writers:** the Privacy page names a real person to contact.
+- **Status:** Arnav's call. Building starts with step 1 (the schema and permission rules). Arnav is told when the AWS steps (account, verifying emails, the Google client) are due.
 
 ### D-038 · 2026-10-25 · AWS on the free plan until the beta; domain deferred
 
