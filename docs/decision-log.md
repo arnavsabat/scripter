@@ -37,6 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Signing out clears this browser's local script copies, safely (D-050).** It first checks that every edit reached the server. If any haven't (the writer is offline), a toast warns, with "Sign out anyway" and "Cancel".
 - **Accounts phase step 5 built (D-048), choices confirmed (D-049): the web app's signed-out side.**
   - **Pages:** the sign-in page (Arnav's template), Terms, Privacy, and invitation links ("Join Fogline", accepted once signed in).
   - **Session:** the access token is kept in memory and renewed through the refresh cookie.
@@ -213,10 +214,7 @@ Phase 2:
   - **`collab.test.tsx`** now waits for the "Reconnecting…" cue, because the client fetches a fresh token first (D-046).
   - **The new forwarding-hop access test** gets 10 s waits.
   - **`cluster.test.ts > split brain`:** the captured error was its final 5 s wait for the two writers' copies to match. That wait came after fencing, the stale room's step-down and both writers' sync had all passed, so it was not a safety failure. It now gets 15 s; the assertion that every word survives is unchanged.
-- New (D-048): on a shared computer, signing out leaves this browser's local copies of scripts (y-indexeddb, kept for offline editing) readable by the next person. Options to bring Arnav with the home page:
-  - clear them on sign-out, after checking every edit has reached the server;
-  - ask on sign-out;
-  - leave them (they're only reachable through this browser profile).
+- ~~(D-048) local script copies left after signing out on a shared computer~~: decided in D-050.
 - New (D-040, minor): after `pnpm test`, Vitest reports "something prevents 8 Vite servers from exiting" for about 10 s. It predates step 1 (it happens on the previous commit too). It comes from the web browser-mode project; the tests pass. Worth finding with the hanging-process reporter when convenient.
 - New (D-026; + New script settled in D-035): should the hover background extend to the remaining text actions (Accept, + New what-if, + Snapshot)?
 22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
@@ -300,6 +298,20 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-050 · 2026-10-26 · Signing out clears local script copies, but never loses unsynced edits silently
+
+- **Context:** for offline editing, each browser keeps a copy of every script it has opened (y-indexeddb). On a shared computer, signing out would leave those copies for the next person using that browser profile.
+- **Decision (Arnav's call): clear them, safely.**
+  - Sign out (the account menu) first checks that every edit made in this browser has reached the server.
+    - The browser remembers which documents have edits not yet acknowledged (D-019). The flag is set on a local edit and cleared when the client is fully synced, so it covers scripts that aren't open too.
+  - If everything is synced, it deletes this browser's local copies, then signs out.
+  - If not (the writer is offline), the toast says "Some edits haven't reached the server yet. Signing out now would lose them." with **Sign out anyway** and **Cancel**.
+- **Rejected:**
+  - Always clearing, which loses an offline writer's unsynced words.
+  - Leaving the copies, which is weak on shared or lab computers.
+- **What changes for writers:** nothing is left behind on a shared computer, and nothing is lost by accident. Opening a script after signing back in loads it from the server once.
+- **Status:** Arnav's call. Built with the account menu in step 6.
 
 ### D-049 · 2026-10-26 · The code screen names no digit count; D-048's other choices confirmed
 
