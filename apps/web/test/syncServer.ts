@@ -1,7 +1,12 @@
 // Vitest global setup (runs in Node): a real sync server with in-memory storage for the browser
-// tests, plus a tiny control endpoint so tests can kill, restart or cut it off.
+// tests, plus a tiny control endpoint so tests can kill, restart or cut it off, and get sign-in
+// tokens: the test key's private half stays here in Node, and the browser asks for a fresh token
+// on every connect (D-046), as the real app asks the API.
 import { createServer } from 'node:http';
+import { tokenVerifier } from '@wr/auth';
+import { createTestIssuer } from '@wr/auth/testing';
 import { startSyncServer, type SyncServer } from '@wr/sync';
+import { memoryAccess } from '@wr/sync/access';
 import { memoryStorage } from '@wr/sync/memory';
 import * as Y from 'yjs';
 
@@ -12,11 +17,13 @@ export const CONTROL_PORT = 4788;
 
 export default async function setup() {
   const storage = memoryStorage();
-  let server: SyncServer | null = await startSyncServer({
-    port: SYNC_PORT,
-    storage,
-    devAuth: true,
-  });
+  const issuer = await createTestIssuer();
+  const auth = {
+    verify: tokenVerifier([issuer.trusted]),
+    access: memoryAccess(),
+    clusterSecret: 'test-cluster-secret',
+  };
+  let server: SyncServer | null = await startSyncServer({ port: SYNC_PORT, storage, ...auth });
   const control = createServer((req, res) => {
     void (async () => {
       res.setHeader('access-control-allow-origin', '*');
@@ -25,7 +32,10 @@ export default async function setup() {
         await server?.kill();
         server = null;
       } else if (url.pathname === '/restart') {
-        server ??= await startSyncServer({ port: SYNC_PORT, storage, devAuth: true, ...FAST });
+        server ??= await startSyncServer({ port: SYNC_PORT, storage, ...auth, ...FAST });
+      } else if (url.pathname === '/token') {
+        res.end(await issuer.sign(url.searchParams.get('name') ?? 'Writer'));
+        return;
       } else if (url.pathname === '/drop') {
         server?.dropConnections();
       } else if (url.pathname === '/stored') {

@@ -53,7 +53,11 @@ export interface SyncClientOptions {
   /** Base URL of the sync server, or a list to pick from at random on each (re)connect (D-022). */
   serverUrl: string | readonly string[];
   docId: string;
-  token: string;
+  /**
+   * The sign-in token for the server. A function is called on every (re)connect, so a long
+   * session always presents a fresh access token (they expire after an hour, D-031).
+   */
+  token: string | (() => string | Promise<string>);
   doc: Y.Doc;
   awareness?: awarenessProtocol.Awareness;
   socket: SocketFactory;
@@ -80,8 +84,11 @@ export class SyncClient {
   stored = 0;
   /** True once the server's reply to our state vector has arrived on this connection. */
   caughtUp = false;
-  /** Set when the server rejects us for good (4401, 4404). */
-  fatal: string | null = null;
+  /**
+   * Set when the server turns us away for good: 'unauthorized' (4401), 'forbidden' (4403: access
+   * changed, ask the API), 'bad episode' (4404) or 'deleted' (4410).
+   */
+  fatal: 'unauthorized' | 'forbidden' | 'bad episode' | 'deleted' | null = null;
   /** Counts connections; with `sent`/`stored`, lets a caller tell exactly which edits are durable. */
   generation = 0;
   /**
@@ -92,6 +99,10 @@ export class SyncClient {
   handshakeIndex: number | null = null;
   private socket: SocketLike | null = null;
   private attempt = 0;
+  /** Which token request is current, so a slow one from before a reconnect is ignored. */
+  private tokenRequest = 0;
+  /** A 4401 with a token function is retried once with a fresh token; a second in a row is final. */
+  private refusedLast = false;
   private retryTimer: unknown = null;
   private heartbeatTimer: unknown = null;
   private connectTimer: unknown = null;
@@ -163,7 +174,28 @@ export class SyncClient {
 
   private connect() {
     if (this.connection === 'stopped') return;
-    const { docId, token } = this.opts;
+    const { token } = this.opts;
+    if (typeof token === 'string') return this.open(token);
+    const request = ++this.tokenRequest;
+    const current = () => request === this.tokenRequest && this.connection !== 'stopped';
+    Promise.resolve()
+      .then(token)
+      .then(
+        (t) => {
+          if (current()) this.open(t);
+        },
+        () => {
+          // Couldn't get a token (offline, or the API is down): try again with backoff.
+          if (!current()) return;
+          this.connection = 'offline';
+          this.scheduleReconnect();
+          this.emit();
+        },
+      );
+  }
+
+  private open(token: string) {
+    const { docId } = this.opts;
     const socket = this.opts.socket(
       `${this.pickServer()}/doc/${docId}?token=${encodeURIComponent(token)}`,
     );
@@ -245,8 +277,17 @@ export class SyncClient {
       );
       awarenessProtocol.removeAwarenessStates(this.awareness, others, this);
     }
-    if (code === CLOSE.UNAUTHORIZED || code === CLOSE.BAD_DOCUMENT) {
-      this.fatal = code === CLOSE.UNAUTHORIZED ? 'unauthorized' : 'bad episode';
+    const freshToken = typeof this.opts.token === 'function';
+    const retryRefusal = code === CLOSE.UNAUTHORIZED && freshToken && !this.refusedLast;
+    this.refusedLast = code === CLOSE.UNAUTHORIZED;
+    const final: Record<number, NonNullable<SyncClient['fatal']>> = {
+      [CLOSE.UNAUTHORIZED]: 'unauthorized',
+      [CLOSE.FORBIDDEN]: 'forbidden',
+      [CLOSE.BAD_DOCUMENT]: 'bad episode',
+      [CLOSE.DELETED]: 'deleted',
+    };
+    if (final[code] && !retryRefusal) {
+      this.fatal = final[code];
       this.connection = 'stopped';
     } else if (this.connection !== 'stopped') {
       this.connection = 'offline';
@@ -340,6 +381,7 @@ export class SyncClient {
         if (sub === SYNC_STEP2) {
           this.caughtUp = true;
           this.attempt = 0;
+          this.refusedLast = false;
         }
       }
     } else if (type === MSG_AWARENESS && this.awareness) {

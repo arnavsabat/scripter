@@ -8,10 +8,15 @@ One WebSocket per open episode. Every message is binary, and every integer is a 
 ws(s)://<sync host>/doc/<episodeId>?token=<token>
 ```
 
-- `episodeId` must match `^[a-z0-9][a-z0-9-]{0,63}$`. If it doesn't, the server closes the socket with **4404**.
-- The token is checked on connect (SPEC 5.4). A missing or invalid token closes the socket with **4401**.
-  - Browsers can't set headers on a WebSocket, so the token travels in the query string. That's why it must be short-lived once Cognito exists.
-  - Until then, the only accepted tokens are **development tokens**: `DEV-UNSIGNED.` followed by base64url of `{"userId","name","color"}` (`src/devAuth.ts`). The server accepts them only when started with `WR_DEV_AUTH=1`.
+- `episodeId` is the document's ID: an episode draft's ID from the API (`draftId`, SPEC 5.2). It must match `^[a-z0-9][a-z0-9-]{0,63}$`, and a document the database doesn't know closes the socket with **4404**.
+- **The token** is a Cognito _access_ token, checked on connect (SPEC 5.4, D-046) with `@wr/auth`: an RS256 signature from the pool's published keys, the issuer, our app client (`client_id`), `token_use: access`, and expiry. A missing, invalid or expired token, or one not linked to a person, closes the socket with **4401**.
+  - Browsers can't set headers on a WebSocket, so the token travels in the query string. Access tokens last an hour, and `SyncClient` asks for a fresh one on every (re)connect.
+  - The development tokens (`DEV-UNSIGNED.…`) are no longer accepted anywhere.
+- **Access** is checked next, at the episode's home server, through the shared rule (`canEdit` / `canView`, SPEC 5.3, D-031):
+  - **Edit:** the showrunner, or a writer assigned to the episode.
+  - **View only:** any other member. The connection gets every edit and all presence. Its handshake reply is acknowledged as usual when it carries nothing new; any actual edit closes the socket with **4403**.
+  - **No access:** **4403**. **Deleted** (the draft, episode or series): **4410**.
+- **Access changes while connected.** The API sends `NOTIFY wr_access` on every change to roles, assignments, membership or deletion. Each home server re-checks the affected connections: anyone whose access changed is closed with **4403** (or **4410** if deleted) within about a second. The client then asks the API what it may do now, discards edits the server never accepted (D-046), and reconnects in the right mode.
 
 ## Messages
 
@@ -71,13 +76,15 @@ A server forwarding a writer to the episode's home opens its own WebSocket to th
 
 ## Close codes
 
-| Code | Meaning                                | Client behavior                                |
-| ---- | -------------------------------------- | ---------------------------------------------- |
-| 1001 | Server going away: shutdown            | Reconnect now (backoff reset)                  |
-| 1013 | Try again: no home reachable right now | Reconnect with backoff                         |
-| 4409 | Moved: the episode lives elsewhere now | Reconnect now (backoff reset)                  |
-| 4401 | Unauthorized                           | Stop and ask for a new token                   |
-| 4404 | Bad episode ID                         | Stop                                           |
-| 4500 | Storage failed                         | Reconnect with backoff (the handshake resends) |
+| Code | Meaning                                                 | Client behavior                                                                          |
+| ---- | ------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| 1001 | Server going away: shutdown                             | Reconnect now (backoff reset)                                                            |
+| 1013 | Try again: no home reachable right now                  | Reconnect with backoff                                                                   |
+| 4409 | Moved: the episode lives elsewhere now                  | Reconnect now (backoff reset)                                                            |
+| 4401 | Unauthorized                                            | With a token function, retry once with a fresh token; otherwise (or twice in a row) stop |
+| 4403 | Forbidden: no access, view-only edit, or access changed | Stop; ask the API, then reconnect in the right mode                                      |
+| 4404 | Bad episode ID                                          | Stop                                                                                     |
+| 4410 | Deleted (restorable for 30 days)                        | Stop; leave the episode                                                                  |
+| 4500 | Storage failed                                          | Reconnect with backoff (the handshake resends)                                           |
 
 Reconnects use exponential backoff with full jitter (SPEC 5.4): `delay = random(0, min(10 s, 250 ms × 2^attempt))`.

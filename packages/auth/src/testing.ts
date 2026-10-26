@@ -1,11 +1,13 @@
 // TEST ONLY (D-030). A throwaway signing key, generated per test run, that issues tokens shaped
 // like Cognito access tokens. Servers trust it only when a test builds them with it: no environment
 // variable or setting can make a running server accept it.
-import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT } from 'jose';
+import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWK } from 'jose';
 import type { TrustedIssuer } from './index';
 
 export interface TestIssuer {
   trusted: TrustedIssuer;
+  /** The public key, for a test that runs servers in other processes (the chaos suite). */
+  publicJwk: JWK;
   /** A signed access token for `sub`. Overrides let tests forge the bad cases. */
   sign(
     sub: string,
@@ -25,6 +27,7 @@ export async function createTestIssuer(clientId = 'test-client'): Promise<TestIs
   const issuer = 'https://issuer.test.writers-room.invalid';
   return {
     trusted: { issuer, clientId, keys: createLocalJWKSet({ keys: [jwk] }) },
+    publicJwk: jwk,
     sign: (sub, o = {}) =>
       new SignJWT({ token_use: o.tokenUse ?? 'access', client_id: o.clientId ?? clientId })
         .setProtectedHeader({ alg: 'RS256', kid })
@@ -48,5 +51,14 @@ export async function createTestIssuer(clientId = 'test-client'): Promise<TestIs
         .setIssuedAt()
         .setExpirationTime('1h')
         .sign(privateKey),
+  };
+}
+
+/** The issuer for a test key whose public half came from another process (see publicJwk). */
+export function trustedTestKey(jwk: JWK, clientId = 'test-client'): TrustedIssuer {
+  return {
+    issuer: 'https://issuer.test.writers-room.invalid',
+    clientId,
+    keys: createLocalJWKSet({ keys: [jwk] }),
   };
 }

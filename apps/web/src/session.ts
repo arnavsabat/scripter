@@ -7,7 +7,8 @@ export interface Session {
   serverUrl: string | readonly string[];
   docId: string;
   identity: Identity;
-  token: string;
+  /** The sign-in token, or a function asked for a fresh one on every connect (D-046). */
+  token: string | (() => Promise<string>);
 }
 
 export function sessionFromUrl(url: URL, serverUrl: string | readonly string[]): Session {

@@ -33,8 +33,15 @@ export const readAck = (decoder: decoding.Decoder) => decoding.readVarUint(decod
 export const CLOSE = {
   /** Missing, malformed or expired token. Don't retry with the same token. */
   UNAUTHORIZED: 4401,
+  /**
+   * You may not edit (or no longer see) this episode: your role or assignment changed, or a
+   * view-only connection sent an edit. Don't reconnect blindly: ask the API what you may do now.
+   */
+  FORBIDDEN: 4403,
   /** The episode ID isn't valid. Don't retry. */
   BAD_DOCUMENT: 4404,
+  /** The episode (or its series) was deleted. It can be restored for 30 days. Don't retry. */
+  DELETED: 4410,
   /** The server couldn't make an update durable. Reconnect: the handshake resends it. */
   STORAGE_FAILED: 4500,
   /** The server is shutting down. Reconnect. */

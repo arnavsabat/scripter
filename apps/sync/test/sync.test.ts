@@ -1,12 +1,13 @@
 // Sync server tests (Node): real WebSockets, real y-protocols, in-memory storage with the same
 // semantics as DynamoDB/S3. Storage-backed versions run in aws-storage.test.ts.
-import { CLOSE, MSG_ACK, MSG_SYNC, SYNC_UPDATE, devIdentity, makeDevToken } from '@wr/shared';
+import { CLOSE, MSG_ACK, MSG_SYNC, SYNC_UPDATE } from '@wr/shared';
 import * as decoding from 'lib0/decoding';
 import * as encoding from 'lib0/encoding';
 import { afterEach, describe, expect, it } from 'vitest';
 import * as Y from 'yjs';
 import { memoryStorage } from '../src/storage/memory';
 import { client, fromStorage, server, sleep, type, until, type SyncServer } from './helpers';
+import { issuer } from './testAuth';
 
 const cleanup: (() => unknown)[] = [];
 afterEach(async () => {
@@ -70,10 +71,9 @@ describe('two writers', () => {
   });
 
   it('rejects a bad token with 4401 and stops retrying', async () => {
-    const srv = track(
-      await server(memoryStorage(), 0, { devAuth: false, clusterSecret: 'test-secret' }),
-    );
-    const a = track(client(srv, 'Maya'));
+    const srv = track(await server(memoryStorage()));
+    // The old unsigned development token is just a bad token now (D-046).
+    const a = track(client(srv, 'Maya', 'ep-test', 'DEV-UNSIGNED.eyJ1c2VySWQiOiJtYXlhIn0'));
     await until(() => a.c.connection === 'stopped');
     expect(a.c.fatal).toBe('unauthorized');
     expect(CLOSE.UNAUTHORIZED).toBe(4401);
@@ -159,7 +159,7 @@ describe('duplicates', () => {
 
     // A raw connection, to send exactly the bytes we choose.
     const ws = new WebSocket(
-      `ws://127.0.0.1:${srv.port}/doc/ep-test?token=${makeDevToken(devIdentity('Raw'))}`,
+      `ws://127.0.0.1:${srv.port}/doc/ep-test?token=${await issuer.sign('Raw')}`,
     );
     ws.binaryType = 'arraybuffer';
     const acks: number[] = [];

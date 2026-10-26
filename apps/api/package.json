@@ -23,6 +23,8 @@
   },
   "devDependencies": {
     "@types/pg": "8.23.1",
-    "tsx": "4.23.15"
+    "@wr/sync": "workspace:*",
+    "tsx": "4.23.15",
+    "yjs": "13.6.33"
   }
 }

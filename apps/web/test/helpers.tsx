@@ -1,4 +1,4 @@
-import { devIdentity, makeDevToken } from '@wr/shared';
+import { devIdentity } from '@wr/shared';
 import { createRoot, type Root } from 'react-dom/client';
 import { commands, userEvent } from 'vitest/browser';
 
@@ -22,8 +22,11 @@ let counter = 0;
 export const newEpisode = () => `t-${Date.now().toString(36)}-${counter++}`;
 
 export function session(name: string, docId: string): Session {
+  // The name and color the app shows for this writer; the server learns who they are from the token.
   const identity = devIdentity(name);
-  return { serverUrl: SYNC, docId, identity, token: makeDevToken(identity) };
+  const token = async () =>
+    (await fetch(`${CONTROL}/token?name=${encodeURIComponent(name)}`)).text();
+  return { serverUrl: SYNC, docId, identity, token };
 }
 
 export interface MountedApp {

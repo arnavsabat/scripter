@@ -1,5 +1,6 @@
-// ⚠️ DEVELOPMENT AUTH STUB (SPEC 5.6, D-018 item 8). Unsigned: anyone can claim any name.
-// The sync server accepts these only when started with WR_DEV_AUTH=1. Replaced by Cognito JWTs.
+// ⚠️ LEFTOVER of the development auth stub (SPEC 5.6, D-018 item 8). No server accepts these
+// tokens any more (D-046); the web app's sign-in (accounts step 5) removes this file. Until then
+// only `devIdentity` is used, for the name and color the tests' browsers show.
 import { fromBase64UrlEncoded, toBase64UrlEncoded } from 'lib0/buffer';
 import { decodeUtf8, encodeUtf8 } from 'lib0/string';
 

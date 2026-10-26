@@ -53,7 +53,7 @@ export const MOVED = 4409;
 /** Origin for updates loaded from storage, so they aren't broadcast. */
 const LOAD = Symbol('load');
 
-const isEmptyUpdate = (u: Uint8Array) => u.byteLength === 2 && u[0] === 0 && u[1] === 0;
+export const isEmptyUpdate = (u: Uint8Array) => u.byteLength === 2 && u[0] === 0 && u[1] === 0;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export class Room {

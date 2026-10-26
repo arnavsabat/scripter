@@ -1,7 +1,8 @@
 // A simulated writer for cluster tests: a SyncClient that types numbered words at a steady pace
 // and records, for every word, when it was typed, when the server confirmed it durable, and when
 // a co-writer first saw it. The worst gaps are the writer-visible pause.
-import { SyncClient, devIdentity, makeDevToken, type SocketLike } from '@wr/shared';
+import { SyncClient, type SocketLike } from '@wr/shared';
+import { tokenFor } from './testAuth';
 import * as Y from 'yjs';
 
 export interface Writer {
@@ -36,7 +37,7 @@ export function writer(
   const client = new SyncClient({
     serverUrl: typeof urls === 'function' ? urls() : urls,
     docId,
-    token: makeDevToken(devIdentity(name)),
+    token: tokenFor(name),
     doc,
     backoff: opts.backoff ?? { baseMs: 100, capMs: 1000 },
     ...(opts.heartbeat ? { heartbeat: opts.heartbeat } : {}),

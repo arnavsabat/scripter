@@ -37,6 +37,13 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase step 4 built (D-046): the sync server enforces roles.**
+  - **No dev stub.** The development stub is removed from the servers; they trust Cognito tokens only (the test key in tests).
+  - **Access check at the home server.** It uses `canEdit` / `canView` through a pluggable access source (Postgres in production). View-only connections see everything, but their edits close with 4403.
+  - **Access changes.** `NOTIFY wr_access` triggers a re-check: a changed connection gets 4403, a deleted one 4410.
+  - **A fresh token on every connect.**
+  - **Live status** is written by the home server.
+  - **On 4403**, unsent edits are discarded with a notice. **On 4410** ("deleted"), the writer goes back to Home with a toast (the web side comes in step 6).
 - **Accounts phase step 3 built (D-044), choices confirmed (D-045), signing in:**
   - **Email codes:** a new address signs up and gets the name step; a known one gets a sign-in code.
   - **Google** goes through Cognito with PKCE.
@@ -122,6 +129,17 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Choices made while building accounts step 4 (D-046):**
+  - **(a)** Close codes: 4403 for no access or changed access (an upgrade too), 4410 for deleted.
+  - **(b)** View-only connections: an empty handshake reply is acknowledged; any edit closes the connection.
+  - **(c)** A fresh token per connect; one 4401 is retried.
+  - **(d)** Messages are held during the token check.
+  - **(e)** Live status: written on join and every 10 s, deleted on leave; "edited" is written at most once a minute.
+  - **(f)** The document ID is the draft ID.
+  - **(g)** The chaos suite has its own test-only server entry.
+  - **(h)** `WR_CLUSTER_SECRET` is always required. This supersedes D-025 (e).
+  - **(i)** `devAuth.ts` stays until step 5, for display names only.
+  - **(j)** The purge job moves to the deploy phase.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -194,7 +212,7 @@ Phase 2:
 20. ~~Email delivery~~ and ~~the invite link flow~~: SES on our own domain (D-030); one-time links (D-032).
 21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
 - New (found 2026-10-24, accounts phase): the prototype's blue primary button (`.pb`, white text on `--accent`) fails SPEC 3.11's 4.5:1 contrast in dark mode: white on `#6EA2E6` is about 2.6:1 (light mode, on `#2F6DB5`, is about 5.3:1). It's used for Compare's "Send mine to main". Options to bring Arnav: dark text on the dark-mode accent, a deeper dark-mode accent for filled buttons only, or the inverted-surface style used by sign-in's Continue (D-028).
-- New (D-042): the 30-day purge job (D-037) isn't built yet. It must erase Postgres rows *and* each draft's DynamoDB edit log and S3 snapshots, so it's built alongside the sync server's Postgres work (step 4) or the deploy, whichever comes first. Until then, soft-deleted items are only hidden.
+- New (D-042, moved by D-046): the 30-day purge job (D-037) isn't built yet. It needs new delete operations on the DynamoDB edit log and S3 snapshots, plus a daily schedule, so it's built in the deploy phase, before real users. Until then, soft-deleted items are only hidden.
 - New (D-040, minor): after `pnpm test`, Vitest reports "something prevents 8 Vite servers from exiting" for about 10 s. It predates step 1 (it happens on the previous commit too). It comes from the web browser-mode project; the tests pass. Worth finding with the hanging-process reporter when convenient.
 - New (D-026; + New script settled in D-035): should the hover background extend to the remaining text actions (Accept, + New what-if, + Snapshot)?
 22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
@@ -278,6 +296,55 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-046 · 2026-10-26 · Accounts phase step 4: the sync server enforces roles; no development stub
+
+- **Decisions Arnav made before building (Arnav's calls):**
+  1. **Losing edit access while typing: discard, with a notice.** Within about a second the page turns "View only" and reloads the server's version. A toast says "Your access changed. Edits since then weren't saved."
+     - Rejected: keeping the unsent words visible locally (the page would silently differ from everyone else's), and offering to copy them (more to build).
+  2. **An episode deleted while people write in it: back to Home, with a toast.** "This episode was deleted by the showrunner." It can be restored for 30 days, with everyone's work intact.
+     - Rejected: a frozen page with a banner, which goes against "nothing over the text".
+  3. **A pluggable access source.** The sync server asks an `AccessSource` who may edit: Postgres in production, an in-memory one for the cluster, chaos and browser tests. The three required permission cases are proven against real Postgres and the real API.
+     - Rejected: Postgres for every test (`pnpm check` would need Docker).
+
+  The web side of 1 and 2 arrives with the home page (step 6). This step builds the server side and the client's close codes.
+- **What was built:**
+  - **No development stub.** The sync server takes a `TokenVerifier` (Cognito in `main.ts`) and an `AccessSource`. The unsigned `DEV-UNSIGNED.` tokens and `WR_DEV_AUTH` are gone from the servers, and `main.ts` refuses to start without the database, the cluster secret and the Cognito settings.
+  - **Access at the home server** (`apps/sync/src/access.ts`, `pgAccess.ts`):
+    - Each connection's draft is looked up, giving its episode and series. The person's role and assignment go through the shared `canEdit` / `canView`.
+    - **Refusals:** no access closes with **4403**, deleted with **4410**, an unknown document with **4404**.
+    - **View-only connections** join like any other, so they get every edit and all presence. An empty handshake reply is acknowledged as usual (so they settle as "synced"), and any real edit closes with 4403.
+  - **Access changes:** the home server `LISTEN`s for the API's `wr_access` notifications and re-checks only the matching connections. A changed one gets 4403, a deleted one 4410. If the listener's connection drops, it reconnects with backoff and re-checks everyone.
+  - **Live status** (D-033): the home server writes `episode_presence` when someone joins and every 10 s, and deletes the row when they leave (unless they're still there in another tab). `episodes.edited_at` is written at most once a minute per episode.
+  - **The client** (`SyncClient`): `token` can be a function, called on every (re)connect, so long sessions always present a fresh access token. 4403 and 4410 are final (`fatal` = 'forbidden' / 'deleted'). One 4401 with a token function is retried with a fresh token; two in a row are final.
+  - **Holding messages:** a new connection holds the messages that arrive while its token is checked, then hands them on in order.
+  - **Docs and setup:** `PROTOCOL.md` (sign-in, access, the new close codes), README, `.env.example` (`WR_CLUSTER_SECRET`), and the compose cluster's environment (Postgres and Cognito).
+- **Tests:**
+  - **Sync, in memory (5):** a view-only connection sees edits but its own are refused; the 4403/4410 refusals at connect; access changes close exactly the affected connections; live status and the once-a-minute "edited"; enforcement through the forwarding hop.
+  - **End to end, against real Postgres** (`apps/api/test/sync-permissions.test.ts`, 6), with roles set up through the real API and a real sync server on `pgAccess`:
+    - **The three required cases:**
+      - a writer can't edit an episode they aren't assigned to;
+      - a viewer's updates are rejected while they still see everyone else's;
+      - a co-writer gets edit rights the moment a writer adds them.
+    - **Plus:** removing a co-writer cuts them off in under 1.5 s without a reconnect; deleting the episode moves everyone out with 4410; Home's green dot comes from the sync server's writes.
+  - **Existing suites:** every existing sync, cluster, chaos and browser test now signs in with real test-key tokens through `@wr/auth`. The browser tests fetch theirs from the test server's control endpoint.
+  - **Results:** `pnpm check` passes (127 tests). `pnpm test:services`: API 49, sync 11.
+  - **Chaos suite** (3 real processes, now `test/chaosServer.ts`): **0 lost edits** in every scenario. Takeover is 6.7 s after a SIGKILL and 10.6 s after a SIGSTOP, unchanged from D-023. The graceful add-and-remove scenario's slowest writer waited 3.8-6.5 s; the previous commit measured 4.8 s the same day, so that's this machine's conditions, not a regression.
+- **Choices Claude made while building, for Arnav to confirm:**
+  - **(a) What 4403 means.** It's "ask the API what you may do now". It's sent for no access, for an edit from a view-only connection, and for any change of mode while connected, upgrades included, because the client learns its mode from the API (D-031). 4410 means deleted.
+  - **(b) How view-only connections work.** Their empty handshake reply is acknowledged like anyone's, and only an actual edit is refused.
+  - **(c) Fresh tokens.** The client asks for a fresh token on every connect, and one 4401 is retried (an hour-old token simply expired). That also fixes a latent bug: a session longer than an hour would have been signed out at its next reconnect.
+  - **(d) Holding messages.** A connection's messages are held while its token is checked. Without this, the client's opening state vector would be lost.
+  - **(e) Live-status writes:** on join, every 10 s, and on leave; "edited" at most once a minute per episode per server.
+  - **(f) The document ID is the draft's ID** (SPEC 5.2). An ID the database doesn't know gets 4404.
+  - **(g) The chaos suite's server entry.** It runs `apps/sync/test/chaosServer.ts`, which trusts the run's test key (its public half passed in `WR_TEST_PUBLIC_JWK`). `main.ts` never reads that variable, so production can't be made to trust a test key.
+  - **(h) The cluster secret is now always required.** `.env.example` has a local value. This supersedes D-025 (e)'s built-in development secret, since there's no longer a development mode.
+  - **(i) `packages/shared/src/devAuth.ts` stays until step 5,** only for `devIdentity` (the name and color the test browsers show). No server accepts its tokens.
+  - **(j) The 30-day purge job moves to the deploy phase.** It needs new delete operations on the DynamoDB log and S3 snapshots and a daily schedule, and nothing needs it before real users.
+- **What changes for writers:**
+  - Roles are now enforced where the typing happens. A viewer or an unassigned writer can read along but can't change a word, and losing access takes effect in about a second.
+  - **Local development:** the app can't sign in until the Cognito pool exists (step 8). The automated tests cover every rule until then.
+- **Status:** built and tested. Arnav's calls 1-3 are recorded; (a)-(j) await Arnav.
 
 ### D-045 · 2026-10-25 · D-044's sign-in choices confirmed
 

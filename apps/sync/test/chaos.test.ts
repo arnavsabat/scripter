@@ -15,6 +15,7 @@ import { awsStorage, type AwsStorageConfig } from '../src/storage/aws';
 import { dynamoClient } from '../src/storage/dynamo';
 import type { Storage } from '../src/storage/types';
 import { until } from './helpers';
+import { issuer } from './testAuth';
 import { report, watchArrivals, writer, type PauseReport, type Writer } from './writer';
 
 const enabled = process.env.WR_TEST_SERVICES === '1';
@@ -31,7 +32,7 @@ const STORAGE: AwsStorageConfig = {
   membersTable: `wr-members-chaos-${run}`, // used only by this file's own storage reads
   snapshotBucket: 'wr-snapshots-test',
 };
-const MAIN = fileURLToPath(new URL('../src/main.ts', import.meta.url));
+const MAIN = fileURLToPath(new URL('./chaosServer.ts', import.meta.url));
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** One real sync server process. */
@@ -54,7 +55,7 @@ class Node {
         PORT: String(this.port),
         WR_SERVER_ID: this.id,
         WR_INTERNAL_URL: this.url,
-        WR_DEV_AUTH: '1',
+        WR_TEST_PUBLIC_JWK: JSON.stringify(issuer.publicJwk),
         WR_CLUSTER_SECRET: 'chaos-secret',
         DYNAMODB_ENDPOINT: STORAGE.dynamoEndpoint,
         S3_ENDPOINT: STORAGE.s3Endpoint,

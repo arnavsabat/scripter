@@ -1,8 +1,9 @@
-import { SyncClient, devIdentity, makeDevToken, type SocketLike } from '@wr/shared';
+import { SyncClient, type SocketLike } from '@wr/shared';
 import { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 import { startSyncServer, type SyncServer, type SyncServerOptions } from '../src/server';
 import { memoryStorage } from '../src/storage/memory';
+import { testServerAuth, tokenFor } from './testAuth';
 
 export type Storage = ReturnType<typeof memoryStorage>;
 
@@ -10,18 +11,23 @@ export type Storage = ReturnType<typeof memoryStorage>;
 export const FAST = { leaseTtlMs: 1000, renewEveryMs: 330, heartbeatMs: 330, deadAfterMs: 1000 };
 
 export async function server(storage: Storage, port = 0, extra: Partial<SyncServerOptions> = {}) {
-  return startSyncServer({ port, storage, devAuth: true, ...FAST, ...extra });
+  return startSyncServer({ port, storage, ...testServerAuth(), ...FAST, ...extra });
 }
 
 /** A client whose network can be switched off: while offline, connections are refused. */
-export function client(srv: { port: number }, name: string, docId = 'ep-test') {
+export function client(
+  srv: { port: number },
+  name: string,
+  docId = 'ep-test',
+  token: string | (() => Promise<string>) = tokenFor(name),
+) {
   const doc = new Y.Doc();
   const awareness = new Awareness(doc);
   const net = { offline: false };
   const c = new SyncClient({
     serverUrl: `ws://127.0.0.1:${srv.port}`,
     docId,
-    token: makeDevToken(devIdentity(name)),
+    token,
     doc,
     awareness,
     backoff: { baseMs: 20, capMs: 200 },

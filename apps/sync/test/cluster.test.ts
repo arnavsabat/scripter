@@ -6,6 +6,7 @@ import { homeOf } from '../src/ring';
 import { startSyncServer, type SyncServer } from '../src/server';
 import { memoryStorage } from '../src/storage/memory';
 import { FAST, until } from './helpers';
+import { testServerAuth } from './testAuth';
 import { report, watchArrivals, writer, type Writer } from './writer';
 
 const HEARTBEAT = { everyMs: 300, deadAfterMs: 1000 }; // the client heartbeat, scaled like FAST
@@ -19,7 +20,13 @@ async function cluster(n: number, storage = memoryStorage()) {
   const servers: SyncServer[] = [];
   for (let i = 1; i <= n; i++)
     servers.push(
-      await startSyncServer({ port: 0, storage, devAuth: true, serverId: `sync-${i}`, ...FAST }),
+      await startSyncServer({
+        port: 0,
+        storage,
+        ...testServerAuth(),
+        serverId: `sync-${i}`,
+        ...FAST,
+      }),
     );
   await until(() => servers.every((s) => s.cluster.ring.servers.length === n), 5000);
   cleanup.push(() => Promise.all(servers.map((s) => s.kill().catch(() => {}))));
@@ -134,7 +141,13 @@ describe('rebalancing', () => {
     const servers: SyncServer[] = [];
     for (let i = 1; i <= 2; i++)
       servers.push(
-        await startSyncServer({ port: 0, storage, devAuth: true, serverId: `sync-${i}`, ...FAST }),
+        await startSyncServer({
+          port: 0,
+          storage,
+          ...testServerAuth(),
+          serverId: `sync-${i}`,
+          ...FAST,
+        }),
       );
     cleanup.push(() => Promise.all(servers.map((s) => s.kill().catch(() => {}))));
     await until(() => servers.every((s) => s.cluster.ring.servers.length === 2));
@@ -157,7 +170,7 @@ describe('rebalancing', () => {
     const third = await startSyncServer({
       port: 0,
       storage,
-      devAuth: true,
+      ...testServerAuth(),
       serverId: 'sync-3',
       ...FAST,
     });

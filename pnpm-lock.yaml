@@ -218,9 +218,15 @@ importers:
       '@types/pg':
         specifier: 8.23.1
         version: 8.23.1
+      '@wr/sync':
+        specifier: workspace:*
+        version: link:../sync
       tsx:
         specifier: 4.23.15
         version: 4.23.15
+      yjs:
+        specifier: 13.6.33
+        version: 13.6.33
 
   apps/sync:
     dependencies:
@@ -230,12 +236,18 @@ importers:
       '@aws-sdk/client-s3':
         specifier: 3.1156.0
         version: 3.1156.0
+      '@wr/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@wr/shared':
         specifier: workspace:*
         version: link:../../packages/shared
       lib0:
         specifier: 0.2.119
         version: 0.2.119
+      pg:
+        specifier: 8.23.1
+        version: 8.23.1
       ws:
         specifier: 8.22.0
         version: 8.22.0
@@ -246,6 +258,9 @@ importers:
         specifier: 13.6.33
         version: 13.6.33
     devDependencies:
+      '@types/pg':
+        specifier: 8.23.1
+        version: 8.23.1
       '@types/ws':
         specifier: 8.18.2
         version: 8.18.2
@@ -310,6 +325,9 @@ importers:
       '@vitest/browser-playwright':
         specifier: 5.0.5
         version: 5.0.5(playwright@1.64.1)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(tsx@4.23.15))(vitest@5.0.5)
+      '@wr/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@wr/sync':
         specifier: workspace:*
         version: link:../sync

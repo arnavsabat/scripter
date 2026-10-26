@@ -1,4 +1,8 @@
 // Entry point. Configuration comes from the environment (see the repo's .env.example).
+// Sign-in is Cognito only (D-030, D-046): until the user pool exists (accounts step 8) the
+// server refuses to start. Tests build servers directly, with a test key.
+import { cognitoIssuer, tokenVerifier } from '@wr/auth';
+import { pgAccess } from './pgAccess';
 import { awsConfigFromEnv, awsStorage } from './storage/aws';
 import { memoryStorage } from './storage/memory';
 import type { Storage } from './storage/types';
@@ -28,22 +32,38 @@ async function storageFromEnv(): Promise<Storage> {
   return awsStorage(awsConfigFromEnv(env));
 }
 
-const devAuth = env.WR_DEV_AUTH === '1';
-if (devAuth) logger.info('⚠️  WR_DEV_AUTH=1: accepting unsigned development tokens');
+const missing = [
+  'DATABASE_URL',
+  'WR_CLUSTER_SECRET',
+  'COGNITO_REGION',
+  'COGNITO_USER_POOL_ID',
+  'COGNITO_CLIENT_ID',
+].filter((k) => !env[k]);
+if (missing.length) {
+  logger.error(`the sync server needs ${missing.join(', ')} (see .env.example)`);
+  process.exit(1);
+}
 
+const access = pgAccess(env.DATABASE_URL!, logger);
 const server = await startSyncServer({
   port: Number(env.PORT ?? 4000),
   storage: await storageFromEnv(),
-  devAuth,
+  verify: tokenVerifier([
+    cognitoIssuer(env.COGNITO_REGION!, env.COGNITO_USER_POOL_ID!, env.COGNITO_CLIENT_ID!),
+  ]),
+  access,
+  clusterSecret: env.WR_CLUSTER_SECRET!,
   ...(env.WR_SERVER_ID ? { serverId: env.WR_SERVER_ID } : {}),
   ...(env.WR_INTERNAL_URL ? { internalUrl: env.WR_INTERNAL_URL } : {}),
-  ...(env.WR_CLUSTER_SECRET ? { clusterSecret: env.WR_CLUSTER_SECRET } : {}),
   logger,
 });
 
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, () => {
     logger.info('shutting down gracefully', { signal });
-    void server.close().then(() => process.stdout.write('', () => process.exit(0))); // flush logs first
+    void server
+      .close()
+      .then(() => access.close())
+      .then(() => process.stdout.write('', () => process.exit(0))); // flush logs first
   });
 }

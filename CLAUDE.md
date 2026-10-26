@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-045) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-046) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -98,5 +98,6 @@ REPO WORKING NOTES
   - **Every** log append and snapshot-pointer move is a DynamoDB transaction fenced on the lease epoch. Truncate only after the pointer moves.
   - The ring is a routing hint; the lease decides who writes. A closing room doesn't count as held.
   - Chaos suite: `pnpm --filter @wr/sync test:chaos` (needs the services).
-- The browser keeps each episode in IndexedDB (y-indexeddb) and connects with `?as=Name&ep=id` (dev auth stub). Web tests use a real sync server from `apps/web/test/syncServer.ts`, with a control endpoint for kill, restart and drop.
+- The browser keeps each episode in IndexedDB (y-indexeddb). There's no dev auth stub (D-046): servers trust Cognito only, and `SyncClient` takes a token function, called on every connect. Web tests use a real sync server from `apps/web/test/syncServer.ts` (test key plus in-memory access), with a control endpoint for kill, restart, drop and `/token?name=`.
+- **Sync access (D-046):** the home server checks `canEdit`/`canView` through an `AccessSource` (`apps/sync/src/access.ts`; Postgres in `pgAccess.ts`). View-only connections get every edit but any edit of theirs closes with 4403. `NOTIFY wr_access` triggers a re-check: a changed connection gets 4403, a deleted one 4410. The chaos suite runs `apps/sync/test/chaosServer.ts`, never `main.ts`, which trusts only Cognito.
 - Web test files run one at a time (`fileParallelism: false`): real key presses go to the focused frame.

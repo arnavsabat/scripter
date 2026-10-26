@@ -1,9 +1,15 @@
-// Verifies the token presented on connect (SPEC 5.4, 5.6). Until Cognito exists, the only
-// tokens are unsigned development tokens, accepted only when the server runs with WR_DEV_AUTH=1.
-import { readDevToken, type Identity } from '@wr/shared';
+// Verifies the token presented on connect (SPEC 5.4, 5.6; D-030, D-046): a Cognito access token,
+// checked by @wr/auth and linked to a person by the access source. There is no development stub.
+import type { TokenVerifier } from '@wr/auth';
+import type { Identity } from '@wr/shared';
+import type { AccessSource } from './access';
 
-export function authenticate(token: string, { devAuth }: { devAuth: boolean }): Identity | null {
-  if (devAuth) return readDevToken(token);
-  // Cognito JWT verification arrives with accounts; until then, refuse everything.
-  return null;
+export async function authenticate(
+  token: string,
+  verify: TokenVerifier,
+  access: AccessSource,
+): Promise<Identity | null> {
+  if (!token) return null;
+  const verified = await verify(token);
+  return verified ? access.identify(verified.sub) : null;
 }
