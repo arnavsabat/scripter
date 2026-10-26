@@ -11,6 +11,11 @@ export interface TestIssuer {
     sub: string,
     overrides?: { tokenUse?: string; clientId?: string; expiresIn?: string | number },
   ): Promise<string>;
+  /** A signed ID token, shaped like Cognito's (Google sign-ins carry an `identities` claim). */
+  signId(
+    sub: string,
+    claims: { email: string; emailVerified?: boolean; name?: string; google?: boolean },
+  ): Promise<string>;
 }
 
 export async function createTestIssuer(clientId = 'test-client'): Promise<TestIssuer> {
@@ -27,6 +32,21 @@ export async function createTestIssuer(clientId = 'test-client'): Promise<TestIs
         .setSubject(sub)
         .setIssuedAt()
         .setExpirationTime(o.expiresIn ?? '1h')
+        .sign(privateKey),
+    signId: (sub, c) =>
+      new SignJWT({
+        token_use: 'id',
+        email: c.email,
+        email_verified: c.emailVerified ?? true,
+        ...(c.name ? { name: c.name } : {}),
+        ...(c.google ? { identities: [{ providerName: 'Google' }] } : {}),
+      })
+        .setProtectedHeader({ alg: 'RS256', kid })
+        .setIssuer(issuer)
+        .setAudience(clientId)
+        .setSubject(sub)
+        .setIssuedAt()
+        .setExpirationTime('1h')
         .sign(privateKey),
   };
 }

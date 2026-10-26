@@ -1,6 +1,6 @@
 import { SignJWT, generateKeyPair } from 'jose';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { tokenVerifier, type TokenVerifier } from '../src/index';
+import { idTokenVerifier, tokenVerifier, type TokenVerifier } from '../src/index';
 import { createTestIssuer, type TestIssuer } from '../src/testing';
 
 let issuer: TestIssuer;
@@ -54,5 +54,39 @@ describe('token check', () => {
     expect(await verify('not-a-token')).toBeNull();
     expect(await verify('DEV-UNSIGNED.eyJ1c2VySWQiOiJ4In0')).toBeNull();
     expect(await verify('')).toBeNull();
+  });
+});
+
+describe('ID token check (sign-in only)', () => {
+  it('reads the email, whether it is verified, the name, and the provider', async () => {
+    const readId = idTokenVerifier(issuer.trusted);
+    expect(
+      await readId(
+        await issuer.signId('g-1', {
+          email: 'maya@example.com',
+          name: 'Maya Alvarez',
+          google: true,
+        }),
+      ),
+    ).toEqual({
+      sub: 'g-1',
+      email: 'maya@example.com',
+      emailVerified: true,
+      name: 'Maya Alvarez',
+      provider: 'google',
+    });
+    expect(
+      await readId(await issuer.signId('e-1', { email: 'sam@example.com', emailVerified: false })),
+    ).toEqual({
+      sub: 'e-1',
+      email: 'sam@example.com',
+      emailVerified: false,
+      name: null,
+      provider: 'email',
+    });
+  });
+  it('an access token is not an ID token, and vice versa', async () => {
+    expect(await idTokenVerifier(issuer.trusted)(await issuer.sign('u'))).toBeNull();
+    expect(await verify(await issuer.signId('u', { email: 'a@example.com' }))).toBeNull();
   });
 });

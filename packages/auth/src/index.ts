@@ -56,3 +56,54 @@ export function tokenVerifier(issuers: readonly TrustedIssuer[]): TokenVerifier 
     }
   };
 }
+
+/** What the API reads from Cognito's ID token at sign-in, to link the sign-in to a person (D-041). */
+export interface IdClaims {
+  sub: string;
+  email: string;
+  emailVerified: boolean;
+  /** Google gives a name; an email-code sign-up has none until the writer types one. */
+  name: string | null;
+  provider: 'google' | 'email';
+}
+
+export type IdTokenVerifier = (token: string) => Promise<IdClaims | null>;
+
+/**
+ * ID tokens are checked like access tokens, but they're addressed to our app client in `aud`
+ * and carry `token_use: "id"`. Only the API reads them (once, at sign-in); the browser never sees one.
+ */
+export function idTokenVerifier(issuer: TrustedIssuer): IdTokenVerifier {
+  return async (token) => {
+    try {
+      const { payload } = await jwtVerify(token, issuer.keys, {
+        issuer: issuer.issuer,
+        audience: issuer.clientId,
+        algorithms: ['RS256'],
+        clockTolerance: 5,
+      });
+      const { sub, email } = payload;
+      if (payload.token_use !== 'id' || typeof sub !== 'string' || typeof email !== 'string')
+        return null;
+      const verified = payload.email_verified;
+      const identities = payload.identities;
+      const google =
+        Array.isArray(identities) &&
+        identities.some(
+          (i) =>
+            typeof i === 'object' &&
+            i !== null &&
+            (i as { providerName?: unknown }).providerName === 'Google',
+        );
+      return {
+        sub,
+        email,
+        emailVerified: verified === true || verified === 'true',
+        name: typeof payload.name === 'string' && payload.name.trim() ? payload.name.trim() : null,
+        provider: google ? 'google' : 'email',
+      };
+    } catch {
+      return null;
+    }
+  };
+}

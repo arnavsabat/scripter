@@ -1,10 +1,13 @@
-// The REST API (SPEC 5.1). Every route except /api/health needs a valid Cognito access token
+// The REST API (SPEC 5.1). Every route except /api/health and the sign-in routes needs a valid Cognito access token
 // (D-031); the token's subject is looked up in user_identities to find the person (D-041).
-import type { TokenVerifier } from '@wr/auth';
+import cookie from '@fastify/cookie';
+import type { IdTokenVerifier, TokenVerifier } from '@wr/auth';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type pg from 'pg';
+import type { CognitoClient } from './auth/cognito';
 import { ApiError } from './errors';
 import type { Mailer } from './mailer';
+import { authRoutes } from './routes/auth';
 import { episodeRoutes } from './routes/episodes';
 import { homeRoutes } from './routes/home';
 import { invitationRoutes } from './routes/invitations';
@@ -29,6 +32,8 @@ declare module 'fastify' {
 export interface AppDeps {
   db: pg.Pool;
   verify: TokenVerifier;
+  /** Signing in (step 3): the Cognito client, and the ID-token check used to link sign-ins (D-041). */
+  auth: { cognito: CognitoClient; verifyId: IdTokenVerifier };
   mailer: Mailer;
   /** Where the web app lives, for links in emails (e.g. https://…/i/<token>). */
   appUrl: string;
@@ -38,6 +43,7 @@ export interface AppDeps {
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   const app = Fastify({ logger: deps.logger ?? false });
   app.decorateRequest('user', null as unknown as User);
+  await app.register(cookie);
 
   app.addHook('onRequest', async (req) => {
     if (req.routeOptions.config.public) return;
@@ -67,6 +73,7 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   app.get('/api/health', { config: { public: true } }, () => ({ ok: true }));
   app.get('/api/me', (req) => req.user);
 
+  authRoutes(app, deps);
   homeRoutes(app, deps);
   seriesRoutes(app, deps);
   episodeRoutes(app, deps);

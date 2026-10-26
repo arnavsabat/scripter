@@ -1,12 +1,14 @@
 // A whole API on a throwaway database, signed in with the test-only key (D-030). Requests go
 // through Fastify's inject(), so no port is opened.
-import { tokenVerifier } from '@wr/auth';
+import { idTokenVerifier, tokenVerifier } from '@wr/auth';
 import { createTestIssuer } from '@wr/auth/testing';
 import { randomUUID } from 'node:crypto';
 import pg from 'pg';
 import { buildApp } from '../src/app';
+import { cognitoClient } from '../src/auth/cognito';
 import { migrate } from '../src/db/migrate';
 import { memoryMailer } from '../src/mailer';
+import { fakeCognito } from './fakeCognito';
 import { createTestDb } from './testDb';
 
 export interface Person {
@@ -28,9 +30,18 @@ export async function apiHarness() {
   const db = new pg.Pool({ connectionString: tdb.url, max: 5 });
   const issuer = await createTestIssuer();
   const mailer = memoryMailer();
+  const cognito = await fakeCognito(issuer);
   const app = await buildApp({
     db,
     verify: tokenVerifier([issuer.trusted]),
+    auth: {
+      cognito: cognitoClient({
+        clientId: issuer.trusted.clientId,
+        apiUrl: cognito.url,
+        oauthUrl: cognito.url,
+      }),
+      verifyId: idTokenVerifier(issuer.trusted),
+    },
     mailer,
     appUrl: 'https://app.test',
   });
@@ -88,12 +99,14 @@ export async function apiHarness() {
     db,
     issuer,
     mailer,
+    cognito,
     person,
     lastInviteToken,
     anonymous: (method: string, url: string) => request(null, method, url),
     withToken: (token: string, method: string, url: string) => request(token, method, url),
     async close() {
       await app.close();
+      await cognito.close();
       await db.end();
       await tdb.drop();
     },

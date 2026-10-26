@@ -37,6 +37,12 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase step 3 built (D-044), signing in:**
+  - **Email codes:** a new address signs up and gets the name step; a known one gets a sign-in code.
+  - **Google** goes through Cognito with PKCE.
+  - **Linking:** each sign-in is linked to one person per verified email.
+  - **Sessions:** a 30-day httpOnly refresh cookie on `/api/auth`, refreshing, and signing out (which revokes the refresh token).
+  - **Tested** against a local fake Cognito.
 - **Accounts phase step 2 built (D-042), choices confirmed (D-043), the API:**
   - **Token checks:** `packages/auth` checks tokens for both the API and the sync server.
   - **The REST API:** series, scripts, episodes, members and roles, co-writers, invitations, deleting and restoring, RECENT, and live status.
@@ -116,6 +122,15 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Choices made while building accounts step 3 (D-044):**
+  - **(a)** Try sign-up first, fall back to the sign-in code.
+  - **(b)** Addresses are lowercased.
+  - **(c)** The sign-in in progress travels as an opaque blob; the server keeps no state.
+  - **(d)** Google's state and PKCE verifier sit in a 10-minute SameSite=Lax cookie.
+  - **(e)** The email's first part stands in for the name until the name step.
+  - **(f)** `PATCH /api/me` sets the name.
+  - **(g)** Unverified emails are refused.
+  - **(h)** Signing out revokes the refresh token at Cognito.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -272,6 +287,43 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-044 · 2026-10-25 · Accounts phase step 3: signing in through the API
+
+- **What was built:**
+  - **The Cognito client** (`apps/api/src/auth/cognito.ts`): plain JSON calls (D-031) for SignUp (no password), ResendConfirmationCode, ConfirmSignUp, InitiateAuth (`USER_AUTH` with `EMAIL_OTP`, with a confirmation session, or `REFRESH_TOKEN_AUTH`), RespondToAuthChallenge and RevokeToken. Google uses `/oauth2/authorize?identity_provider=Google` with PKCE S256, then `/oauth2/token`.
+  - **Linking** (`src/auth/link.ts`): Cognito's ID token is checked with the new `idTokenVerifier` in `packages/auth` (audience = our client, `token_use: id`). Its verified email finds or creates the person, and its `sub` is recorded in `user_identities` (D-041). A race of two first sign-ins with one address lands on the same person.
+  - **Endpoints** (`src/routes/auth.ts`, public):
+    - `POST /api/auth/email/start`, `/email/resend` and `/email/verify`;
+    - `GET /api/auth/google/start` and `/google/callback`;
+    - `POST /api/auth/refresh` and `/signout`;
+    - plus the signed-in `PATCH /api/me` for the name step.
+  - **The refresh cookie** is `wr_refresh`: httpOnly, Secure, SameSite=Strict, path `/api/auth`, 30 days. The browser gets only the 1-hour access token, in the response body (D-031).
+  - **Errors read as plain messages:** "That code isn’t right…", "That code has expired. Send a new one.", "Too many tries. Wait a minute…", "Check the email address."
+  - **`main.ts`** now also needs `COGNITO_DOMAIN`, for Google.
+- **Tests:** 10 sign-in tests (`apps/api/test/auth.test.ts`) against a local fake Cognito (`test/fakeCognito.ts`) that speaks the same operations and error names, issues test-key tokens, and records the codes it would have emailed. They cover:
+  - **A new email:** signing up, the name step, then signed in.
+  - **The cookie's attributes,** and that the refresh token never appears in a response body.
+  - **A known email:** a wrong code gets a clear message, and the right one signs in.
+  - **"Send a new code"**, including someone who never finished signing up.
+  - **A garbled attempt** reads as an expired code.
+  - **Google and an email code reach the same person.**
+  - **A new Google account** takes its name and skips the name step.
+  - **Google failing safely:** a forged state, a missing cookie, or an unverified email gives "signin=failed" with no session.
+  - **Sessions:** refreshing with the cookie; no cookie means no session; signing out revokes everywhere.
+
+  The full `pnpm check` passes (122 tests). `pnpm test:services`: API 43, sync 11.
+- **Choices Claude made while building, for Arnav to confirm:**
+  - **(a) Sign-up first.** "Continue" always tries sign-up first. If Cognito says the address exists, it sends a sign-in code instead. If the account exists but was never confirmed, it re-sends the sign-up code. Both paths look the same to the writer. This rests on the Cognito behavior logged under Known risks, verified at step 8.
+  - **(b) Lowercased addresses.** Email addresses are lowercased before reaching Cognito, so "Maya@…" and "maya@…" are one account. The pool is also made case-insensitive in step 8.
+  - **(c) No server-side state between "Continue" and the code.** The browser holds an opaque blob (which path, the address, Cognito's session). Tampering gains nothing, because Cognito checks its own session, and a garbled blob reads as "expired".
+  - **(d) The Google cookie.** Google's sign-in round trip keeps its anti-forgery `state` and PKCE verifier in a 10-minute httpOnly cookie, `wr_oauth`. It's SameSite=Lax because the browser returns from Google on a cross-site redirect, where a Strict cookie wouldn't be sent.
+  - **(e) A stand-in name.** A new email sign-up is named with the address's first part ("riley") until the name step saves the typed name. If they close the tab first, that stays.
+  - **(f) `PATCH /api/me` saves the name step.** It could technically rename someone later too, but the UI only offers it on the first-time step (D-032).
+  - **(g) Unverified addresses are refused** when linking, so nobody can claim someone else's scripts with an unverified email.
+  - **(h) Signing out revokes the refresh token at Cognito,** so a copied cookie stops working, not just this browser's.
+- **What changes for writers:** nothing visible until the sign-in page (step 5) and Cognito (step 8) exist. **For the system:** the API can now create and resume sessions without the browser ever holding a long-lived secret.
+- **Status:** built and tested against the fake. (a)-(h) await Arnav.
 
 ### D-043 · 2026-10-25 · D-042's building choices confirmed
 

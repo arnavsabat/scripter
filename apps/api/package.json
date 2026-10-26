@@ -15,6 +15,7 @@
     "test:services": "WR_TEST_SERVICES=1 vitest run"
   },
   "dependencies": {
+    "@fastify/cookie": "11.1.3",
     "@wr/auth": "workspace:*",
     "@wr/shared": "workspace:*",
     "fastify": "5.12.7",
