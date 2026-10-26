@@ -37,6 +37,10 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **AWS account plan (D-038):**
+  - **Plan:** the AWS account is created only at step 8 of the accounts phase, on the **free plan**. That makes it $0 with no possible charges, and the 6-month clock starts as late as possible. It's upgraded to the paid plan when the closed beta starts.
+  - **Admin access:** a plain IAM admin user, not IAM Identity Center, because setting up Organizations would force the upgrade.
+  - **The domain is deferred until just before the beta** (supersedes D-030's timing). For the demo, SES's sandbox sends to Arnav's two verified addresses.
 - **Deleting and + New series (D-037):**
   - **Deleting:** the showrunner can delete episodes, scripts and series. A × appears at the right end of the hovered row (home episode rows; sidebar script and series rows), and the row turns into an inline confirm ("Delete “…” for everyone?", Cancel, Delete). A series also needs its name typed first.
   - **Restoring:** deleted items wait 30 days under a RECENTLY DELETED sidebar section with Restore, then they're erased.
@@ -103,7 +107,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **AWS cost levers for the deploy phase (proposed 2026-10-24, decided then):** these keep SPEC 5.5's infrastructure unchanged.
   - **Estimated cost:** about $40-50 a month on demand in `ca-central-1`. The load balancer (about $18), the small Postgres (about $15), public IPv4 addresses (about $3.65 each) and the container (about $10) make up most of it. This corrects Claude's earlier, too-low "$25-45".
   - **The levers:**
-    1. Use the AWS paid plan's sign-up credits.
+    1. Use the AWS sign-up credits. D-038 starts on the free plan and upgrades to paid when the beta starts.
     2. Before the beta, run the compute only for demos and tests, and tear it down afterwards. DynamoDB, S3, Cognito and a Postgres snapshot are kept.
     3. Run the always-on container on ARM (Graviton) Fargate Spot, about 70% cheaper. A Spot interruption is a failover the design already survives with zero lost edits.
     4. Use public subnets with no NAT gateway, which would otherwise add about $35 a month.
@@ -247,6 +251,29 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-038 · 2026-10-25 · AWS on the free plan until the beta; domain deferred
+
+- **Context:** Arnav has little money to spare right now and asked what AWS's free plan would mean, and whether choices can be changed later.
+  - Accounts created since July 15, 2025 choose a free or a paid plan. Both start with sign-up credits (about $100-200; the console shows the exact amount).
+  - The free plan can't be charged. It ends after 6 months or when the credits run out, whichever comes first. The account then closes, and AWS keeps its data for 90 days. It can be upgraded to paid at any time, keeping the remaining credits.
+  - The free plan blocks AWS Marketplace, Savings Plans and Reserved Instances. Joining AWS Organizations or Control Tower upgrades it automatically, and it can't receive other promotional credits.
+- **Decision (Arnav's call):**
+  1. **Timing:** create the AWS account only at step 8 of this phase (Cognito, SES and the budget alarms), on the **free plan**. This phase's usage (Cognito Essentials with under 10,000 monthly users; SES in pennies) fits inside the free allowances and credits, so it costs $0, and the 6-month clock starts as late as possible.
+  2. **Admin access:** a plain IAM admin user with MFA, plus the AWS CLI with that user's access key. This replaces Claude's earlier suggestion of IAM Identity Center, whose usual setup creates an AWS Organization, which would force the upgrade. Root gets MFA and isn't used day to day.
+  3. **The domain waits until just before the beta.** This supersedes D-030's timing, not its choice: SES on our own domain with DKIM is still the plan for the beta.
+     - Until then, SES stays in its sandbox, verified for Arnav's two demo addresses. It sends codes and invitations to exactly those two.
+     - The sender for now is one of those verified addresses. Mail may land in spam, which is acceptable for a demo.
+     - When it's bought, the domain comes from a low-cost registrar (Cloudflare or Porkbun, about $10-11 a year for .com), with DNS in Route 53 ($0.50 a month, covered by credits) so CDK can write the DKIM records.
+  4. **Upgrade to the paid plan when the closed beta starts.** The deploy-phase cost levers (proposed 2026-10-24) still apply.
+- **What changes for writers:** nothing yet. For the demo, the emails may land in Arnav's spam folder. **For the system:**
+  - The CDK stacks take the sender address as configuration, so swapping in the domain later changes one setting and the DNS records, not code.
+  - The budget alarms ($20 and $40) are still deployed first.
+- **Rejected:**
+  - Creating the account now, which starts the 6-month clock months early.
+  - The paid plan from the start: possible charges before there are users.
+  - Buying the domain now: $10-15 Arnav doesn't need to spend before the beta.
+- **Status:** Arnav's call. This changes Claude's earlier advice: the paid plan from day one, Identity Center, and the domain at step 8.
 
 ### D-037 · 2026-10-24 · Deleting episodes, scripts and series; Recently deleted; + New series
 
