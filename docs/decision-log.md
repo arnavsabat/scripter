@@ -199,7 +199,7 @@ Spike and Phase 1:
 10. How TypeScript runs on Node: dev uses `tsx` (D-018). Production bundling is decided with the first deploy.
 11. Load-test targets and method: concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
 12. Autocomplete behavior and look (SPEC 4.4; first on the cut list after the sync cuts).
-13. ~~AWS region~~: `ca-central-1` (D-030).
+13. ~~AWS region~~: `ca-central-1` (D-030); `us-east-2` if the account checks confirm (D-057).
 14. How to gate the first AWS deploy before Cognito exists (SPEC 5.6). Also at deploy (D-025): where the cluster secret lives on AWS, and how the sync server is built for production.
 15. Which kind of "small Postgres" to run on AWS: RDS, Aurora Serverless v2, or Postgres on the Fargate task (SPEC 5.5).
 16. Monitoring and logging tool (the imported log deferred this to the build).
@@ -301,6 +301,23 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-057 · 2026-10-26 · Region: us-east-2 if the account checks confirm (would supersede D-030's ca-central-1)
+
+- **Context:** Arnav's new free-plan account was set up in `us-east-2` (Ohio), and choosing `ca-central-1` (Montreal, D-030) prompted him to leave the free plan.
+  - **AWS's documentation** describes no regional limit on the free plan (only GovCloud and China are excluded), so the account itself needs checking.
+  - **What works in us-east-2:** Cognito's Essentials plan with passwordless email codes is offered in every region Cognito runs in. Cognito sends through SES in its own region, which our setup already does because both read one region setting. Budgets are account-wide. Everything the deploy phase plans (DynamoDB, S3, Fargate, Postgres, CloudFront) is in Ohio.
+- **Decision (Arnav's call, conditional):** if read-only checks of the account confirm that everything works in `us-east-2` and that `ca-central-1` would force the paid plan, use **`us-east-2` and keep the free plan** (D-038).
+  - Rejected: `ca-central-1` on the paid plan. It keeps data in Canada, but the paid plan can bill, which D-038 avoided until the beta.
+- **Checks before anything is created** (Arnav installs and configures the CLI himself, so his access key never passes through Claude):
+  - who the CLI is signed in as;
+  - the account's plan and region settings;
+  - whether a read-only Cognito call in `ca-central-1` is refused;
+  - SES in `us-east-2` (sandbox, sending enabled);
+  - Cognito and Budgets access;
+  - whether `arnav-admin` holds the permissions a CDK deployment needs.
+- **What changes for writers, if confirmed:** accounts and scripts live in the US (Ohio) rather than Canada; the Privacy page's "Where it lives" is updated. Latency from Toronto is about the same. **For the system:** the region settings (`infra/.env.local`, `COGNITO_REGION`) and the log; no code names a region.
+- **Status:** Arnav's call, pending the checks. D-030's region stands until they pass.
 
 ### D-056 · 2026-10-26 · D-055's AWS setup choices confirmed
 
