@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 3 built (D-044), signing in:**
+- **Accounts phase step 3 built (D-044), choices confirmed (D-045), signing in:**
   - **Email codes:** a new address signs up and gets the name step; a known one gets a sign-in code.
   - **Google** goes through Cognito with PKCE.
   - **Linking:** each sign-in is linked to one person per verified email.
@@ -122,15 +122,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building accounts step 3 (D-044):**
-  - **(a)** Try sign-up first, fall back to the sign-in code.
-  - **(b)** Addresses are lowercased.
-  - **(c)** The sign-in in progress travels as an opaque blob; the server keeps no state.
-  - **(d)** Google's state and PKCE verifier sit in a 10-minute SameSite=Lax cookie.
-  - **(e)** The email's first part stands in for the name until the name step.
-  - **(f)** `PATCH /api/me` sets the name.
-  - **(g)** Unverified emails are refused.
-  - **(h)** Signing out revokes the refresh token at Cognito.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -287,6 +278,19 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-045 · 2026-10-25 · D-044's sign-in choices confirmed
+
+- **Decision (Arnav's call):** D-044 (a)-(h) stand:
+  - sign-up first, falling back to the sign-in code;
+  - addresses lowercased;
+  - no server state between "Continue" and the code;
+  - a 10-minute Lax cookie for Google's round trip;
+  - the address's first part as a stand-in name;
+  - `PATCH /api/me` for the name step;
+  - unverified addresses refused;
+  - signing out revokes the refresh token at Cognito.
+- **Status:** Arnav's call. Step 4 (the sync server) is next.
 
 ### D-044 · 2026-10-25 · Accounts phase step 3: signing in through the API
 
