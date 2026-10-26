@@ -173,6 +173,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 - ~~D-020: storage-backed tests not yet run~~: resolved in D-021. All 6 pass against DynamoDB Local and SeaweedFS, three runs in a row, including the SIGKILL crash of a real server process.
 - ~~D-020: no client heartbeat~~: decided in D-022 (ping every 5 s, give up after 10 s).
+- **D-062: a host sync server and the Docker cluster mix in one membership.** They share the local DynamoDB, but the containers can't reach the host's `localhost` address. For now: run one or the other, never both. A fix (separate membership tables, or a reachable host address) can wait until it matters.
 - **D-020: web test runs end with a 10-second wait.** Vite's own browser connections outlive the test server's teardown, so Vitest waits out its timeout. The run still exits 0, and our servers leave nothing open.
 
 - **Spike follow-ups (D-012):**
@@ -302,6 +303,13 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-062 · 2026-10-26 · The local stack checked on the real pool before the demo; the cluster image fixed
+
+- **Checked:** the API and one sync server start against the deployed pool (`pnpm dev:api`, `pnpm dev:sync`). Signed out, the API answers 401 "Please sign in again", as it should. Migration 002 applied to the local Postgres.
+- **Found and fixed (a build fix, no design change):** the 3-container cluster (`pnpm cluster:up`) crashed on start with `Cannot find package '@wr/auth'`. The sync image was written before `packages/auth` existed and copied only `@wr/shared`. `apps/sync/Dockerfile` now copies `@wr/auth` too, and all three servers start and find each other (sync-1, -2, -3).
+- **Found, a dev-only trap (now an open issue):** running `pnpm dev:sync` on the Mac while the cluster runs makes the Mac's server a fourth member, because both share the local DynamoDB. The containers can't reach it at its `localhost` address. So the demo runs either the single server or the cluster, never both. Its membership row expired 6 s after it stopped, as designed.
+- **Status:** fixed and verified locally; the browser against the cluster is the one path still to run, in the demo (as D-024 noted).
 
 ### D-061 · 2026-10-26 · Cognito deployed; the email-code assumptions checked on the real pool, and one fixed
 

@@ -3,12 +3,14 @@
 FROM node:24.12.0-alpine
 WORKDIR /repo
 RUN corepack enable
-# Install only what the sync server needs (and its workspace dependency @wr/shared).
+# Install only what the sync server needs (and its workspace dependencies @wr/shared, @wr/auth).
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY apps/sync/package.json apps/sync/
 COPY packages/shared/package.json packages/shared/
+COPY packages/auth/package.json packages/auth/
 RUN COREPACK_ENABLE_DOWNLOAD_PROMPT=0 pnpm install --frozen-lockfile --filter "@wr/sync..."
 COPY packages/shared packages/shared
+COPY packages/auth/src packages/auth/src
 COPY apps/sync apps/sync
 WORKDIR /repo/apps/sync
 EXPOSE 4000
