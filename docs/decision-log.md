@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 8, part 1 built (D-055), choices confirmed (D-056): the CDK app, not yet deployed.**
+- **Accounts phase step 8, part 1 built (D-055), choices confirmed (D-056): the CDK app. Deployed so far: the CDK bootstrap and `WrBudgets` (D-060).**
   - **Stacks, deployed in order:** `WrBudgets` ($40 a month, emailing at $20 and $40 actual and $40 forecast), then `WrEmail` (SES identities for the sender and the demo's two addresses), then `WrAuth` (the Cognito pool on Essentials with passwordless email codes, case-insensitive email usernames, a public USER_AUTH-only client, the sign-in domain, and Google once configured).
   - **The API** sends invitations through SES when `WR_SENDER_EMAIL` is set.
 - **Accounts phase step 7 built (D-053), choices confirmed (D-054): the Share menu.**
@@ -302,6 +302,17 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-060 · 2026-10-26 · First AWS deployment: CDK bootstrap and the budget alarms
+
+- **Done (Arnav's go):**
+  - `cdk bootstrap` in `us-east-2` created the CDK toolkit stack (`CDKToolkit`: its assets bucket, roles and version parameter).
+  - `WrBudgets` deployed `writers-room-monthly`. Checked in AWS: $40 a month, $0 spent, with alerts at 50% actual ($20), 100% actual ($40) and 100% forecast ($40), emailed to Arnav's alert address.
+  - Both were deployed with the `writers-room` profile as `arnav-admin`.
+- **Correction:** AWS Budgets emails the address directly when a threshold is crossed. There's no subscription to confirm, despite what Claude said before.
+- **Also:** `Stack#addDependency` is deprecated in this CDK version, so `infra/src/app.ts` now uses `addStackDependency`.
+- **Next, with Arnav's go:** `WrEmail` (two verification links to click), then `WrAuth`.
+- **Status:** deployed and verified.
 
 ### D-059 · 2026-10-26 · How this AWS account is secured (no root sign-in exists)
 

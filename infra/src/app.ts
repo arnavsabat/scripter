@@ -16,4 +16,4 @@ const email = new EmailStack(app, 'WrEmail', {
   testRecipients: config.testRecipients,
 });
 const auth = new AuthStack(app, 'WrAuth', { env, config });
-auth.addDependency(email);
+auth.addStackDependency(email);
