@@ -1,14 +1,15 @@
 // The script screen: toolbar, sidebar and page (SPEC 3.5-3.7). `App` wraps it with toasts for the tests.
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import { Sidebar, type SidebarTab } from './components/Sidebar';
 import { ToastProvider, useToast } from './components/Toast';
-import { Toolbar } from './components/Toolbar';
+import { Toolbar, type EpisodeTitle } from './components/Toolbar';
 import { handleMarginKey, topInPage } from './editor/marginKeys';
 import { ScriptPage } from './editor/ScriptPage';
 import { useScriptEditor } from './editor/useScriptEditor';
 import type { Session } from './session';
 import './app.css';
 import './script.css';
+import './home/home.css';
 
 /** The one menu or popover open at a time; Esc closes it first (SPEC 3.9). */
 export type Overlay =
@@ -26,7 +27,16 @@ export function App({ session }: { session: Session }) {
   );
 }
 
-export function ScriptScreen({ session }: { session: Session }) {
+interface ScriptScreenProps {
+  session: Session;
+  /** The open episode's title (the tests' bare editor has none). */
+  title?: EpisodeTitle;
+  onBack?: () => void;
+  /** The server turned this connection away for good (4403 access changed, 4410 deleted…). */
+  onFatal?: (reason: NonNullable<ReturnType<typeof useScriptEditor>['fatal']>) => void;
+}
+
+export function ScriptScreen({ session, title, onBack, onFatal }: ScriptScreenProps) {
   const toast = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [tab, setTab] = useState<SidebarTab>('scenes');
@@ -46,10 +56,18 @@ export function ScriptScreen({ session }: { session: Session }) {
     },
   });
 
+  const reportFatal = useEffectEvent((reason: NonNullable<typeof handle.fatal>) =>
+    onFatal?.(reason),
+  );
+  useEffect(() => {
+    if (handle.fatal) reportFatal(handle.fatal);
+  }, [handle.fatal]);
+
   return (
     <div className={`app${sidebarOpen ? '' : ' left-closed'}`}>
       <Toolbar
-        title="Untitled script"
+        title={title ?? 'Untitled script'}
+        {...(onBack ? { onBack } : {})}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => {
           setOverlay(null);

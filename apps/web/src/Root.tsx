@@ -1,13 +1,17 @@
-// The app: who's signed in, and which page the URL names (D-048's tiny router).
+// The app: who's signed in, and which page the URL names (D-048's tiny router). Signed in, Home
+// and the open script are two layers that crossfade (the handoff, SPEC 3.10).
 import { colorFor } from '@wr/shared';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiFailure, api, publicApi } from './api';
 import { ScriptScreen } from './App';
 import { auth, useAuth, type Me } from './auth';
 import { ToastProvider, useToast } from './components/Toast';
+import { HomeScreen } from './home/HomeScreen';
+import { useHome } from './home/useHome';
+import { localCopies } from './localCopies';
 import { Privacy, Terms } from './pages/Legal';
 import { SignIn, type InvitePreview } from './pages/SignIn';
-import { navigate, useRoute } from './router';
+import { navigate, useRoute, type Route } from './router';
 import type { Session } from './session';
 
 export function Root({ syncUrls }: { syncUrls: string | readonly string[] }) {
@@ -35,20 +39,15 @@ function Pages({ syncUrls }: { syncUrls: string | readonly string[] }) {
   if (route.name === 'terms') return <Terms />;
   if (route.name === 'privacy') return <Privacy />;
   if (state.status === 'loading') return null;
-  if (route.name === 'invite')
-    return <Invitation token={route.token} signedIn={state.status === 'signedIn'} />;
-  if (state.status === 'signedOut') return <SignIn />;
-  if (route.name === 'episode')
-    return <Episode key={route.id} id={route.id} me={state.me} syncUrls={syncUrls} />;
-  return <HomeSoon me={state.me} />;
+  if (state.status === 'signedOut')
+    return route.name === 'invite' ? <InvitationSignIn token={route.token} /> : <SignIn />;
+  return <SignedIn route={route} me={state.me} syncUrls={syncUrls} />;
 }
 
-/** /i/<token> from an invitation email (D-032): sign in if needed, then join. */
-function Invitation({ token, signedIn }: { token: string; signedIn: boolean }) {
+/** /i/<token>, signed out: "Join Fogline" (D-028, D-032). Accepting happens once signed in. */
+function InvitationSignIn({ token }: { token: string }) {
   const toast = useToast();
   const [preview, setPreview] = useState<InvitePreview | null>(null);
-  const accepting = useRef(false);
-
   useEffect(() => {
     let live = true;
     publicApi<InvitePreview>('GET', `/api/invitations/preview?token=${token}`).then(
@@ -65,12 +64,76 @@ function Invitation({ token, signedIn }: { token: string; signedIn: boolean }) {
       live = false;
     };
   }, [token, toast]);
+  return preview ? <SignIn invite={preview} /> : null;
+}
 
+function SignedIn({
+  route,
+  me,
+  syncUrls,
+}: {
+  route: Route;
+  me: Me;
+  syncUrls: string | readonly string[];
+}) {
+  const { data, reload } = useHome();
+  const [select, setSelect] = useState<string | null>(null);
+  const onEpisode = route.name === 'episode';
+
+  // The script layer stays mounted while it fades out after "back", then goes.
+  const [shown, setShown] = useState<string | null>(onEpisode ? route.id : null);
+  if (onEpisode && route.id !== shown) setShown(route.id);
   useEffect(() => {
-    if (!signedIn || accepting.current) return;
-    accepting.current = true;
-    api<{ seriesName: string }>('POST', '/api/invitations/accept', { token }).then(
+    if (onEpisode) return;
+    const t = setTimeout(() => setShown(null), 260);
+    return () => clearTimeout(t);
+  }, [onEpisode]);
+
+  return (
+    <div className="layers">
+      <div className={`layer${onEpisode ? ' off to-left' : ''}`}>
+        <HomeScreen me={me} data={data} reload={reload} select={select} />
+      </div>
+      {shown && (
+        <Layer visible={onEpisode}>
+          <Episode key={shown} id={shown} me={me} syncUrls={syncUrls} onChanged={reload} />
+        </Layer>
+      )}
+      {route.name === 'invite' && (
+        <AcceptInvitation
+          token={route.token}
+          onJoined={(seriesId) => {
+            setSelect(seriesId);
+            reload();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/** A layer that fades in on its first frame, so opening a script crossfades too. */
+function Layer({ visible, children }: { visible: boolean; children: ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const frame = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(frame);
+  }, []);
+  return <div className={`layer${visible && ready ? '' : ' off to-right'}`}>{children}</div>;
+}
+
+/** /i/<token>, signed in: join, then show the series on Home. */
+function AcceptInvitation({ token, onJoined }: { token: string; onJoined: (id: string) => void }) {
+  const toast = useToast();
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current) return;
+    started.current = true;
+    api<{ seriesId: string; seriesName: string }>('POST', '/api/invitations/accept', {
+      token,
+    }).then(
       (r) => {
+        onJoined(r.seriesId);
         toast.show(`You joined ${r.seriesName}`);
         navigate('/', { replace: true });
       },
@@ -79,33 +142,39 @@ function Invitation({ token, signedIn }: { token: string; signedIn: boolean }) {
         navigate('/', { replace: true });
       },
     );
-  }, [signedIn, token, toast]);
-
-  if (signedIn || !preview) return null;
-  return <SignIn invite={preview} />;
+  }, [token, toast, onJoined]);
+  return null;
 }
 
 interface OpenedEpisode {
-  draftId: string;
+  id: string;
   name: string;
+  number: number;
+  series: { id: string; name: string; isSeries: boolean };
   canEdit: boolean;
+  draftId: string;
 }
 
-/** /e/<id>: the script screen, connected to the episode's main draft as this person. */
+/** /e/<id>: the script screen on the episode's main draft, as this person (D-046). */
 function Episode({
   id,
   me,
   syncUrls,
+  onChanged,
 }: {
   id: string;
   me: Me;
   syncUrls: string | readonly string[];
+  onChanged: () => void;
 }) {
   const toast = useToast();
   const [episode, setEpisode] = useState<OpenedEpisode | null>(null);
+  // A script made with + New script / + New episode opens with its title ready to type (D-033).
+  const [isNew] = useState(() => new URLSearchParams(location.search).get('new') === '1');
 
   useEffect(() => {
     let live = true;
+    if (isNew) history.replaceState(null, '', location.pathname);
     api<OpenedEpisode>('GET', `/api/episodes/${id}`).then(
       (e) => {
         if (live) setEpisode(e);
@@ -119,7 +188,7 @@ function Episode({
     return () => {
       live = false;
     };
-  }, [id, toast]);
+  }, [id, toast, isNew]);
 
   const session = useMemo<Session | null>(
     () =>
@@ -128,22 +197,64 @@ function Episode({
         docId: episode.draftId,
         identity: { userId: me.id, name: me.name, color: colorFor(me.id) },
         token: auth.token,
+        canEdit: episode.canEdit,
       },
     [episode, me, syncUrls],
   );
-  return session ? <ScriptScreen session={session} /> : null;
-}
 
-/** Until the home page lands (accounts step 6). */
-function HomeSoon({ me }: { me: Me }) {
+  /** The server closed us for good (D-046): access changed, or the episode was deleted. */
+  const onFatal = async (reason: string) => {
+    if (!episode) return;
+    if (reason === 'deleted' || reason === 'bad episode') {
+      toast.show(
+        reason === 'deleted'
+          ? 'This episode was deleted by the showrunner.'
+          : 'That episode isn’t available.',
+      );
+      onChanged();
+      return navigate('/', { replace: true });
+    }
+    if (reason !== 'forbidden') return; // 'unauthorized': the sign-in state takes over
+    let now: OpenedEpisode;
+    try {
+      now = await api<OpenedEpisode>('GET', `/api/episodes/${id}`);
+    } catch (err) {
+      toast.show(err instanceof ApiFailure ? err.message : 'You no longer have access.');
+      onChanged();
+      return navigate('/', { replace: true });
+    }
+    // Reload the server's version in the new mode. Losing edit access discards edits the
+    // server never accepted (D-046), so this device's copy goes too.
+    setEpisode(null);
+    if (!now.canEdit) await localCopies.clear(episode.draftId);
+    toast.show(
+      now.canEdit
+        ? 'You can edit this episode now.'
+        : 'Your access changed. Edits since then weren’t saved.',
+    );
+    setEpisode(now);
+  };
+
+  if (!session || !episode) return null;
+  const prefix = episode.series.isSeries ? `Ep ${episode.number} · ` : '';
   return (
-    <div className="si-page">
-      <p style={{ textAlign: 'center', paddingTop: 96, fontSize: 13, color: 'var(--muted)' }}>
-        Signed in as {me.name}. The home page arrives in the next step.{' '}
-        <button type="button" className="ta" data-t="Sign out" onClick={() => void auth.signOut()}>
-          Sign out
-        </button>
-      </p>
-    </div>
+    <ScriptScreen
+      session={session}
+      onBack={() => navigate('/')}
+      onFatal={(r) => void onFatal(r)}
+      title={{
+        text: prefix + episode.name,
+        value: episode.name,
+        prefix,
+        canEdit: episode.canEdit,
+        startRenaming: isNew,
+        onRename: (name) => {
+          setEpisode({ ...episode, name });
+          api('PATCH', `/api/episodes/${id}`, { name }).then(onChanged, (err: unknown) =>
+            toast.show(err instanceof ApiFailure ? err.message : 'Couldn’t rename it.'),
+          );
+        },
+      }}
+    />
   );
 }

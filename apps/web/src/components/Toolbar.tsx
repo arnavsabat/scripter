@@ -6,10 +6,22 @@ import type { PresenceUser } from '../editor/presence';
 import { initials } from '../session';
 import { Icon } from './Icons';
 import { Menu } from './Menu';
+import { RenameTitle } from './RenameTitle';
 import { useToast } from './Toast';
 
+/** The episode this toolbar names (D-033): its title, and whether it can be renamed here. */
+export interface EpisodeTitle {
+  text: string;
+  value: string;
+  prefix: string;
+  canEdit: boolean;
+  onRename: (name: string) => void;
+  startRenaming?: boolean;
+}
+
 interface Props {
-  title: string;
+  title: string | EpisodeTitle;
+  onBack?: () => void;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   overlay: Overlay;
@@ -28,6 +40,7 @@ const CUE_HINT = 'Your edits are saved on this device and will merge when you re
 
 export function Toolbar({
   title,
+  onBack,
   sidebarOpen,
   onToggleSidebar,
   overlay,
@@ -41,13 +54,13 @@ export function Toolbar({
 
   return (
     <header className="toolbar">
-      <div className="lgrp">
+      <div className="lgrp slide">
         <button
           type="button"
           className="ib"
           title="Back to home"
           aria-label="Back to home"
-          onClick={() => toast.show('Home arrives with accounts in a later phase')}
+          onClick={() => (onBack ? onBack() : toast.show('Home isn’t available here'))}
         >
           <Icon name="back" />
         </button>
@@ -61,7 +74,18 @@ export function Toolbar({
         >
           <Icon name="side" />
         </button>
-        <span className="title">{title}</span>
+        {typeof title === 'string' ? (
+          <span className="title">{title}</span>
+        ) : (
+          <RenameTitle
+            text={title.text}
+            value={title.value}
+            prefix={title.prefix}
+            canRename={title.canEdit}
+            onSave={title.onRename}
+            startEditing={!!title.startRenaming}
+          />
+        )}
         <span className="anchor">
           <button
             type="button"
@@ -82,26 +106,29 @@ export function Toolbar({
             />
           )}
         </span>
+        {typeof title !== 'string' && !title.canEdit && <span className="vo">View only</span>}
         {cue && (
           <span className="cue" title={CUE_HINT} role="status">
             {CUE_TEXT[cue]}
           </span>
         )}
       </div>
-      <div className="grp">
-        <span className="avatars" aria-label="Writing now">
-          {others.map((u) => (
-            <span
-              key={u.userId}
-              className={`av av-${(u.color % 3) + 1}`}
-              title={u.name}
-              aria-label={u.name}
-            >
-              {initials(u.name)}
-            </span>
-          ))}
-        </span>
-        <span className="dv" aria-hidden="true" />
+      <div className="grp slide">
+        {others.length > 0 && (
+          <span className="avatars" aria-label="Writing now">
+            {others.map((u) => (
+              <span
+                key={u.userId}
+                className={`av av-${(u.color % 3) + 1}`}
+                title={u.name}
+                aria-label={u.name}
+              >
+                {initials(u.name)}
+              </span>
+            ))}
+          </span>
+        )}
+        {others.length > 0 && <span className="dv" aria-hidden="true" />}
         <button
           type="button"
           className={`ib${overlay?.kind === 'share' ? ' on' : ''}`}

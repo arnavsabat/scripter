@@ -10,6 +10,8 @@ export interface Session {
   identity: Identity;
   /** The sign-in token, or a function asked for a fresh one on every connect (D-046). */
   token: string | (() => Promise<string>);
+  /** False for viewers and unassigned writers: the page is read-only ("View only", D-033). */
+  canEdit?: boolean;
 }
 
 /** Two-letter initials for an avatar: "Maya" → "MA", "Sam Jones" → "SJ". */

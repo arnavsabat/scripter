@@ -35,7 +35,7 @@ export function ScriptPage({ mountRef, view, overlay, setOverlay }: Props) {
 
   return (
     <main className="center">
-      <div className="in">
+      <div className="in slide">
         <div className="desk">
           <div className="page">
             <div ref={mountRef} />

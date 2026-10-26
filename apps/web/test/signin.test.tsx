@@ -47,6 +47,17 @@ const button = (label: string) =>
 /** Text actions are clicked by selector (Vitest's text locators are ambiguous for them). */
 const clickAction = (label: string) => commands.clickAt(`button[data-t="${label}"]`, 4, 4);
 
+/** Home is showing, signed in as someone with these initials. */
+const onHomeAs = (initials: string) =>
+  $('.home-tb .title')?.textContent === 'Home' &&
+  $('[aria-label="Account"] .av')?.textContent === initials;
+
+async function signOutViaMenu() {
+  await commands.clickAt('button[aria-label="Account"]', 10, 10);
+  await until(() => button('Sign out'));
+  await userEvent.click(button('Sign out'));
+}
+
 async function enterEmail(email: string) {
   await until(() => heading() === 'Sign in or create an account' || heading().startsWith('Join'));
   await userEvent.fill(field(), email);
@@ -55,6 +66,8 @@ async function enterEmail(email: string) {
 }
 
 beforeEach(async () => {
+  // Earlier test files can leave scripts marked unsynced in this browser (D-050's sign-out check).
+  localStorage.removeItem('wr-unsynced');
   await fetch('/__fake/reset', { method: 'POST' });
   await fetch('/api/auth/signout', { method: 'POST' }); // forget the refresh cookie
 });
@@ -73,7 +86,7 @@ describe('signing in with an email code', () => {
     await until(() => heading() === 'What should the room call you?');
     await userEvent.fill(field(), 'Riley Chen');
     await userEvent.click(button('Continue'));
-    await until(() => document.body.textContent?.includes('Signed in as Riley Chen'));
+    await until(() => onHomeAs('RC'));
   });
 
   it('a returning writer’s longer sign-in code works, and they skip the name step', async () => {
@@ -83,15 +96,15 @@ describe('signing in with an email code', () => {
     await until(() => heading() === 'What should the room call you?');
     await userEvent.fill(field(), 'Sam Jones');
     await userEvent.click(button('Continue'));
-    await until(() => document.body.textContent?.includes('Signed in as Sam Jones'));
-    await clickAction('Sign out');
+    await until(() => onHomeAs('SJ'));
+    await signOutViaMenu();
     await enterEmail('SAM@example.com');
     // An 8-digit sign-in code: nothing happens at six digits, and it signs in at the eighth.
     await userEvent.type(field(), '123456');
     await new Promise((r) => setTimeout(r, 200));
     expect(heading()).toBe('Check your email');
     await userEvent.type(field(), '78');
-    await until(() => document.body.textContent?.includes('Signed in as Sam Jones'));
+    await until(() => onHomeAs('SJ'));
   });
 
   it('a wrong code is explained in a toast; "Use a different email" goes back with the address kept', async () => {
@@ -121,10 +134,10 @@ describe('staying signed in', () => {
     await until(() => heading() === 'What should the room call you?');
     await userEvent.fill(field(), 'Priya');
     await userEvent.click(button('Continue'));
-    await until(() => document.body.textContent?.includes('Signed in as Priya'));
+    await until(() => onHomeAs('PR'));
     closeAll();
     open(); // a fresh page: nothing in memory, only the cookie
-    await until(() => document.body.textContent?.includes('Signed in as Priya'));
+    await until(() => onHomeAs('PR'));
     expect($('.si h1')).toBeNull();
   });
 });

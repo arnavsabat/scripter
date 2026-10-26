@@ -95,6 +95,8 @@ export function createEditor(
   ydoc: Y.Doc,
   awareness: Awareness,
   hooks: EditorHooks,
+  /** False for a view-only session (D-033, D-046): no caret, and typing does nothing. */
+  editable = true,
 ): ScriptEditor {
   const plugins = [
     ySyncPlugin(ydoc.getXmlFragment(FRAGMENT)),
@@ -120,6 +122,7 @@ export function createEditor(
   const view = new EditorView(mount, {
     state: EditorState.create({ schema, plugins }),
     attributes: { class: 'script', spellcheck: 'true', 'aria-label': 'Script' },
+    editable: () => editable,
     handleKeyDown: (v, event) => hooks.onKeyDown(v, event),
     // `this` rather than `view`: y-prosemirror dispatches during the EditorView constructor.
     dispatchTransaction(this: EditorView, tr) {

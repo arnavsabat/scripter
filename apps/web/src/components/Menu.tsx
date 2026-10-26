@@ -7,6 +7,8 @@ export interface MenuItem {
   hint?: string;
   onSelect: () => void;
   current?: boolean;
+  /** A thin line above this item (e.g. before "Remove from series"). */
+  separated?: boolean;
 }
 
 interface Props {
@@ -61,19 +63,21 @@ export function Menu({ items, onClose, style, label }: Props) {
       onKeyDown={onKeyDown}
     >
       {items.map((item) => (
-        <button
-          key={item.label}
-          type="button"
-          className="mi"
-          role="menuitem"
-          onClick={() => {
-            onClose();
-            item.onSelect();
-          }}
-        >
-          {item.label}
-          <span>{item.current ? '✓' : (item.hint ?? '')}</span>
-        </button>
+        <div key={item.label} style={{ display: 'contents' }}>
+          {item.separated && <div className="sep" role="separator" />}
+          <button
+            type="button"
+            className="mi"
+            role="menuitem"
+            onClick={() => {
+              onClose();
+              item.onSelect();
+            }}
+          >
+            {item.label}
+            <span>{item.current ? '✓' : (item.hint ?? '')}</span>
+          </button>
+        </div>
       ))}
     </div>
   );

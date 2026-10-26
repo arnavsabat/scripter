@@ -1,0 +1,353 @@
+/* Home, the handoff, Members, deleting, renaming and "View only": values from prototype v2
+   (docs/prototype/writers-room-prototype-v2.html, D-034 to D-037). Colors are tokens only. */
+
+/* ---- The handoff (SPEC 3.10): Home and the script are two layers that crossfade, their
+   contents sliding 10 px, while the toolbar, gray sidebar and white surface stay put. ---- */
+.layers {
+  position: relative;
+  height: 100%;
+}
+.layer {
+  position: absolute;
+  inset: 0;
+  transition: opacity 0.22s ease;
+}
+.layer.off {
+  opacity: 0;
+  pointer-events: none;
+}
+.slide {
+  transition: transform 0.22s ease;
+}
+.left .in.slide {
+  transition:
+    opacity 0.24s ease,
+    transform 0.22s ease;
+}
+.layer.off.to-left .slide {
+  transform: translateX(-10px);
+}
+.layer.off.to-right .slide {
+  transform: translateX(10px);
+}
+
+/* ---- Home's column (SPEC 3.10) ---- */
+.home {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 40px 48px;
+}
+.sh {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 12px 14px;
+}
+.sh > span:first-child {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.eps {
+  border-top: 1px solid var(--line2);
+}
+.ep {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line2);
+  font-size: 15px;
+  cursor: pointer;
+}
+.ep:hover {
+  background: var(--hover);
+}
+.ep .nm,
+.row .nm {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: left;
+}
+.epr {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.live {
+  color: var(--green);
+}
+.emptyh {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  padding-top: 96px;
+  line-height: 1.6;
+}
+.home-tb .lgrp {
+  padding-left: 8px;
+}
+.sep {
+  height: 1px;
+  background: var(--line2);
+  margin: 4px 6px;
+}
+.mh {
+  display: flex;
+  flex-direction: column;
+  padding: 6px 10px 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* Hover backgrounds on Home's text actions (D-026, D-035); the toolbar's match its 32x28 icon
+   slots (D-036). Padding is offset by an equal negative margin, so nothing moves. */
+.ta.hv {
+  padding: 4px 6px;
+  margin: -4px -6px;
+  border-radius: 6px;
+}
+.ta.hv:hover {
+  background: var(--hover);
+}
+.ta.hv.tbh {
+  height: 28px;
+  box-sizing: border-box;
+  align-content: center;
+  padding: 0 8px;
+  margin: 0 -8px;
+}
+
+/* ---- Click-to-rename titles (D-033) and "View only" ---- */
+.title.rn {
+  cursor: text;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+}
+.title.rn:hover {
+  background: var(--hover);
+}
+.ren {
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--hover);
+  border: 0;
+  border-radius: 4px;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  outline: none;
+  box-shadow: 0 0 0 2px var(--blue-ring);
+}
+.vo {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* ---- Deleting (D-037): the hover × and the inline confirm ---- */
+.rx {
+  width: 24px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin: 0 -6px 0 6px;
+  border-radius: 6px;
+  color: var(--icon);
+  opacity: 0;
+}
+.rx svg {
+  width: 14px;
+  height: 14px;
+}
+.hasx:hover .rx,
+.hasx:focus-within .rx,
+.rx:focus-visible {
+  opacity: 1;
+}
+.rx:hover {
+  color: var(--text);
+}
+.cf,
+.cf:hover {
+  background: var(--hover);
+  cursor: default;
+}
+.cfq {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text);
+  line-height: 1.4;
+  text-align: left;
+}
+.cfa {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+.ta.del,
+.ta.del.flash {
+  color: var(--del-fg);
+}
+.ta.del.dis {
+  opacity: 0.45;
+  cursor: default;
+}
+.row.cfs,
+.mrow.cfs {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+.cfs .cfa {
+  margin-left: 0;
+}
+.cfs .fld {
+  flex: none;
+  width: 100%;
+}
+
+/* ---- The right panel (Members, D-030), the same component as Compare (SPEC 3.9) ---- */
+.right {
+  width: 0;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--panel);
+  transition: width 0.24s ease;
+}
+.right-open .right {
+  width: 340px;
+}
+.rp {
+  width: 340px;
+  height: 100%;
+  box-sizing: border-box;
+  border-left: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+.rh {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 16px 12px 12px 20px;
+  border-bottom: 1px solid var(--line2);
+}
+.rh b {
+  font-size: 13px;
+}
+.rh > span {
+  display: flex;
+  flex-direction: column;
+}
+.rb {
+  flex: 1;
+  overflow: auto;
+}
+.rb.ml {
+  padding: 8px 8px 0;
+}
+.rf {
+  padding: 14px 20px;
+  border-top: 1px solid var(--line2);
+}
+.mrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  position: relative;
+}
+.mrow:hover {
+  background: var(--hover);
+}
+.mrow .n {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 500;
+}
+.mrow .av {
+  border: 0;
+  margin: 0;
+}
+.role {
+  font-size: 12px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+button.role:hover {
+  color: var(--text);
+}
+.fl {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 0 0 6px;
+}
+.irow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.fld {
+  flex: 1;
+  min-width: 0;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  outline: none;
+}
+.fld:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--blue-ring);
+}
+/* Field-styled buttons (D-027) */
+.fbtn {
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  font-size: 13px;
+  color: var(--text);
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+.fbtn:hover {
+  background: linear-gradient(var(--hover), var(--hover)), var(--bg);
+}
+.fbtn .car {
+  font-size: 10px;
+  color: var(--muted);
+}
+.pick {
+  position: relative;
+  display: inline-flex;
+}

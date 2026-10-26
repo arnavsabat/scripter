@@ -10,21 +10,30 @@ import {
   type ReactNode,
 } from 'react';
 
+/** A button in the toast: Undo, or a choice like "Sign out anyway" / "Cancel" (D-050). */
+export interface ToastAction {
+  label: string;
+  run: () => void;
+}
+
 export interface ToastApi {
-  show(message: string, undo?: () => void): void;
+  show(message: string, actions?: (() => void) | ToastAction[]): void;
 }
 
 const Ctx = createContext<ToastApi>({ show: () => {} });
 export const useToast = () => useContext(Ctx);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toast, setToast] = useState<{ message: string; undo?: () => void } | null>(null);
+  const [toast, setToast] = useState<{ message: string; actions: ToastAction[] } | null>(null);
   const [visible, setVisible] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const show = useCallback((message: string, undo?: () => void) => {
-    setToast(undo ? { message, undo } : { message });
+  const show = useCallback((message: string, actions?: (() => void) | ToastAction[]) => {
+    setToast({
+      message,
+      actions: typeof actions === 'function' ? [{ label: 'Undo', run: actions }] : (actions ?? []),
+    });
     setVisible(true);
     clearTimeout(timer.current);
     timer.current = setTimeout(() => setVisible(false), 6000);
@@ -36,17 +45,18 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       <div className={`toast${visible ? ' show' : ''}`} role="status" aria-live="polite">
         {toast?.message}
-        {toast?.undo && (
+        {toast?.actions.map((a) => (
           <button
+            key={a.label}
             type="button"
             onClick={() => {
-              toast.undo?.();
+              a.run();
               setVisible(false);
             }}
           >
-            Undo
+            {a.label}
           </button>
-        )}
+        ))}
       </div>
     </Ctx.Provider>
   );

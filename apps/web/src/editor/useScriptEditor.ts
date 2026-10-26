@@ -9,6 +9,7 @@ import { undo } from 'y-prosemirror';
 import { IndexeddbPersistence } from 'y-indexeddb';
 import { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
+import { localCopies } from '../localCopies';
 import type { Session } from '../session';
 import {
   FRAGMENT,
@@ -45,6 +46,8 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
   const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
   const [others, setOthers] = useState<PresenceUser[]>([]);
   const [cue, setCue] = useState<Cue>(null);
+  /** Why the server turned this connection away for good (4403, 4410…), for the page to act on. */
+  const [fatal, setFatal] = useState<SyncClient['fatal']>(null);
 
   // Effect Events always see the latest handlers without re-creating the editor.
   const onCombine = useEffectEvent(handlers.onCombine);
@@ -73,12 +76,18 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
     // 1. This device's copy first, so the script (and any unsynced offline work) shows at once.
     void local.whenSynced.then(() => {
       if (cancelled || !mountRef.current) return;
-      const ed = createEditor(mountRef.current, ydoc, awareness, {
-        onChange: sync,
-        onCombine: (c) => onCombine(c, () => undo(ed.view.state)),
-        onWarning: (id, anchor) => onWarning(id, anchor),
-        onKeyDown: (view, event) => onKeyDown(view, event),
-      });
+      const ed = createEditor(
+        mountRef.current,
+        ydoc,
+        awareness,
+        {
+          onChange: sync,
+          onCombine: (c) => onCombine(c, () => undo(ed.view.state)),
+          onWarning: (id, anchor) => onWarning(id, anchor),
+          onKeyDown: (view, event) => onKeyDown(view, event),
+        },
+        session.canEdit !== false,
+      );
       created = ed;
 
       // 2. Then the server: the handshake sends what it lacks and brings what we lack.
@@ -92,11 +101,25 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
       });
       const c = client;
       let seeded = false;
+      // Which of this browser's copies hold edits the server hasn't acknowledged (D-050).
+      const noteLocalEdit = (_: Uint8Array, origin: unknown) => {
+        if (origin !== c && origin !== local) localCopies.markUnsynced(session.docId);
+      };
+      ydoc.on('update', noteLocalEdit);
+      cleanups.push(() => ydoc.off('update', noteLocalEdit));
       cleanups.push(
         c.onChange(() => {
           setCue(c.cue);
-          // A brand-new episode: once the server has confirmed it's empty, start with one action line.
-          if (!seeded && c.caughtUp && ydoc.getXmlFragment(FRAGMENT).length === 0) {
+          if (c.synced) localCopies.markSynced(session.docId);
+          if (c.fatal) setFatal(c.fatal);
+          // A brand-new episode: once the server has confirmed it's empty, start with one action
+          // line. Never from a view-only session: that would be an edit.
+          if (
+            !seeded &&
+            session.canEdit !== false &&
+            c.caughtUp &&
+            ydoc.getXmlFragment(FRAGMENT).length === 0
+          ) {
             seeded = true;
             seedNewScript(ydoc);
           }
@@ -121,7 +144,10 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
       });
 
       sync(ed.view, false);
-      ed.view.focus();
+      // Ready to type, unless something else already has the keyboard (a new script's title,
+      // waiting to be named).
+      const active = document.activeElement;
+      if (!active || active === document.body) ed.view.focus();
       setEditor(ed);
     });
 
@@ -154,5 +180,5 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
     [editor],
   );
 
-  return { mountRef, editor, scenes, currentSceneId, others, cue, jumpTo };
+  return { mountRef, editor, scenes, currentSceneId, others, cue, fatal, jumpTo };
 }

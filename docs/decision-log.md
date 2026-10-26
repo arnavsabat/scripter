@@ -37,6 +37,8 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase step 6 built (D-051): Home, the handoff, Members, deleting, renaming, the theme, "View only", losing access, and the safe sign-out, all in the real web app.**
+  - **Removing a member** uses the inline confirm ("Remove Maya from The Long Night?" with Cancel / Remove), not an Undo toast. Prototype v2 is updated to match.
 - **Signing out clears this browser's local script copies, safely (D-050).** It first checks that every edit reached the server. If any haven't (the writer is offline), a toast warns, with "Sign out anyway" and "Cancel".
 - **Accounts phase step 5 built (D-048), choices confirmed (D-049): the web app's signed-out side.**
   - **Pages:** the sign-in page (Arnav's template), Terms, Privacy, and invitation links ("Join Fogline", accepted once signed in).
@@ -137,6 +139,18 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Choices made while building accounts step 6 (D-051):**
+  - **(a)** The handoff is two stacked layers.
+  - **(b)** New scripts open with `?new=1`.
+  - **(c)** The editor takes the keyboard only if nothing else has it.
+  - **(d)** "edited just now" or "Oct 12".
+  - **(e)** A plain script's meta uses its writers.
+  - **(f)** "You can edit this episode now." on an upgrade.
+  - **(g)** "Accepted ✓", then the series moves 0.8 s later.
+  - **(h)** Avatar colors come from the person's ID.
+  - **(i)** Members lists you first, then by role.
+  - **(j)** Toasts can carry labeled actions.
+  - **(k)** The fake API keeps an in-memory room, with test-only controls.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -298,6 +312,69 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-051 · 2026-10-26 · Accounts phase step 6: Home, the handoff, Members, deleting and renaming in the web app
+
+- **Decision Arnav made before building (Arnav's call):** removing someone from a series uses the **inline confirm**, like deleting: the row asks "Remove Maya from The Long Night?" with Cancel and Remove, and there's no Undo afterwards. The approved prototype had an Undo toast, but the server deletes a membership outright, so Undo would have needed a new "removed members" record. Prototype v2 is updated to match.
+  - Rejected: a server-side record kept for an hour so Undo could restore the role and episodes (more to build), and delaying the removal by the toast's 6 s (the person would keep access meanwhile, and closing the tab would lose the removal).
+- **What was built** (`apps/web/src/home/`, `Root.tsx`, `theme.ts`, `localCopies.ts`; matched to prototype v2 in light and dark):
+  - **Home** (`HomeScreen.tsx`):
+    - **Toolbar:** "Home", + New series, + New script (the 28 px hover boxes, D-036), the theme toggle and the account menu (name, email, Sign out).
+    - **Sidebar:** RECENT, SCRIPTS, SERIES, INVITATIONS (Accept turns into "Accepted ✓") and RECENTLY DELETED (Restore, "N days left"), each hidden when empty.
+    - **Center:** the series header (the title renames by click for the showrunner; meta like "3 episodes · you’re the showrunner" or "Script · just you"; + New episode for the showrunner; Members), episode rows with "Maya · edited Oct 12" or "● Maya, Sam · editing now", and the empty states.
+    - **Refresh:** Home asks `/api/home` again every 15 s and on focus (D-033).
+  - **Deleting (D-037):** the showrunner's hover × on episode rows and on script and series rows, the inline confirm, a typed name for a series, and Restore.
+  - **Members (D-030, D-027)** (`MembersPanel.tsx`):
+    - **Panel:** the 340 px right panel, opened and closed by "Members" (bold while open), the × or Esc.
+    - **Rows:** each person with their role and episodes. For the showrunner, a role menu with Showrunner / Writer / Viewer, then "Remove from series" (the inline confirm). The INVITED section lists pending invitations, each with its own role and "Cancel invitation".
+    - **Invite row:** the field-styled role picker and Invite. Errors from the API ("Make someone else showrunner first.") show in the toast.
+  - **The handoff** (SPEC 3.10): Home and the open script are two stacked layers that crossfade over 220 ms, their contents sliding 10 px. Home stays mounted while a script is open (its selection and scroll survive), and the script layer is removed after fading out.
+  - **The script toolbar:**
+    - **Back** goes Home.
+    - **The title** is the episode's real one ("Ep 2 · Undertow"), renamed by click if you may edit it. A new script or episode opens with its title ready to type.
+    - **"View only"** shows for viewers and unassigned writers, whose page is read-only. A viewer never adds the starter line to an empty script.
+    - **Avatars and the divider** show only when co-writers are present (prototype v2).
+  - **Losing access mid-session (D-046):**
+    - **4403:** the app asks the API what you may do now. If you lost edit access, it deletes this browser's copy and shows "Your access changed. Edits since then weren't saved.", then reloads view-only. If you gained it: "You can edit this episode now."
+    - **4410:** back to Home with "This episode was deleted by the showrunner."
+  - **The theme** (SPEC 3.10): follows the system until toggled, then remembered on this device (`wr-theme`) and applied before the first paint. The icon shows the mode you'd switch to.
+  - **Safe sign-out (D-050):** documents with unacknowledged local edits are tracked. Sign out warns ("Some edits haven’t reached the server yet…", with Sign out anyway / Cancel) or clears every local script copy and signs out.
+- **Tests:**
+  - **Browser (Chromium), 16 new**, against a fake API that now keeps an in-memory room with the same rules and messages as the API, plus the test sync server:
+    - Home's sections, header and rows;
+    - a writer's series (no + New episode; Members read-only);
+    - Accept;
+    - the empty state;
+    - + New script (the title keeps the keyboard, the handoff, Home lists it, RECENT);
+    - + New episode turning a script into a series;
+    - + New series;
+    - "View only" with a read-only page;
+    - deleting and restoring an episode;
+    - a series' typed-name rule;
+    - Members (the role menu, removing after the confirm, Esc);
+    - inviting with the picker;
+    - the theme toggle;
+    - losing edit access, and an episode deleted, mid-session;
+    - the safe sign-out.
+  - **Results:** all 41 web tests pass, along with the full check and the service suites.
+- **Bugs the tests caught, both fixed:**
+  1. **The editor took the keyboard as it finished loading,** so a new episode's name was typed into the script. It now takes focus only if nothing else has it.
+  2. **The rename box reopened after Enter,** because the title component was rebuilt on every change. It isn't any more.
+- **Choices Claude made while building, for Arnav to confirm:**
+  - **(a) The handoff is two stacked layers** rather than one shared shell. It looks the same, because the toolbar, gray sidebar and white surface coincide and only their contents fade and slide, and it keeps Home's state while a script is open.
+  - **(b) New scripts carry a `?new=1` flag.** "+ New script" and "+ New episode" open `/e/<id>?new=1`, which starts the title renaming and is then removed from the URL.
+  - **(c) The editor takes the keyboard on load only if nothing else has it** (bug 1).
+  - **(d) "edited" wording:** "just now" within a minute, otherwise the date ("Oct 12", with the year if it isn't this one).
+  - **(e) A plain script's meta** ("Script · you and Maya") names its episode's writers, since Home's data doesn't list series members.
+  - **(f) Gaining edit access mid-session** says "You can edit this episode now." and reloads editable.
+  - **(g) Accept** turns into "Accepted ✓" (its width reserved so nothing moves), and the series moves into SERIES 0.8 s later (prototype v2).
+  - **(h) Avatar colors** come from the person's ID, so they're the same in every browser.
+  - **(i) Members ordering:** you first, then by role. The count line reads "4 people · 1 invited".
+  - **(j) Labeled toast actions.** Toasts can carry labeled actions as well as Undo; the safe sign-out uses this.
+  - **(k) The fake API's in-memory room.** For the browser tests, the fake API keeps an in-memory room. The test servers gained test-only controls: sign in as someone with the sample room, unassign, and change someone's access at the sync server.
+- **Not yet:** the Share menu (step 7). Today it still shows placeholder toasts.
+- **What changes for writers:** the whole home page is real. Writers create, open, name, share access to, delete and restore scripts and series, and the app explains every change of access.
+- **Status:** built and tested. Arnav's call on member removal is recorded; (a)-(k) await Arnav.
 
 ### D-050 · 2026-10-26 · Signing out clears local script copies, but never loses unsynced edits silently
 

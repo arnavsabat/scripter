@@ -26,7 +26,7 @@ export function Sidebar({ tab, onTab, scenes, currentSceneId, onJump, others }: 
   const toast = useToast();
   return (
     <aside className="left" aria-label="Script navigator">
-      <div className="in">
+      <div className="in slide">
         <div className="tabs" role="tablist">
           {TABS.map(([id, label]) => (
             <button

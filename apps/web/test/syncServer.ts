@@ -35,6 +35,15 @@ export default async function setup() {
         server = null;
       } else if (url.pathname === '/restart') {
         server ??= await startSyncServer({ port: SYNC_PORT, storage, ...auth, ...FAST });
+      } else if (url.pathname === '/access') {
+        // What a writer may now do with a document (the API's job in production, D-046).
+        const mode = url.searchParams.get('mode') as 'edit' | 'view' | 'none' | 'deleted';
+        auth.access.set(
+          url.searchParams.get('name') ?? '',
+          url.searchParams.get('doc') ?? '',
+          mode,
+        );
+        auth.access.notify({ series: 's-test' });
       } else if (url.pathname === '/token') {
         res.end(await issuer.sign(url.searchParams.get('name') ?? 'Writer'));
         return;

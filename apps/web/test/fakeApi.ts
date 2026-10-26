@@ -5,6 +5,7 @@
 import type { TestIssuer } from '@wr/auth/testing';
 import { randomBytes } from 'node:crypto';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
+import { fakeRooms } from './fakeRooms';
 
 export const FAKE_API_PORT = 4789;
 
@@ -19,6 +20,7 @@ export async function startFakeApi(issuer: TestIssuer) {
   const tokens = new Map<string, string>(); // access token -> email
   const refresh = new Map<string, string>(); // cookie -> email
   const accepted: string[] = [];
+  const rooms = fakeRooms(users);
 
   const read = async (req: IncomingMessage) => {
     let raw = '';
@@ -57,7 +59,22 @@ export async function startFakeApi(issuer: TestIssuer) {
         tokens.clear();
         refresh.clear();
         accepted.length = 0;
+        rooms.reset();
         return send(res, 200, { ok: true });
+      }
+      // Test shortcut: sign in as someone (sets the refresh cookie), optionally with the
+      // prototype's sample room seeded from their point of view.
+      if (path === '/__fake/unassign') {
+        const b = await read(req);
+        rooms.unassign(b.episode!, b.name!);
+        return send(res, 200, { ok: true });
+      }
+      if (path === '/__fake/login') {
+        const b = await read(req);
+        const u = rooms.user(b.name ?? 'Arnav');
+        if (b.room) rooms.seed(u);
+        const s = await issue(u);
+        return send(res, 200, s.body, { 'set-cookie': s.cookie });
       }
       if (path === '/__fake/accepted') return send(res, 200, accepted);
       if (m === 'POST' && (path === '/api/auth/email/start' || path === '/api/auth/email/resend')) {
@@ -123,21 +140,12 @@ export async function startFakeApi(issuer: TestIssuer) {
         me.name = (await read(req)).name ?? me.name;
         return send(res, 200, me);
       }
-      if (m === 'POST' && path === '/api/invitations/accept') {
-        accepted.push(`${me.email} ${(await read(req)).token}`);
-        return send(res, 200, { seriesId: 'fg', seriesName: 'Fogline', role: 'writer' });
-      }
-      const episode = /^\/api\/episodes\/([0-9a-f-]{36})$/.exec(path);
-      if (m === 'GET' && episode)
-        return send(res, 200, {
-          id: episode[1],
-          name: 'Pilot',
-          number: 1,
-          series: { id: 's-test', name: 'The Long Night', isSeries: true },
-          role: 'writer',
-          canEdit: true,
-          draftId: `ep-${episode[1]!.slice(0, 8)}`,
-        });
+      let parsed: Record<string, string> | undefined;
+      const body = async () => (parsed ??= await read(req));
+      if (m === 'POST' && path === '/api/invitations/accept')
+        accepted.push(`${me.email} ${(await body()).token}`);
+      const r = await rooms.handle(m ?? 'GET', path, body, me);
+      if (r) return send(res, r.status, r.body);
       return fail(res, 404, 'not_found', 'That doesn’t exist.');
     })();
   });
