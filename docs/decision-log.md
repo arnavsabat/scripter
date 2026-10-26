@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 7 built (D-053): the Share menu.**
+- **Accounts phase step 7 built (D-053), choices confirmed (D-054): the Share menu.**
   - **Copy invite link** copies `/e/<episode>` and says "copied" only if it was.
   - **Invite co-writer…** is the checklist of the series' writers (toggle, with Undo). The showrunner also gets the invite row, whose invitations assign this episode on acceptance.
   - **Viewers and unassigned writers** see only Copy invite link.
@@ -143,9 +143,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building accounts step 7 (D-053):**
-  - **(a)** Clicking Undo in the toast closes the co-writer menu, like any outside click.
-  - **(b)** "Copied" only when the copy worked; otherwise the toast shows the link.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -307,6 +304,16 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-054 · 2026-10-26 · D-053 confirmed; the email addresses for the AWS setup
+
+- **Decision (Arnav's call):**
+  - D-053 (a) and (b) stand: Undo closes the co-writer menu like any outside click, and the copy toast tells the truth.
+  - **Email addresses:** the AWS setup uses Arnav's two Gmail addresses.
+    - One receives budget alerts and is the SES sender for sign-in codes and invitations until the domain exists (D-038).
+    - Both are the demo's two accounts, verified in SES's sandbox.
+    - They live only in local settings (`infra/.env.local`, git-ignored, read by the CDK app), never in the public repository. The Privacy page's contact address (D-039) was already chosen to be public.
+- **Status:** Arnav's call. Arnav is creating the AWS account (free plan, a plain IAM admin user, the CLI in `ca-central-1`). Claude writes the CDK stacks: budgets first, then Cognito and SES.
 
 ### D-053 · 2026-10-26 · Accounts phase step 7: the Share menu
 
