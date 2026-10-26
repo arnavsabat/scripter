@@ -37,6 +37,11 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase step 2 built (D-042), the API:**
+  - **Token checks:** `packages/auth` checks tokens for both the API and the sync server.
+  - **The REST API:** series, scripts, episodes, members and roles, co-writers, invitations, deleting and restoring, RECENT, and live status.
+  - **Access alerts:** `NOTIFY wr_access` on every access change.
+  - **Rules:** RECENT is kept on the server; a series always keeps a showrunner.
 - **Accounts phase step 1 built (D-040), choices confirmed (D-041):**
   - **Built:** the permission rules (`packages/shared/src/permissions.ts`), the first Postgres migration, and the migration runner.
   - **One person per verified email:** `users` plus `user_identities`, linked by the API at sign-in.
@@ -111,6 +116,13 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Choices made while building accounts step 2 (D-042):**
+  - **(a)** A creator is assigned to what they create.
+  - **(b)** Re-inviting replaces the link.
+  - **(c)** Accepting never lowers a role.
+  - **(d)** Episode trash waits for its series.
+  - **(e)** Pending invitees' emails are visible to members; members' emails are not.
+  - **(f)** Home is one request, repeated every 15 s.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -183,6 +195,7 @@ Phase 2:
 20. ~~Email delivery~~ and ~~the invite link flow~~: SES on our own domain (D-030); one-time links (D-032).
 21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
 - New (found 2026-10-24, accounts phase): the prototype's blue primary button (`.pb`, white text on `--accent`) fails SPEC 3.11's 4.5:1 contrast in dark mode: white on `#6EA2E6` is about 2.6:1 (light mode, on `#2F6DB5`, is about 5.3:1). It's used for Compare's "Send mine to main". Options to bring Arnav: dark text on the dark-mode accent, a deeper dark-mode accent for filled buttons only, or the inverted-surface style used by sign-in's Continue (D-028).
+- New (D-042): the 30-day purge job (D-037) isn't built yet. It must erase Postgres rows *and* each draft's DynamoDB edit log and S3 snapshots, so it's built alongside the sync server's Postgres work (step 4) or the deploy, whichever comes first. Until then, soft-deleted items are only hidden.
 - New (D-040, minor): after `pnpm test`, Vitest reports "something prevents 8 Vite servers from exiting" for about 10 s. It predates step 1 (it happens on the previous commit too). It comes from the web browser-mode project; the tests pass. Worth finding with the hanging-process reporter when convenient.
 - New (D-026; + New script settled in D-035): should the hover background extend to the remaining text actions (Accept, + New what-if, + Snapshot)?
 22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
@@ -265,6 +278,53 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-042 · 2026-10-25 · Accounts phase step 2: the API, shared token checks, RECENT on the server, always a showrunner
+
+- **Decisions Arnav made before building (Arnav's calls):**
+  1. **Token checks live in a new server-only `packages/auth`,** used by apps/api and apps/sync. It keeps `packages/shared` runnable in the browser.
+     - Rejected: putting them in shared (server-only types in a package that must run anywhere), and copying them into both apps (two copies of security code drifting apart).
+  2. **RECENT is kept on the server,** in an `episode_opens` table (migration 002, times only), so it's the same on every device.
+     - Rejected: per-device browser storage.
+  3. **A series always keeps at least one showrunner.** The last one can't become a writer or viewer, or leave, until someone else is showrunner ("Make someone else showrunner first.").
+     - Rejected: allowing it, which leaves a series nobody can manage.
+- **What was built:**
+  - **`packages/auth`** (with `jose` 6.2.13):
+    - `tokenVerifier(issuers)` accepts only RS256 access tokens from a listed issuer, signed by that issuer's published keys, for our app client (`client_id`), and not expired.
+    - `cognitoIssuer(region, pool, client)` fetches and caches the pool's JWKS.
+    - `@wr/auth/testing` generates a per-run test key. It's trusted only when a test builds a server with it; no setting can turn it on.
+  - **`apps/api`** (Fastify 5.12.7):
+    - **The sign-in check:** every route but `/api/health` needs a Bearer access token, and its `sub` must be linked in `user_identities` (D-041).
+    - **Routes:** `GET /api/me` and `GET /api/home` (series with episodes, numbers, writers, live people, per-episode `canEdit`; RECENT; INVITATIONS; RECENTLY DELETED).
+    - **Series:** create (script or series), rename, delete, restore, new episode, members, change role, remove member, invite.
+    - **Episodes:** open (returns `canEdit` and the main draft's ID, and records RECENT), rename, delete, restore, add or remove co-writers.
+    - **Invitations:** accept by token, accept from the sidebar, change role, cancel.
+    - **Every check** goes through `seriesFor` / `episodeFor` (`src/access.ts`) and the shared rule. Non-members get "doesn't exist" for series and "Ask the showrunner" for episodes.
+    - **Access alerts:** every access change sends `NOTIFY wr_access` inside its transaction, so the alert fires only if the change commits.
+    - **Emails:** invitations use D-033's Plain wording. Until SES exists (step 8), the development mailer prints the email, link included.
+    - `pnpm --filter @wr/api dev` refuses to start without the Cognito pool's settings.
+- **Tests:** 23 API tests against real Postgres, signed in with the test key (`pnpm --filter @wr/api test:services`), plus 7 token-check tests and the 10 migration tests. They cover:
+  - **Signing in:** refusing missing, forged and unlinked tokens.
+  - **The permission matrix,** as seen by the showrunner, writers, a viewer and a stranger.
+  - **Episodes:** writers renaming only their own; only the showrunner creating, deleting or inviting.
+  - **Co-writers:** a writer adding and removing a co-writer on their own episode only; viewers can't be co-writers.
+  - **Roles:** demoting to viewer removes assignments; removal ends access; a series keeps its last showrunner.
+  - **Invitations:** a link is one-time and works with any address; cancelled, expired and unknown links fail; INVITATIONS with Accept; already-a-member is refused.
+  - **Deleting:** delete and restore return an episode to its place; a deleted series vanishes and comes back; deleting a plain script's episode deletes the script.
+  - **Home:** RECENT order; the live dot's 30-second window.
+  - **Access alerts:** NOTIFY sent once per committed access change, and never for a refused one.
+
+  The full `pnpm check` passes: 120 tests, 47 skipped without services.
+- **Choices Claude made while building, for Arnav to confirm:**
+  - **(a) A creator is assigned.** Whoever creates an episode (or a script) is assigned to it, as in the approved prototype (D-034, detail 5), so the showrunner shows among its writers ("Arnav, Sam · edited …").
+  - **(b) Inviting again replaces the link.** Inviting an address that already has a pending invitation cancels the old link and sends a new one.
+  - **(c) Accepting never lowers a role.** Accepting an invitation keeps a higher role you already have. An invitation sent from an episode assigns that episode only if you end up a writer.
+  - **(d) Episode trash waits for its series.** RECENTLY DELETED lists an episode only while its series is live. If the whole series was deleted, the episode comes back with it, and its own entry reappears afterwards.
+  - **(e) Who sees pending emails.** Every member can see pending invitations' addresses in Members, as the approved prototype shows a writer. Members' own email addresses aren't shown to anyone.
+  - **(f) No WebSocket from Home.** Home's data comes from one request, which Home repeats every 15 s and on focus (D-033).
+- **Not built yet:** the 30-day purge (see Open issues), and the sign-in endpoints that link identities and set the cookie (step 3).
+- **What changes for writers:** nothing visible yet. **For the system:** the API enforces every role rule from SPEC 5.3, and the sync servers can now be told when access changes.
+- **Status:** built and tested. (a)-(f) await Arnav.
 
 ### D-041 · 2026-10-25 · D-040's choices confirmed, including one person per verified email
 

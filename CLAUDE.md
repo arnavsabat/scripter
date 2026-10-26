@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-041) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-042) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -65,7 +65,7 @@ PARTS 2-5, CONDENSED (full text: docs/SPEC.md)
 
 ## Part 5. Architecture
 
-- **Monorepo:** `apps/web` (React + Vite, plain CSS, no Tailwind), `apps/sync` (custom y-protocols WebSocket server; Hocuspocus is a reference only), `apps/api` (Fastify), `packages/schema`, `packages/pagination`, `packages/shared`, `infra` (CDK), `tools/loadtest`. Local: docker compose (Postgres, DynamoDB Local, SeaweedFS), plus 3 sync nodes from Phase 1.
+- **Monorepo:** `apps/web` (React + Vite, plain CSS, no Tailwind), `apps/sync` (custom y-protocols WebSocket server; Hocuspocus is a reference only), `apps/api` (Fastify), `packages/schema`, `packages/pagination`, `packages/shared`, `packages/auth` (server-only token checks, D-042), `infra` (CDK), `tools/loadtest`. Local: docker compose (Postgres, DynamoDB Local, SeaweedFS), plus 3 sync nodes from Phase 1.
 - **Data:** Postgres tables `users, series, series_members, episodes, episode_writers, invitations, drafts, snapshots, usage_events`. One Y.Doc per main draft and one per what-if (forked from a snapshot of main, never from another what-if). Series data lives outside the Y.Docs.
 - **Roles:** Showrunner (everything); Writer (edits assigned episodes, adds co-writers from series members, creates what-ifs, sends to main without approval); Viewer (read-only). Enforced per connection at the home sync server. Every check goes through `canEdit` / `canMerge(user, scope)`. The home sync server reads roles and assignments from Postgres on connect; the API runs `NOTIFY wr_access` when access changes, and the sync servers re-check open connections (D-031). Libraries: `pg` with plain-SQL migrations, `jose`, and plain `fetch` to Cognito. The refresh token is in an httpOnly cookie via the API; the access token is in memory only.
 - **Sync service:** one home server per episode doc by consistent hashing with virtual nodes over DynamoDB heartbeats. Any server forwards to the home. DynamoDB leases with an epoch fencing token. Every update is appended to the DynamoDB edit log, conditional on the current epoch, **before** ack and broadcast. Clients resend unacked updates (Yjs dedupes), which gives zero lost edits. Periodic S3 snapshots truncate the log. Failover loads snapshot plus log tail. Backoff with full jitter. Graceful handoff on scaling. Tokens verified on connect.
@@ -81,7 +81,7 @@ REPO WORKING NOTES
 
 - Node 24.12 (`.node-version`), pnpm 12.12.1 via corepack (`corepack enable` once). Strict TypeScript 6.0.3 (not 7: typescript-eslint doesn't support it yet; D-006).
 - `pnpm check` runs format check, lint, typecheck and tests. Run it before every commit. `pnpm test:services` (after `pnpm services:up`) runs the suites that need Postgres, DynamoDB Local and SeaweedFS; each API test file gets a throwaway database.
-- Postgres schema changes are new numbered files in `apps/api/migrations/` (never edit an applied one); apply them with `pnpm --filter @wr/api migrate`. Permission checks go through `packages/shared/src/permissions.ts` only.
+- Postgres schema changes are new numbered files in `apps/api/migrations/` (never edit an applied one); apply them with `pnpm --filter @wr/api migrate`. Permission checks go through `packages/shared/src/permissions.ts` only. In the API, every series or episode route starts with `seriesFor` / `episodeFor` (`apps/api/src/access.ts`), and access changes `NOTIFY wr_access` inside the same transaction. Test tokens come only from `@wr/auth/testing`.
 - `packages/schema`, `packages/pagination` and `packages/shared` must stay environment-neutral (no Node or DOM types in `src`). Tests that need Node use a `test/tsconfig.json`.
 - `docs/` and this file are excluded from Prettier. Never reformat the spec, the log or the prototype.
 - Log entries are numbered D-001, D-002, …; the newest goes at the top of "Log entries". Update the current-state sections at the same time.

@@ -8,11 +8,16 @@
     ".": "./src/index.ts"
   },
   "scripts": {
+    "dev": "tsx watch --env-file-if-exists=../../.env src/main.ts",
+    "start": "tsx --env-file-if-exists=../../.env src/main.ts",
     "migrate": "tsx --env-file-if-exists=../../.env src/db/migrate-cli.ts",
     "typecheck": "tsc --noEmit -p .",
     "test:services": "WR_TEST_SERVICES=1 vitest run"
   },
   "dependencies": {
+    "@wr/auth": "workspace:*",
+    "@wr/shared": "workspace:*",
+    "fastify": "5.12.7",
     "pg": "8.23.1"
   },
   "devDependencies": {

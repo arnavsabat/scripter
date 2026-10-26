@@ -1,0 +1,17 @@
+{
+  "name": "@wr/auth",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Server-side sign-in token checks shared by the API and the sync servers (D-031, D-042).",
+  "exports": {
+    ".": "./src/index.ts",
+    "./testing": "./src/testing.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "jose": "6.2.13"
+  }
+}
