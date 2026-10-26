@@ -81,14 +81,19 @@ export function authRoutes(app: FastifyInstance, deps: AppDeps): void {
     } catch (err) {
       if (!(err instanceof CognitoError) || err.type !== 'UsernameExistsException') explain(err);
     }
+    // The address exists. If it never finished signing up, send a fresh sign-up code: asking for
+    // a sign-in code would get a challenge no code can answer, because the pool hides whether
+    // accounts exist (checked on the real pool, D-061). Cognito refuses to re-send a sign-up code
+    // to a confirmed account, which is how we tell the two apart.
+    try {
+      await auth.cognito.resendSignUpCode(email);
+      return { kind: 'signup', email };
+    } catch (err) {
+      if (!(err instanceof CognitoError) || err.type !== 'InvalidParameterException') explain(err);
+    }
     try {
       return { kind: 'signin', email, session: await auth.cognito.startEmailCode(email) };
     } catch (err) {
-      // Signed up before but never entered the code: send a fresh sign-up code.
-      if (err instanceof CognitoError && err.type === 'UserNotConfirmedException') {
-        await auth.cognito.resendSignUpCode(email).catch(explain);
-        return { kind: 'signup', email };
-      }
       explain(err);
     }
   }

@@ -99,7 +99,13 @@ export async function fakeCognito(issuer: TestIssuer) {
         return { status: 200, body: { AuthenticationResult: await issue(u.sub, email) } };
       }
       if (!u) return fail('UserNotFoundException');
-      if (!u.confirmed) return fail('UserNotConfirmedException');
+      // Like the real pool (checked 2026-10-26, D-061): with user-existence errors hidden, an
+      // unconfirmed account gets a challenge as if a code were sent, but no code can ever succeed.
+      if (!u.confirmed) {
+        const session = randomUUID();
+        sessions.set(session, { email, purpose: 'otp', code: 'never' });
+        return { status: 200, body: { ChallengeName: 'EMAIL_OTP', Session: session } };
+      }
       const code = eightDigits(); // Cognito's sign-in codes are 8 digits, sign-up codes 6
       const session = randomUUID();
       sessions.set(session, { email, purpose: 'otp', code });

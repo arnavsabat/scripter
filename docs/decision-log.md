@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 8, part 1 built (D-055), choices confirmed (D-056): the CDK app. Deployed so far: the CDK bootstrap and `WrBudgets` (D-060).**
+- **Accounts phase step 8, part 1 built (D-055), choices confirmed (D-056): the CDK app. Deployed: the CDK bootstrap and `WrBudgets` (D-060), then `WrEmail` and `WrAuth` (D-061).**
   - **Stacks, deployed in order:** `WrBudgets` ($40 a month, emailing at $20 and $40 actual and $40 forecast), then `WrEmail` (SES identities for the sender and the demo's two addresses), then `WrAuth` (the Cognito pool on Essentials with passwordless email codes, case-insensitive email usernames, a public USER_AUTH-only client, the sign-in domain, and Google once configured).
   - **The API** sends invitations through SES when `WR_SENDER_EMAIL` is set.
 - **Accounts phase step 7 built (D-053), choices confirmed (D-054): the Share menu.**
@@ -281,7 +281,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Known risks
 
-- New (accounts step 3): the email-code flow assumes what Cognito's docs show: `SignUp` works without a password, and `ConfirmSignUp`'s session can be passed to `InitiateAuth` (`USER_AUTH`) to sign in at once. It also assumes `SignUp` reports an existing address with `UsernameExistsException` even when user-existence errors are hidden; the docs found don't settle that. Our local fake Cognito follows these assumptions, so they're verified against the real pool at step 8, before the demo.
+- Partly resolved (D-061): the email-code flow's assumptions were checked on the real pool. Sign-up with no password and `UsernameExistsException` hold. An unconfirmed account's sign-in request gets a fake challenge, now handled by re-sending the sign-up code first. Still open: that `ResendConfirmationCode` is refused for a confirmed account (checked in the demo).
 - New (D-031): the sync servers depend on Postgres to authorize *new* connections. If it's unavailable, writers already connected keep editing, but reconnecting writers (after a failover, say) are refused until it returns. Mitigations to consider later: caching recent decisions for a short time, and a Postgres replica.
 - Mid-line paragraph splits under concurrent editing (Yjs binding). Measured in the spike (D-012, test 2): nothing is lost and the structure never corrupts, but text typed concurrently in the second half of a line lands on the first half, and an in-progress word can tear. The risk is accepted pending P2.
 - Cursor stability when nodes are deleted by other users. Tested in the spike: the cursor moves to the start of the next line. Low risk now.
@@ -302,6 +302,23 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-061 · 2026-10-26 · Cognito deployed; the email-code assumptions checked on the real pool, and one fixed
+
+- **Deployed (Arnav's go for this phase's deploys):**
+  - `WrEmail`: both of Arnav's addresses verified and sending enabled.
+  - `WrAuth`: the pool, the client and `writers-room-asabat.auth.us-east-2.amazoncognito.com`. Its settings were checked in AWS and match D-055: the Essentials plan; email as a case-insensitive username; `EMAIL_OTP` allowed; SES sending; a client with no secret, only `ALLOW_USER_AUTH` and refresh, 60-minute access tokens, 30-day refresh tokens, revocation on, and Cognito as the only provider until Google.
+  - The IDs are in Arnav's local `.env` (git-ignored), together with `AWS_PROFILE=writers-room` for the API's SES sending and `WR_CLUSTER_SECRET`. `WR_DEV_AUTH` is gone.
+- **The known risk from step 3, checked against the real pool** (using Arnav's second address, which received a code email):
+  1. **Sign-up with no password works:** the account is created unconfirmed, with a session, and the code goes by email. ✓
+  2. **Signing up again with the same address** gives `UsernameExistsException`. ✓
+  3. **Different from what was assumed:** asking for a sign-in code (`USER_AUTH` / `EMAIL_OTP`) for an *unconfirmed* account returns a challenge as though a code were sent, not `UserNotConfirmedException`. That's the client's user-existence protection.
+     - **The consequence:** someone who started signing up but never typed the code would, next time, be offered a sign-in that no code can complete.
+- **The fix** (`apps/api/src/routes/auth.ts`): when the address already exists, first re-send a *sign-up* code (`ResendConfirmationCode`). Cognito refuses that for a confirmed account, and only then does the API start a sign-in code.
+  - The fake Cognito now behaves like the real pool for unconfirmed accounts, a challenge no code can answer. The "someone who never finished signing up" test failed on the old logic and passes on the new one.
+- **Still to check on the real pool, in the demo:** that Cognito refuses `ResendConfirmationCode` for a *confirmed* account with `InvalidParameterException`, as the fix expects. The first account confirmed in the demo provides the case.
+- **What changes for writers:** someone who abandons signing up halfway can come back and finish, with a fresh sign-up code.
+- **Status:** deployed; fix built and tested; one check left for the demo.
 
 ### D-060 · 2026-10-26 · First AWS deployment: CDK bootstrap and the budget alarms
 
