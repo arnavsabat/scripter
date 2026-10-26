@@ -16,6 +16,8 @@
     "test:services": "pnpm -r --if-present test:services",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "dev:web": "pnpm --filter @wr/web dev",
+    "dev:api": "pnpm --filter @wr/api dev",
+    "dev:sync": "pnpm --filter @wr/sync dev",
     "services:up": "docker compose up -d",
     "services:down": "docker compose down",
     "cluster:up": "docker compose --profile cluster up -d --build",
