@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 2 built (D-042), the API:**
+- **Accounts phase step 2 built (D-042), choices confirmed (D-043), the API:**
   - **Token checks:** `packages/auth` checks tokens for both the API and the sync server.
   - **The REST API:** series, scripts, episodes, members and roles, co-writers, invitations, deleting and restoring, RECENT, and live status.
   - **Access alerts:** `NOTIFY wr_access` on every access change.
@@ -116,13 +116,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building accounts step 2 (D-042):**
-  - **(a)** A creator is assigned to what they create.
-  - **(b)** Re-inviting replaces the link.
-  - **(c)** Accepting never lowers a role.
-  - **(d)** Episode trash waits for its series.
-  - **(e)** Pending invitees' emails are visible to members; members' emails are not.
-  - **(f)** Home is one request, repeated every 15 s.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -258,6 +251,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Known risks
 
+- New (accounts step 3): the email-code flow assumes what Cognito's docs show: `SignUp` works without a password, and `ConfirmSignUp`'s session can be passed to `InitiateAuth` (`USER_AUTH`) to sign in at once. It also assumes `SignUp` reports an existing address with `UsernameExistsException` even when user-existence errors are hidden; the docs found don't settle that. Our local fake Cognito follows these assumptions, so they're verified against the real pool at step 8, before the demo.
 - New (D-031): the sync servers depend on Postgres to authorize *new* connections. If it's unavailable, writers already connected keep editing, but reconnecting writers (after a failover, say) are refused until it returns. Mitigations to consider later: caching recent decisions for a short time, and a Postgres replica.
 - Mid-line paragraph splits under concurrent editing (Yjs binding). Measured in the spike (D-012, test 2): nothing is lost and the structure never corrupts, but text typed concurrently in the second half of a line lands on the first half, and an in-progress word can tear. The risk is accepted pending P2.
 - Cursor stability when nodes are deleted by other users. Tested in the spike: the cursor moves to the start of the next line. Low risk now.
@@ -278,6 +272,17 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-043 · 2026-10-25 · D-042's building choices confirmed
+
+- **Decision (Arnav's call):** D-042 (a)-(f) stand:
+  - a creator is assigned to what they create;
+  - re-inviting replaces the link;
+  - accepting never lowers a role;
+  - an episode's Recently deleted entry waits for its series;
+  - pending invitees' addresses are visible to members, while members' own addresses never are;
+  - Home is one request, repeated every 15 s and on focus.
+- **Status:** Arnav's call. Step 3 (the sign-in endpoints) is next.
 
 ### D-042 · 2026-10-25 · Accounts phase step 2: the API, shared token checks, RECENT on the server, always a showrunner
 
