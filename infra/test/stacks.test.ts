@@ -13,7 +13,7 @@ const config = loadConfig({
   WR_TEST_RECIPIENTS: 'sender@example.com, friend@example.com',
   WR_COGNITO_DOMAIN_PREFIX: 'writers-room-test',
 });
-const env = { region: 'ca-central-1' };
+const env = { region: 'us-east-2' };
 
 describe('budget alarms (SPEC 5.5)', () => {
   it('a $40 monthly budget that emails at $20 and $40 actual, and $40 forecast', () => {

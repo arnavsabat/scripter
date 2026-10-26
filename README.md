@@ -55,6 +55,8 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 
 **Tests:** `pnpm test` runs everything that needs no containers. The web integration tests run in real Chromium; install it once with `pnpm --filter @wr/web exec playwright install chromium`. With the services up, `pnpm test:services` runs the API's Postgres tests (permissions, invitations, sign-in against a fake Cognito, and the sync server enforcing roles end to end) and the sync server's DynamoDB and S3 storage and fencing tests, and `pnpm --filter @wr/sync test:chaos` runs the chaos suite. That suite starts three real server processes and kills one mid-typing (SIGKILL), freezes one until it's fenced off (SIGSTOP/SIGCONT), and adds and removes servers, printing the pause writers saw.
 
+**AWS (accounts step 8):** the account is on AWS's free plan in `us-east-2` (D-058). The CLI's credentials are under the `writers-room` profile, so run AWS and CDK commands with `export AWS_PROFILE=writers-room` first. The CDK app's settings are in the git-ignored `infra/.env.local` (copy `infra/.env.local.example`). The order is `pnpm --filter @wr/infra bootstrap`, then `deploy:budgets`, `deploy:email` (click the verification links) and `deploy:auth`.
+
 ## Scripts
 
 | Command                              | What it does                                                 |

@@ -56,8 +56,8 @@ export function Privacy() {
       </p>
       <h2>Where it lives</h2>
       <p>
-        On Amazon Web Services in Canada (Montreal). Sign-in codes and invitations are sent by email
-        through Amazon.
+        On Amazon Web Services in the United States (Ohio). Sign-in codes and invitations are sent
+        by email through Amazon.
       </p>
       <h2>Deleting your account</h2>
       <p>

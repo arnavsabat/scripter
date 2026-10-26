@@ -57,7 +57,7 @@ services:
       PORT: '4000'
       WR_CLUSTER_SECRET: dev-only-cluster-secret
       DATABASE_URL: postgres://wr:wr_dev_only@postgres:5432/writers_room
-      COGNITO_REGION: ${COGNITO_REGION:-ca-central-1}
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-2}
       COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
       COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:-}
       AWS_REGION: us-east-1

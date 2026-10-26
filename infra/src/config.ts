@@ -4,7 +4,7 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 export interface InfraConfig {
-  /** ca-central-1 (D-030). */
+  /** us-east-2 (D-058; the free plan's organization policy forbids ca-central-1). */
   region: string;
   /** Budget alerts go here (D-038). */
   alertEmail: string;
@@ -34,7 +34,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): InfraConfig {
       .map((s) => s.trim())
       .filter(Boolean);
   return {
-    region: env.WR_AWS_REGION ?? 'ca-central-1',
+    region: env.WR_AWS_REGION ?? 'us-east-2',
     alertEmail: need('WR_ALERT_EMAIL'),
     senderEmail: need('WR_SENDER_EMAIL'),
     testRecipients: list(need('WR_TEST_RECIPIENTS')),

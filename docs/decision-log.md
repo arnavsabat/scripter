@@ -79,6 +79,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - **Episode positions** are never reused; "Ep N" is the rank.
   - **Tests:** `pnpm check` runs without services, `pnpm test:services` runs with them, and each test file gets a throwaway database.
 - **Prototype v2 approved (D-039)** as what the accounts phase builds to. The Privacy page's contact address is sabat.arnav@gmail.com, and account deletion is "within 30 days".
+- **Region (D-058):** `us-east-2`, on the free plan. The account's organization policy forbids `ca-central-1` (D-030's choice).
 - **AWS account plan (D-038):**
   - **Plan:** the AWS account is created only at step 8 of the accounts phase, on the **free plan**. That makes it $0 with no possible charges, and the 6-month clock starts as late as possible. It's upgraded to the paid plan when the closed beta starts.
   - **Admin access:** a plain IAM admin user, not IAM Identity Center, because setting up Organizations would force the upgrade.
@@ -199,7 +200,7 @@ Spike and Phase 1:
 10. How TypeScript runs on Node: dev uses `tsx` (D-018). Production bundling is decided with the first deploy.
 11. Load-test targets and method: concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
 12. Autocomplete behavior and look (SPEC 4.4; first on the cut list after the sync cuts).
-13. ~~AWS region~~: `ca-central-1` (D-030); `us-east-2` if the account checks confirm (D-057).
+13. ~~AWS region~~: `us-east-2` (D-058; the free plan's organization policy forbids D-030's `ca-central-1`).
 14. How to gate the first AWS deploy before Cognito exists (SPEC 5.6). Also at deploy (D-025): where the cluster secret lives on AWS, and how the sync server is built for production.
 15. Which kind of "small Postgres" to run on AWS: RDS, Aurora Serverless v2, or Postgres on the Fargate task (SPEC 5.5).
 16. Monitoring and logging tool (the imported log deferred this to the build).
@@ -301,6 +302,22 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-058 · 2026-10-26 · Account checked: us-east-2 it is (supersedes D-030's region); arnav-admin needs admin rights
+
+- **The read-only checks** (D-057), run as the `writers-room` CLI profile:
+  - **Identity:** `arnav-admin` in Arnav's account.
+  - **Plan:** FREE, active, with $100 of credits, expiring 2027-04-26 (D-038).
+  - **Regions:** `us-east-2` and `ca-central-1` are both enabled by default.
+  - **Montreal is forbidden by the account's AWS Organizations service control policy.** A read-only Cognito call in `ca-central-1` was refused with "an explicit deny in a service control policy", and simulating `cognito-idp:CreateUserPool` or `cloudformation:CreateStack` there gives `explicitDeny`. No permission inside the account can override that, so `ca-central-1` really does need the paid plan, as Arnav was told.
+  - **Ohio is open:** Cognito answers (no pools yet). SES is healthy with sending enabled, in its sandbox, with a quota of 200 a day. Budgets and CloudFormation answer. Simulating in `us-east-2` shows no service-control-policy denial for anything the project plans: CloudFormation, S3, SSM, ECR, Cognito, SES, Secrets Manager, DynamoDB, ECS, RDS and CloudFront, plus account-wide IAM and Budgets.
+  - **But `arnav-admin` has only `ReadOnlyAccess`.** Every create action is an *implicit* deny: nothing allows it, though nothing forbids it. D-038 planned an admin user; `AdministratorAccess` has to be attached before anything can be deployed.
+- **Decision (Arnav's conditional call from D-057, now met): `us-east-2`, on the free plan.** This supersedes D-030's `ca-central-1`.
+  - **Changed:** the infra and API region defaults (`infra/src/config.ts`, `.env.example`, `docker-compose.yml`), the local `infra/.env.local`, and the infra tests' region. The Privacy page (and prototype v2) now say "On Amazon Web Services in the United States (Ohio)."
+  - The README notes the `writers-room` profile.
+- **What changes for writers:** their accounts and scripts will live in the US (Ohio) rather than Canada, and the Privacy page says so. Latency from Toronto is about the same.
+- **Needed from Arnav before deploying:** in the AWS console, IAM → Users → `arnav-admin` → Add permissions → Attach policies directly → **AdministratorAccess**. `ReadOnlyAccess` can then be removed. Claude re-runs the permission simulation afterwards.
+- **Status:** Arnav's call (D-057's condition met). Nothing has been deployed.
 
 ### D-057 · 2026-10-26 · Region: us-east-2 if the account checks confirm (would supersede D-030's ca-central-1)
 
