@@ -122,15 +122,15 @@ describe('through the forwarding hop', () => {
           }),
         ),
       );
-    await until(() => servers.every((s) => s.cluster.ring.servers.length === 2));
+    await until(() => servers.every((s) => s.cluster.ring.servers.length === 2), 10_000);
     const entry = servers.find((s) => s.cluster.homeOf(DOC) !== s.serverId)!;
     const maya = track(client(entry, 'Maya', DOC));
     const priya = track(client(entry, 'Priya', DOC));
-    await Promise.all([maya.c.whenSynced(), priya.c.whenSynced()]);
+    await Promise.all([maya.c.whenSynced(10_000), priya.c.whenSynced(10_000)]);
     type(maya.doc, 'via the hop');
-    await until(() => priya.text() === 'via the hop');
+    await until(() => priya.text() === 'via the hop', 10_000);
     type(priya.doc, '!');
-    await until(() => priya.c.fatal === 'forbidden');
+    await until(() => priya.c.fatal === 'forbidden', 10_000);
     expect(await fromStorage(storage, DOC)).toBe('via the hop');
   });
 });

@@ -124,7 +124,9 @@ describe('split brain', () => {
     await until(() => staleRoom.state === 'closed', 5000);
     expect(storage.log.fenced).toBeGreaterThan(0); // storage refused the stale owner's append
     await Promise.all([stuck.client.whenSynced(10_000), other.client.whenSynced(10_000)]);
-    await until(() => same(stuck, other), 5000);
+    // The woken server rejoins the ring and may take the episode back, moving the writers once
+    // more; under a loaded machine that can outlast 5 s, so allow the same margin as above.
+    await until(() => same(stuck, other), 15_000);
     const words = new Set(other.text().split(' '));
     for (const w of [...stuck.words, ...other.words]) expect(words.has(w), w).toBe(true);
     // Whoever owns the episode now (the woken server rejoins the ring and may get it back,

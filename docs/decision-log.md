@@ -209,6 +209,10 @@ Phase 2:
 21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
 - New (found 2026-10-24, accounts phase): the prototype's blue primary button (`.pb`, white text on `--accent`) fails SPEC 3.11's 4.5:1 contrast in dark mode: white on `#6EA2E6` is about 2.6:1 (light mode, on `#2F6DB5`, is about 5.3:1). It's used for Compare's "Send mine to main". Options to bring Arnav: dark text on the dark-mode accent, a deeper dark-mode accent for filled buttons only, or the inverted-surface style used by sign-in's Continue (D-028).
 - New (D-042, moved by D-046): the 30-day purge job (D-037) isn't built yet. It needs new delete operations on the DynamoDB edit log and S3 snapshots, plus a daily schedule, so it's built in the deploy phase, before real users. Until then, soft-deleted items are only hidden.
+- Resolved (2026-10-26, flaky under load): about one in ten full `pnpm test` runs on a busy laptop failed. Three load-sensitive waits were fixed:
+  - **`collab.test.tsx`** now waits for the "Reconnecting…" cue, because the client fetches a fresh token first (D-046).
+  - **The new forwarding-hop access test** gets 10 s waits.
+  - **`cluster.test.ts > split brain`:** the captured error was its final 5 s wait for the two writers' copies to match. That wait came after fencing, the stale room's step-down and both writers' sync had all passed, so it was not a safety failure. It now gets 15 s; the assertion that every word survives is unchanged.
 - New (D-048): on a shared computer, signing out leaves this browser's local copies of scripts (y-indexeddb, kept for offline editing) readable by the next person. Options to bring Arnav with the home page:
   - clear them on sign-out, after checking every edit has reached the server;
   - ask on sign-out;

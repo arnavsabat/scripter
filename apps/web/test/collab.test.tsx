@@ -126,7 +126,8 @@ describe('server crash and offline work', () => {
 
     const reopened = await mount('Maya', ep, 'left', 'ready'); // server still down
     expect(reopened.lines()[0]).toBe('action: Before the outage. Written offline.');
-    expect(reopened.host.querySelector('.cue')?.textContent).toBe('Reconnecting…');
+    // The client first asks for a fresh token (D-046), so the cue follows a moment later.
+    await until(() => reopened.host.querySelector('.cue')?.textContent === 'Reconnecting…', 5000);
 
     await server('restart');
     await until(() => !reopened.host.querySelector('.cue'), 15_000);
