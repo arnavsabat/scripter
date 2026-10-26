@@ -4,6 +4,7 @@ import type { Cue } from '@wr/shared';
 import type { Overlay } from '../App';
 import type { PresenceUser } from '../editor/presence';
 import { initials } from '../session';
+import { CoWriterMenu, type ShareContext } from './CoWriterMenu';
 import { Icon } from './Icons';
 import { Menu } from './Menu';
 import { RenameTitle } from './RenameTitle';
@@ -22,6 +23,7 @@ export interface EpisodeTitle {
 interface Props {
   title: string | EpisodeTitle;
   onBack?: () => void;
+  share?: ShareContext;
   sidebarOpen: boolean;
   onToggleSidebar: () => void;
   overlay: Overlay;
@@ -41,6 +43,7 @@ const CUE_HINT = 'Your edits are saved on this device and will merge when you re
 export function Toolbar({
   title,
   onBack,
+  share,
   sidebarOpen,
   onToggleSidebar,
   overlay,
@@ -131,7 +134,7 @@ export function Toolbar({
         {others.length > 0 && <span className="dv" aria-hidden="true" />}
         <button
           type="button"
-          className={`ib${overlay?.kind === 'share' ? ' on' : ''}`}
+          className={`ib${overlay?.kind === 'share' || overlay?.kind === 'cowriter' ? ' on' : ''}`}
           title="Share"
           aria-label="Share"
           aria-haspopup="menu"
@@ -147,16 +150,25 @@ export function Toolbar({
             onClose={close}
             items={[
               {
+                // A link to this episode (D-032): members land in it; anyone else is told to ask.
                 label: 'Copy invite link',
-                onSelect: () => toast.show('Invite links arrive with accounts in a later phase'),
+                onSelect: () => {
+                  if (!share) return toast.show('Sharing needs an open episode');
+                  const link = `${location.origin}/e/${share.episodeId}`;
+                  // Only say "copied" when it was; otherwise show the link to copy by hand.
+                  (navigator.clipboard?.writeText(link) ?? Promise.reject(new Error())).then(
+                    () => toast.show(`Link to “${share.label}” copied`),
+                    () => toast.show(`Copy this link: ${link}`),
+                  );
+                },
               },
-              {
-                label: 'Invite co-writer…',
-                onSelect: () => toast.show('Inviting co-writers comes with roles in a later phase'),
-              },
+              ...(share?.canEdit
+                ? [{ label: 'Invite co-writer…', onSelect: () => setOverlay({ kind: 'cowriter' }) }]
+                : []),
             ]}
           />
         )}
+        {overlay?.kind === 'cowriter' && share && <CoWriterMenu ctx={share} onClose={close} />}
       </div>
     </header>
   );

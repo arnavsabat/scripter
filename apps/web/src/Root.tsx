@@ -151,6 +151,7 @@ interface OpenedEpisode {
   name: string;
   number: number;
   series: { id: string; name: string; isSeries: boolean };
+  role: 'showrunner' | 'writer' | 'viewer';
   canEdit: boolean;
   draftId: string;
 }
@@ -241,6 +242,14 @@ function Episode({
     <ScriptScreen
       session={session}
       onBack={() => navigate('/')}
+      share={{
+        episodeId: episode.id,
+        seriesId: episode.series.id,
+        label: prefix + episode.name,
+        canEdit: episode.canEdit,
+        showrunner: episode.role === 'showrunner',
+        me: me.id,
+      }}
       onFatal={(r) => void onFatal(r)}
       title={{
         text: prefix + episode.name,

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useEffectEvent, useState } from 'react';
 import { Sidebar, type SidebarTab } from './components/Sidebar';
 import { ToastProvider, useToast } from './components/Toast';
+import type { ShareContext } from './components/CoWriterMenu';
 import { Toolbar, type EpisodeTitle } from './components/Toolbar';
 import { handleMarginKey, topInPage } from './editor/marginKeys';
 import { ScriptPage } from './editor/ScriptPage';
@@ -16,6 +17,7 @@ export type Overlay =
   | null
   | { kind: 'draft' }
   | { kind: 'share' }
+  | { kind: 'cowriter' }
   | { kind: 'element'; top: number; highlighted: number }
   | { kind: 'warning'; blockId: string; top: number };
 
@@ -31,12 +33,14 @@ interface ScriptScreenProps {
   session: Session;
   /** The open episode's title (the tests' bare editor has none). */
   title?: EpisodeTitle;
+  /** What Share works on (step 7); the tests' bare editor has none. */
+  share?: ShareContext;
   onBack?: () => void;
   /** The server turned this connection away for good (4403 access changed, 4410 deleted…). */
   onFatal?: (reason: NonNullable<ReturnType<typeof useScriptEditor>['fatal']>) => void;
 }
 
-export function ScriptScreen({ session, title, onBack, onFatal }: ScriptScreenProps) {
+export function ScriptScreen({ session, title, share, onBack, onFatal }: ScriptScreenProps) {
   const toast = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [tab, setTab] = useState<SidebarTab>('scenes');
@@ -68,6 +72,7 @@ export function ScriptScreen({ session, title, onBack, onFatal }: ScriptScreenPr
       <Toolbar
         title={title ?? 'Untitled script'}
         {...(onBack ? { onBack } : {})}
+        {...(share ? { share } : {})}
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => {
           setOverlay(null);

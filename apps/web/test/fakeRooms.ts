@@ -353,6 +353,30 @@ export function fakeRooms(users: Map<string, FakeUser>) {
       return { status: 200, body: { ok: true } };
     }
 
+    const cw = /^\/api\/episodes\/([0-9a-f-]{36})\/writers\/([0-9a-f-]{36})$/.exec(path);
+    if (cw) {
+      const found = findEpisode(cw[1]!);
+      if (!found || found.s.deletedAt || found.e.deletedAt)
+        return err(404, 'not_found', 'That episode doesn’t exist.');
+      const { s, e } = found;
+      if (!canEdit(s, e, me.id))
+        return err(
+          403,
+          'forbidden',
+          'You can’t edit this episode. Ask the showrunner to add you as a writer.',
+        );
+      const uid = cw[2]!;
+      if (m === 'PUT') {
+        if (s.members.get(uid) !== 'writer')
+          return err(
+            409,
+            'not_a_writer',
+            'Only writers in this series can be co-writers. The showrunner can change their role in Members.',
+          );
+        if (!e.writers.includes(uid)) e.writers.push(uid);
+      } else e.writers = e.writers.filter((w) => w !== uid);
+      return { status: 200, body: { ok: true } };
+    }
     r = /^\/api\/episodes\/([0-9a-f-]{36})(\/restore)?$/.exec(path);
     if (r) {
       const found = findEpisode(r[1]!);

@@ -37,6 +37,10 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase step 7 built (D-053): the Share menu.**
+  - **Copy invite link** copies `/e/<episode>` and says "copied" only if it was.
+  - **Invite co-writer…** is the checklist of the series' writers (toggle, with Undo). The showrunner also gets the invite row, whose invitations assign this episode on acceptance.
+  - **Viewers and unassigned writers** see only Copy invite link.
 - **Accounts phase step 6 built (D-051), choices confirmed (D-052): Home, the handoff, Members, deleting, renaming, the theme, "View only", losing access, and the safe sign-out, all in the real web app.**
   - **Removing a member** uses the inline confirm ("Remove Maya from The Long Night?" with Cancel / Remove), not an Undo toast. Prototype v2 is updated to match.
 - **Signing out clears this browser's local script copies, safely (D-050).** It first checks that every edit reached the server. If any haven't (the writer is offline), a toast warns, with "Sign out anyway" and "Cancel".
@@ -139,6 +143,9 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Choices made while building accounts step 7 (D-053):**
+  - **(a)** Clicking Undo in the toast closes the co-writer menu, like any outside click.
+  - **(b)** "Copied" only when the copy worked; otherwise the toast shows the link.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -300,6 +307,29 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-053 · 2026-10-26 · Accounts phase step 7: the Share menu
+
+- **What was built** (`apps/web/src/components/Toolbar.tsx`, `CoWriterMenu.tsx`, prototype v2, D-032):
+  - **Copy invite link** copies `<origin>/e/<episode id>`: members who open it land in the episode, and anyone else is told to ask the showrunner. The toast says "Link to “Ep 3 · The Long Night” copied".
+  - **Invite co-writer…** opens the shared menu as a checklist headed "CO-WRITERS".
+    - It lists the series' writers (with 20 px avatars and "(you)"), with ✓ on this episode's co-writers.
+    - A click adds or removes one through the API, and the toast "Maya removed from Ep 3 · The Long Night" offers Undo.
+    - With no writers in the series yet: "No writers in this series yet."
+    - For the showrunner only, the D-027 invite row sits at the bottom. Its invitations assign this episode on acceptance (the API's `episodeId`).
+  - **Viewers and unassigned writers** see only "Copy invite link". The API refuses the rest anyway (D-042).
+  - **The fake API** gained the co-writer endpoints with the real rules (only writers; only those who may edit the episode). The test browser is granted clipboard permission.
+- **Tests (browser, 4):**
+  - the copied link is checked by reading the clipboard back;
+  - the showrunner's checklist: toggling, Undo restoring Maya, and the invite row;
+  - a writer adding a co-writer to their own episode, with no invite row;
+  - someone who can't edit gets only Copy invite link.
+- **A bug the test caught:** the toast said "copied" even when the browser refused clipboard access. It now says so only after the copy succeeds, and otherwise shows "Copy this link: …".
+- **Choices Claude made while building, for Arnav to confirm:**
+  - **(a)** Clicking Undo in the toast closes the co-writer menu, like any click outside a menu (SPEC 3.9). The change is still undone.
+  - **(b)** If the clipboard is refused, the toast shows the link to copy by hand rather than claiming it was copied.
+- **What changes for writers:** sharing works: a link for the group chat, and two clicks to add a co-writer.
+- **Status:** built and tested. (a) and (b) await Arnav. Accounts steps 1-7 are done; step 8 (AWS: budgets, then Cognito and SES) needs Arnav's account.
 
 ### D-052 · 2026-10-26 · D-051's Home choices confirmed
 

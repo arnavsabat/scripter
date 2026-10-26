@@ -32,7 +32,10 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: playwright(),
+      // Copy invite link writes to the clipboard (D-032), which a browser allows only when granted.
+      provider: playwright({
+        contextOptions: { permissions: ['clipboard-read', 'clipboard-write'] },
+      }),
       commands: { clickAt },
       instances: [{ browser: 'chromium', viewport: { width: 1440, height: 900 } }],
     },
