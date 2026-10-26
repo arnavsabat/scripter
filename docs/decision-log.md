@@ -303,6 +303,15 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-059 · 2026-10-26 · How this AWS account is secured (no root sign-in exists)
+
+- **Found (read-only, IAM credential report):**
+  - **No root sign-in.** The account's root user has **no password**, was never used, and has no access keys. The free-plan account belongs to an AWS-managed organization (all features on), which also explains the service control policies of D-058, so root sign-in credentials don't exist. Root MFA is therefore not applicable: there's nothing to sign in with. "Root MFA off" in the account summary is expected.
+  - **Arnav's console login** is the account-level sign-in on AWS's "Choose AWS sessions" page. Its two-factor settings are managed there, not in IAM.
+  - **`arnav-admin`:** MFA active (enabled 2026-10-26, through CloudShell); no console password; one active access key, kept in `~/.aws/credentials` on Arnav's Mac under the `writers-room` profile.
+- **What it means:** the credential that can change the account from the CLI is `arnav-admin`'s access key. It stays out of the repository (it lives in `~/.aws`, never in the project). If it's ever exposed, deactivate it in IAM and create a new one.
+- **Status:** recorded; no decision needed.
+
 ### D-058 · 2026-10-26 · Account checked: us-east-2 it is (supersedes D-030's region); arnav-admin needs admin rights
 
 - **The read-only checks** (D-057), run as the `writers-room` CLI profile:
