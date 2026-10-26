@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 8, part 1 built (D-055): the CDK app, not yet deployed.**
+- **Accounts phase step 8, part 1 built (D-055), choices confirmed (D-056): the CDK app, not yet deployed.**
   - **Stacks, deployed in order:** `WrBudgets` ($40 a month, emailing at $20 and $40 actual and $40 forecast), then `WrEmail` (SES identities for the sender and the demo's two addresses), then `WrAuth` (the Cognito pool on Essentials with passwordless email codes, case-insensitive email usernames, a public USER_AUTH-only client, the sign-in domain, and Google once configured).
   - **The API** sends invitations through SES when `WR_SENDER_EMAIL` is set.
 - **Accounts phase step 7 built (D-053), choices confirmed (D-054): the Share menu.**
@@ -146,14 +146,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building accounts step 8, part 1 (D-055):**
-  - **(a)** One $40 budget with three alerts.
-  - **(b)** Three stacks, deployed in order.
-  - **(c)** The user pool survives stack deletion.
-  - **(d)** Google's client secret is kept in Secrets Manager (about $0.40 a month); to confirm at the Google step.
-  - **(e)** The sign-in code email uses Cognito's default wording, for now.
-  - **(f)** "Password" stays allowed at the pool level, as Cognito requires; our client allows only USER_AUTH.
-  - **(g)** The SES mailer.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -315,6 +307,18 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-056 · 2026-10-26 · D-055's AWS setup choices confirmed
+
+- **Decision (Arnav's call):** D-055 (a)-(g) stand:
+  - one $40 budget with three alerts;
+  - three stacks deployed in order;
+  - the user pool retained;
+  - Google's client secret in Secrets Manager (about $0.40 a month, within the credits);
+  - Cognito's default sign-in code wording for now;
+  - "password" allowed only at the pool level;
+  - invitations through SES.
+- **Status:** Arnav's call. Waiting on Arnav's AWS account; Claude deploys one stack at a time after Arnav's go-ahead.
 
 ### D-055 · 2026-10-26 · Accounts phase step 8, part 1: the CDK app (budgets, SES, Cognito), not yet deployed
 
