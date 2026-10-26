@@ -1,4 +1,4 @@
-// The script screen: toolbar, sidebar and page (SPEC 3.5-3.7). Single writer, local only.
+// The script screen: toolbar, sidebar and page (SPEC 3.5-3.7). `App` wraps it with toasts for the tests.
 import { useCallback, useState } from 'react';
 import { Sidebar, type SidebarTab } from './components/Sidebar';
 import { ToastProvider, useToast } from './components/Toast';
@@ -26,7 +26,7 @@ export function App({ session }: { session: Session }) {
   );
 }
 
-function ScriptScreen({ session }: { session: Session }) {
+export function ScriptScreen({ session }: { session: Session }) {
   const toast = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [tab, setTab] = useState<SidebarTab>('scenes');

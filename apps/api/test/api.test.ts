@@ -284,6 +284,24 @@ describe.skipIf(!servicesEnabled)('API', () => {
       });
       expect(again.status).toBe(410);
     });
+    it('a signed-out visitor can preview a link (series, inviter, role) without using it up', async () => {
+      await arnav.call('POST', `/api/series/${roomId}/invitations`, {
+        email: 'zoe@example.com',
+        role: 'viewer',
+      });
+      const token = h.lastInviteToken('zoe@example.com');
+      const preview = await h.anonymous('GET', `/api/invitations/preview?token=${token}`);
+      expect(preview.status).toBe(200);
+      expect(preview.body).toEqual({ seriesName: 'The Long Night', from: 'Arnav', role: 'viewer' });
+      const zoe = await h.person('Zoe');
+      expect((await zoe.call('POST', '/api/invitations/accept', { token })).status).toBe(200);
+      expect((await h.anonymous('GET', `/api/invitations/preview?token=${token}`)).status).toBe(
+        410,
+      );
+      expect(
+        (await h.anonymous('GET', `/api/invitations/preview?token=${'y'.repeat(43)}`)).status,
+      ).toBe(404);
+    });
     it('a cancelled or expired link stops working; an unknown one is refused', async () => {
       const inv = await arnav.call<{ id: string }>('POST', `/api/series/${roomId}/invitations`, {
         email: 'kai@example.com',

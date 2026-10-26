@@ -9,6 +9,7 @@ import { startSyncServer, type SyncServer } from '@wr/sync';
 import { memoryAccess } from '@wr/sync/access';
 import { memoryStorage } from '@wr/sync/memory';
 import * as Y from 'yjs';
+import { startFakeApi } from './fakeApi';
 
 export const SYNC_PORT = 4787;
 /** Cluster timings scaled down so kill-and-restart doesn't wait the full 6 s lease (D-022). */
@@ -24,6 +25,7 @@ export default async function setup() {
     clusterSecret: 'test-cluster-secret',
   };
   let server: SyncServer | null = await startSyncServer({ port: SYNC_PORT, storage, ...auth });
+  const stopApi = await startFakeApi(issuer);
   const control = createServer((req, res) => {
     void (async () => {
       res.setHeader('access-control-allow-origin', '*');
@@ -57,5 +59,6 @@ export default async function setup() {
     control.closeAllConnections();
     control.close();
     await server?.kill();
+    await stopApi();
   };
 }

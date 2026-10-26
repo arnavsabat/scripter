@@ -1,20 +1,15 @@
-// Who is writing, and which episode (D-018 item 8). ⚠️ The identity is a DEVELOPMENT STUB:
-// `?as=Maya` picks the writer and the token is unsigned. Cognito replaces this with accounts.
-import { devIdentity, makeDevToken, type Identity } from '@wr/shared';
+// What the script screen needs to connect: the sync servers, the draft's document, who we are
+// (for presence), and a fresh access token on every connect (D-046).
+import type { Identity } from '@wr/shared';
 
 export interface Session {
   /** One sync server URL, or the cluster's list (the client picks one at random, D-022). */
   serverUrl: string | readonly string[];
+  /** The main draft's document ID, from the API (SPEC 5.2). */
   docId: string;
   identity: Identity;
   /** The sign-in token, or a function asked for a fresh one on every connect (D-046). */
   token: string | (() => Promise<string>);
-}
-
-export function sessionFromUrl(url: URL, serverUrl: string | readonly string[]): Session {
-  const identity = devIdentity(url.searchParams.get('as') ?? 'Writer');
-  const docId = (url.searchParams.get('ep') ?? 'dev-episode').toLowerCase();
-  return { serverUrl, docId, identity, token: makeDevToken(identity) };
 }
 
 /** Two-letter initials for an avatar: "Maya" → "MA", "Sam Jones" → "SJ". */

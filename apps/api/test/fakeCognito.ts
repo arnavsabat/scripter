@@ -31,6 +31,7 @@ export async function fakeCognito(issuer: TestIssuer) {
   >();
   const codes: { email: string; code: string }[] = [];
   const sixDigits = () => String(Math.floor(100000 + Math.random() * 900000));
+  const eightDigits = () => String(Math.floor(10000000 + Math.random() * 90000000));
   const fail = (type: string, status = 400): Res => ({
     status,
     body: { __type: type, message: type },
@@ -99,7 +100,7 @@ export async function fakeCognito(issuer: TestIssuer) {
       }
       if (!u) return fail('UserNotFoundException');
       if (!u.confirmed) return fail('UserNotConfirmedException');
-      const code = sixDigits();
+      const code = eightDigits(); // Cognito's sign-in codes are 8 digits, sign-up codes 6
       const session = randomUUID();
       sessions.set(session, { email, purpose: 'otp', code });
       codes.push({ email, code });

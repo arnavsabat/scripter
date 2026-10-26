@@ -58,6 +58,7 @@ describe.skipIf(!servicesEnabled)('signing in', () => {
   async function emailSignIn(email: string) {
     const start = await post('/api/auth/email/start', { email });
     expect(start.status).toBe(200);
+    expect([6, 8]).toContain(start.body.codeLength);
     const verify = await post('/api/auth/email/verify', {
       attempt: start.body.attempt,
       code: h.cognito.lastCode(email.toLowerCase()),
@@ -99,6 +100,7 @@ describe.skipIf(!servicesEnabled)('signing in', () => {
   it('a known email gets a sign-in code; a wrong code is refused with a clear message', async () => {
     const first = await emailSignIn('sam@example.com');
     const start = await post('/api/auth/email/start', { email: 'SAM@example.com' });
+    expect(start.body.codeLength).toBe(8); // a returning writer gets a sign-in code
     const wrong = await post('/api/auth/email/verify', {
       attempt: start.body.attempt,
       code: '000000',

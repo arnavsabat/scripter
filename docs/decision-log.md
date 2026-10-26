@@ -37,6 +37,12 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase step 5 built (D-048): the web app's signed-out side.**
+  - **Pages:** the sign-in page (Arnav's template), Terms, Privacy, and invitation links ("Join Fogline", accepted once signed in).
+  - **Session:** the access token is kept in memory and renewed through the refresh cookie.
+  - **Routing:** a tiny History-API router of our own.
+  - **Tests:** the browser tests use a small fake API; the real API keeps its own tests.
+  - **Removed:** the dev stub, from the browser too.
 - **Accounts phase step 4 built (D-046), choices confirmed (D-047): the sync server enforces roles.**
   - **No dev stub.** The development stub is removed from the servers; they trust Cognito tokens only (the test key in tests).
   - **Access check at the home server.** It uses `canEdit` / `canView` through a pluggable access source (Postgres in production). View-only connections see everything, but their edits close with 4403.
@@ -129,6 +135,16 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Choices made while building accounts step 5 (D-048):**
+  - **(a)** The code length per path ("6-digit" for sign-up, "8-digit" for sign-in), forced by Cognito.
+  - **(b)** Sign-in errors show in the shared toast.
+  - **(c)** A public invitation preview endpoint.
+  - **(d)** "Continue with Google" is a link.
+  - **(e)** The name step finishes before the app counts you as signed in.
+  - **(f)** The access token is renewed a minute early, with one 401 retry.
+  - **(g)** `devAuth.ts` is gone; `Identity` and `colorFor` are in `shared/identity.ts`.
+  - **(h)** A one-line signed-in placeholder until step 6.
+  - **(i)** `reloadAuthForTests()`.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -202,6 +218,10 @@ Phase 2:
 21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
 - New (found 2026-10-24, accounts phase): the prototype's blue primary button (`.pb`, white text on `--accent`) fails SPEC 3.11's 4.5:1 contrast in dark mode: white on `#6EA2E6` is about 2.6:1 (light mode, on `#2F6DB5`, is about 5.3:1). It's used for Compare's "Send mine to main". Options to bring Arnav: dark text on the dark-mode accent, a deeper dark-mode accent for filled buttons only, or the inverted-surface style used by sign-in's Continue (D-028).
 - New (D-042, moved by D-046): the 30-day purge job (D-037) isn't built yet. It needs new delete operations on the DynamoDB edit log and S3 snapshots, plus a daily schedule, so it's built in the deploy phase, before real users. Until then, soft-deleted items are only hidden.
+- New (D-048): on a shared computer, signing out leaves this browser's local copies of scripts (y-indexeddb, kept for offline editing) readable by the next person. Options to bring Arnav with the home page:
+  - clear them on sign-out, after checking every edit has reached the server;
+  - ask on sign-out;
+  - leave them (they're only reachable through this browser profile).
 - New (D-040, minor): after `pnpm test`, Vitest reports "something prevents 8 Vite servers from exiting" for about 10 s. It predates step 1 (it happens on the previous commit too). It comes from the web browser-mode project; the tests pass. Worth finding with the hanging-process reporter when convenient.
 - New (D-026; + New script settled in D-035): should the hover background extend to the remaining text actions (Accept, + New what-if, + Snapshot)?
 22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
@@ -285,6 +305,58 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-048 · 2026-10-26 · Accounts phase step 5: sign-in, Terms, Privacy and invitation links in the web app
+
+- **Decisions Arnav made before building (Arnav's calls):**
+  1. **A tiny router of our own:** about 50 lines on the History API (`apps/web/src/router.ts`). It handles six fixed routes (`/`, `/e/<id>`, `/i/<token>`, `/terms`, `/privacy`, and a not-found case), with real URLs and back and forward. The 220 ms handoff stays fully in our hands.
+     - Rejected: React Router (more than six flat routes need, and its transitions would have to be bent around the handoff).
+  2. **A small fake API for the browser tests** (`apps/web/test/fakeApi.ts`): the same endpoints and shapes with canned data, started by the web tests' global setup. `/api` is proxied to it, as the dev server proxies to the real API. `pnpm check` stays Docker-free, and the real API's behavior keeps its own 50 tests. The full two-account run on the real stack is the step 9 demo.
+     - Rejected: the real API and Postgres in the browser tests, which would move them out of `pnpm check`.
+- **What was built:**
+  - **The sign-in page** (`pages/SignIn.tsx`, `signin.css`), exactly as approved in prototype v2 (D-028, D-029):
+    - **Steps:** email; then code (it signs in as the last digit lands, with "Use a different email · Send a new code"); then the first-time name step.
+    - **Invitations:** the "Join <series>" version for invitation links.
+    - **Google:** "Continue with Google" goes to `/api/auth/google/start`.
+    - A failed Google return (`?signin=failed`) shows a toast.
+  - **Terms and Privacy** (`pages/Legal.tsx`): the reviewed text, with the contact address (D-039) and "Last updated October 26, 2026".
+  - **The session** (`auth.ts`): on load, the app asks `/api/auth/refresh` whether the cookie still signs it in. The access token is held in memory and renewed a minute before it expires. `SyncClient` gets `auth.token`, so every reconnect presents a fresh one. `api.ts` retries a 401 once with a fresh token.
+  - **`Root.tsx`:**
+    - Terms and Privacy show signed in or out.
+    - `/i/<token>` previews the invitation, shows the "Join" sign-in when signed out, and accepts the invitation once signed in ("You joined Fogline").
+    - `/e/<id>` asks the API for the episode and opens the script screen on its main draft.
+    - A one-line placeholder stands in for Home until step 6.
+  - **The API** gained `GET /api/invitations/preview` (public; series name, inviter and role; never accepts). `/email/start` and `/email/resend` now return `codeLength`.
+  - **Gone:** `packages/shared/src/devAuth.ts`. `Identity` and the avatar `colorFor` moved to `packages/shared/src/identity.ts`, which the sync server shares.
+  - **The Vite dev server** proxies `/api` to `localhost:${API_PORT ?? 4100}` (D-031's same origin).
+- **Tests:**
+  - **Browser (Chromium), against the fake API (10):**
+    - a new writer gets the 6-digit code and the name step, and is in;
+    - a returning writer gets the 8-digit code and skips the name step;
+    - a wrong code shows a toast, and "Use a different email" keeps the address;
+    - "Send a new code";
+    - a reload stays signed in (the cookie);
+    - the legal line opens Terms and Privacy, with the contact address;
+    - the Google link, and a failed Google return;
+    - an invitation link shows "Join Fogline" and is accepted after sign-in;
+    - a used link says so.
+  - **API (1):** the preview works without using the link up, and refuses used and unknown links.
+  - **Results:** `pnpm check` passes (137 tests). `pnpm test:services`: API 50, sync 11. The real pages were also screenshotted in light and dark mode and match prototype v2.
+- **Choices Claude made while building, for Arnav to confirm:**
+  - **(a) Code length (Cognito-forced, and a small deviation from the prototype's wording).**
+    - Cognito's sign-up codes are 6 digits and its sign-in codes 8, according to a community report rather than AWS's docs, and they aren't configurable. So the API reports the length, and the page says "We sent a 6-digit code…" or "…an 8-digit code…" (placeholder "Enter 8-digit code") and submits on the last digit. The prototype only had "6-digit".
+    - To be checked against the real pool at step 8.
+    - The alternative is wording without a number ("We sent a code…").
+  - **(b) Errors on the sign-in pages** (a wrong code, too many tries, a used invitation) show in the shared toast. The prototype designed no error area, and this adds no new UI element.
+  - **(c) The public invitation preview endpoint,** which gives only what holding the link already grants.
+  - **(d) "Continue with Google" is a link** (`<a href>`), since it's a navigation; it looks the same as the button.
+  - **(e) The name step finishes before the app counts you as signed in.** The page holds the new session until the name is saved. If the tab closes first, the stand-in name stays (D-044 (e)).
+  - **(f) Token renewal.** The access token is renewed a minute before it expires, and an API 401 gets one retry with a fresh token.
+  - **(g) `devAuth.ts` is deleted.** `Identity` and `colorFor` now live in `shared/identity.ts`.
+  - **(h) A one-line signed-in placeholder** ("Signed in as … · Sign out") until Home lands in step 6.
+  - **(i) A test-only hook,** `reloadAuthForTests()` in `auth.ts`, so a test can simulate a page reload.
+- **What changes for writers:** the real sign-in page, Terms and Privacy exist, and invitation links lead into the right series. Locally they work once Cognito exists (step 8).
+- **Status:** built and tested. (a)-(i) await Arnav.
 
 ### D-047 · 2026-10-26 · D-046's sync choices confirmed
 

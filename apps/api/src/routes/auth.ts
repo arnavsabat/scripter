@@ -43,6 +43,13 @@ interface Attempt {
   session?: string;
 }
 const pack = (a: Attempt) => Buffer.from(JSON.stringify(a)).toString('base64url');
+/**
+ * How long the emailed code is, so the page can say so and submit on the last digit. Cognito's
+ * sign-up codes have 6 digits and its sign-in codes 8; neither is configurable (checked against
+ * the real pool in step 8).
+ */
+const codeLength = (a: Attempt) => (a.kind === 'signup' ? 6 : 8);
+const started = (a: Attempt) => ({ attempt: pack(a), codeLength: codeLength(a) });
 function unpack(s: string): Attempt {
   try {
     const a = JSON.parse(Buffer.from(s, 'base64url').toString()) as Partial<Attempt>;
@@ -114,7 +121,7 @@ export function authRoutes(app: FastifyInstance, deps: AppDeps): void {
         },
       },
     },
-    async (req) => ({ attempt: pack(await begin(req.body.email.trim().toLowerCase())) }),
+    async (req) => started(await begin(req.body.email.trim().toLowerCase())),
   );
 
   app.post<{ Body: { attempt: string } }>(
@@ -129,7 +136,7 @@ export function authRoutes(app: FastifyInstance, deps: AppDeps): void {
         },
       },
     },
-    async (req) => ({ attempt: pack(await begin(unpack(req.body.attempt).email)) }),
+    async (req) => started(await begin(unpack(req.body.attempt).email)),
   );
 
   app.post<{ Body: { attempt: string; code: string } }>(

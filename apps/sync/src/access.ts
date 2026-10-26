@@ -1,7 +1,7 @@
 // Who is connecting, and what they may do with an episode (SPEC 5.3, D-031, D-046). The home
 // server asks at connect time and again whenever the API reports an access change. Production
 // reads Postgres (pgAccess.ts); tests that don't need a database use memoryAccess() below.
-import { AVATAR_COLORS, type Identity } from '@wr/shared';
+import { colorFor, type Identity } from '@wr/shared';
 
 /** What a connection may do: type in the episode, or only read it (it still sees edits and presence). */
 export type Mode = 'edit' | 'view';
@@ -34,12 +34,7 @@ export interface AccessSource {
   close(): Promise<void>;
 }
 
-/** A stable avatar color for a person (SPEC 3.1's three pairs). */
-export function colorFor(userId: string): number {
-  let hash = 0;
-  for (const ch of userId) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0;
-  return hash % AVATAR_COLORS;
-}
+export { colorFor };
 
 /**
  * For tests without a database. A token's subject is the person's name ("Maya" signs in as Maya).

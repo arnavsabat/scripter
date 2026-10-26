@@ -20,6 +20,8 @@ const clickAt: BrowserCommand<[selector: string, x: number, y: number]> = async 
 // Web integration tests run in real headless Chromium (D-015): real key presses, real layout.
 export default defineConfig({
   plugins: [react()],
+  // The app calls /api on its own origin (D-031); in the tests that's the fake API (test/fakeApi.ts).
+  server: { proxy: { '/api': 'http://127.0.0.1:4789', '/__fake': 'http://127.0.0.1:4789' } },
   test: {
     include: ['test/**/*.test.{ts,tsx}'],
     globalSetup: ['test/syncServer.ts'],

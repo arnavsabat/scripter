@@ -62,6 +62,39 @@ async function join(c: pg.PoolClient, inv: InvitationRow, userId: string) {
 }
 
 export function invitationRoutes(app: FastifyInstance, { db }: AppDeps): void {
+  // What the signed-out invitation page shows ("Join Fogline / Sam Jones invited you to write",
+  // D-028) before the visitor signs in. Only what holding the link already grants; never accepts.
+  app.get<{ Querystring: { token: string } }>(
+    '/api/invitations/preview',
+    {
+      config: { public: true },
+      schema: {
+        querystring: {
+          type: 'object',
+          required: ['token'],
+          properties: { token: { type: 'string', minLength: 20, maxLength: 200 } },
+        },
+      },
+    },
+    async (req) => {
+      const { rows } = await db.query<InvitationRow & { from_name: string | null }>(
+        `${SELECT.replace(' from invitations i', ', u.name as from_name from invitations i')}
+           left join users u on u.id = i.invited_by
+          where i.token_hash = $1`,
+        [hashToken(req.query.token)],
+      );
+      const inv = rows[0];
+      if (!inv) throw new ApiError(404, 'invitation_unknown', 'This invitation link isn’t valid.');
+      if (!inv.usable)
+        throw new ApiError(
+          410,
+          'invitation_used',
+          'This invitation has expired or was already used. Ask the showrunner for a new one.',
+        );
+      return { seriesName: inv.series_name, from: inv.from_name ?? 'Someone', role: inv.role };
+    },
+  );
+
   // From the email's link: /i/<token>, after signing in (D-032).
   app.post<{ Body: { token: string } }>(
     '/api/invitations/accept',
