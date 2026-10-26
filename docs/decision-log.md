@@ -146,12 +146,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
-  - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
-  - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
-  - **(d)** Episode positions are never reused, and "Ep N" is the episode's rank.
-  - **(e)** `pnpm check` stays free of services; `pnpm test:services` runs the Postgres- and AWS-backed suites.
-  - **(f)** Every test file gets its own throwaway database.
 - **AWS cost levers for the deploy phase (proposed 2026-10-24, decided then):** these keep SPEC 5.5's infrastructure unchanged.
   - **Estimated cost:** about $40-50 a month on demand in `ca-central-1`. The load balancer (about $18), the small Postgres (about $15), public IPv4 addresses (about $3.65 each) and the container (about $10) make up most of it. This corrects Claude's earlier, too-low "$25-45".
   - **The levers:**
