@@ -2,3 +2,4 @@
 export * from './protocol';
 export * from './devAuth';
 export * from './client';
+export * from './permissions';

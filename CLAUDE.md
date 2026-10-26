@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-039) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-040) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -80,7 +80,8 @@ REPO WORKING NOTES
 =====================================================
 
 - Node 24.12 (`.node-version`), pnpm 12.12.1 via corepack (`corepack enable` once). Strict TypeScript 6.0.3 (not 7: typescript-eslint doesn't support it yet; D-006).
-- `pnpm check` runs format check, lint, typecheck and tests. Run it before every commit.
+- `pnpm check` runs format check, lint, typecheck and tests. Run it before every commit. `pnpm test:services` (after `pnpm services:up`) runs the suites that need Postgres, DynamoDB Local and SeaweedFS; each API test file gets a throwaway database.
+- Postgres schema changes are new numbered files in `apps/api/migrations/` (never edit an applied one); apply them with `pnpm --filter @wr/api migrate`. Permission checks go through `packages/shared/src/permissions.ts` only.
 - `packages/schema`, `packages/pagination` and `packages/shared` must stay environment-neutral (no Node or DOM types in `src`). Tests that need Node use a `test/tsconfig.json`.
 - `docs/` and this file are excluded from Prettier. Never reformat the spec, the log or the prototype.
 - Log entries are numbered D-001, D-002, …; the newest goes at the top of "Log entries". Update the current-state sections at the same time.

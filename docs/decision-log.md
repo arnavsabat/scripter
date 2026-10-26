@@ -37,6 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase step 1 built (D-040):** the permission rules (`packages/shared/src/permissions.ts`), the first Postgres migration, and the migration runner. Choices awaiting Arnav are under Proposed.
 - **Prototype v2 approved (D-039)** as what the accounts phase builds to. The Privacy page's contact address is sabat.arnav@gmail.com, and account deletion is "within 30 days".
 - **AWS account plan (D-038):**
   - **Plan:** the AWS account is created only at step 8 of the accounts phase, on the **free plan**. That makes it $0 with no possible charges, and the 6-month clock starts as late as possible. It's upgraded to the paid plan when the closed beta starts.
@@ -105,6 +106,13 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Choices made while building accounts step 1 (D-040):**
+  - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
+  - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
+  - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
+  - **(d)** Episode positions are never reused, and "Ep N" is the episode's rank.
+  - **(e)** `pnpm check` stays free of services; `pnpm test:services` runs the Postgres- and AWS-backed suites.
+  - **(f)** Every test file gets its own throwaway database.
 - **AWS cost levers for the deploy phase (proposed 2026-10-24, decided then):** these keep SPEC 5.5's infrastructure unchanged.
   - **Estimated cost:** about $40-50 a month on demand in `ca-central-1`. The load balancer (about $18), the small Postgres (about $15), public IPv4 addresses (about $3.65 each) and the container (about $10) make up most of it. This corrects Claude's earlier, too-low "$25-45".
   - **The levers:**
@@ -171,6 +179,7 @@ Phase 2:
 20. ~~Email delivery~~ and ~~the invite link flow~~: SES on our own domain (D-030); one-time links (D-032).
 21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
 - New (found 2026-10-24, accounts phase): the prototype's blue primary button (`.pb`, white text on `--accent`) fails SPEC 3.11's 4.5:1 contrast in dark mode: white on `#6EA2E6` is about 2.6:1 (light mode, on `#2F6DB5`, is about 5.3:1). It's used for Compare's "Send mine to main". Options to bring Arnav: dark text on the dark-mode accent, a deeper dark-mode accent for filled buttons only, or the inverted-surface style used by sign-in's Continue (D-028).
+- New (D-040, minor): after `pnpm test`, Vitest reports "something prevents 8 Vite servers from exiting" for about 10 s. It predates step 1 (it happens on the previous commit too). It comes from the web browser-mode project; the tests pass. Worth finding with the hanging-process reporter when convenient.
 - New (D-026; + New script settled in D-035): should the hover background extend to the remaining text actions (Accept, + New what-if, + Snapshot)?
 22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
 23. Fountain and .fdx import edge cases: title pages, notes, boneyard, dual dialogue, and unsupported element types.
@@ -252,6 +261,43 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-040 · 2026-10-25 · Accounts phase step 1: permission rules, schema, migrations
+
+- **What was built:**
+  - **`packages/shared/src/permissions.ts`:** the one rule SPEC 5.3 asks for. It's pure and environment-neutral, so the API, the home sync server and the web app share it.
+    - `canEdit(user, scope)`: on a series, only the showrunner (rename, invite, roles, remove people, create, delete and restore episodes). On an episode, the showrunner or a writer assigned to it (typing, renaming, co-writers).
+    - `canMerge(user, episode)`: the same as `canEdit` in v1, since writers send to main on their own episodes without approval. It's kept separate for scene locks and cross-episode proposals.
+    - `canView(user, scope)`: any member.
+    - `canBeCoWriter(role)`: writers only.
+    - `user` is an `Access` (the user's role in that series plus their assigned episodes), loaded from Postgres by the caller.
+  - **`apps/api/migrations/001_accounts_and_rooms.sql`:**
+    - **Tables:** SPEC 5.2's `users`, `series`, `series_members`, `episodes`, `episode_writers`, `invitations`, `drafts`, `snapshots` and `usage_events`; plus `user_identities` (proposal a), `episode_presence` (D-033), and `deleted_at` on `series` and `episodes` (D-037).
+    - **Constraints:** roles checked; one main draft per episode; only what-ifs have a base snapshot; invitation token hashes unique (the token is never stored); a fixed vocabulary of usage events with no content; emails unique regardless of case; cascading deletes for the purge job.
+  - **`apps/api/src/db/migrate.ts`** (and `pnpm --filter @wr/api migrate`): applies `NNN_name.sql` files in order, each in its own transaction, recorded in `schema_migrations`. It's guarded by a Postgres advisory lock, so two servers starting together take turns.
+  - **Libraries:** `pg` 8.23.1 and `@types/pg` 8.23.1 (D-031), plus `tsx` for the API's scripts, as in apps/sync.
+- **Tests:**
+  - **Permissions (7, plain Node):** the showrunner, writer, viewer and non-member matrix; co-writer eligibility; role parsing.
+  - **Database (10, real Postgres, `pnpm --filter @wr/api test:services`):**
+    - migrations apply once and then report "up to date";
+    - two runners at once apply each file exactly once;
+    - a failing file leaves nothing behind and isn't recorded;
+    - the schema rules above are enforced by Postgres itself.
+
+  The full `pnpm check` passes (113 tests, 24 skipped without services). The dev database is migrated.
+- **Choices Claude made while building, for Arnav to confirm:**
+  - **(a) One person per verified email.**
+    - Cognito creates a separate user for each way of signing in, so Google and an email code would otherwise make two accounts for the same address.
+    - The fix: `users` holds people, and `user_identities` maps each Cognito user (`sub`) to a person. At sign-in, the API (which sees Cognito's ID token, D-031) links an identity to the person with that verified email, or creates the person.
+    - The sync server only needs `sub` to person, one indexed lookup.
+    - The alternative is linking inside Cognito with a pre-sign-up Lambda trigger: more AWS pieces, and harder to test locally.
+  - **(b) `canView` and `canBeCoWriter`** sit beside `canEdit` / `canMerge`. SPEC 5.3 names the latter two, and reading and co-writer eligibility also need a rule; all of them live in the one module.
+  - **(c) No "deleted" flag in the rule.** Deleted series and episodes are never loaded by the API or the sync server, so they have no access. Restoring is checked as `canEdit` on the series scope.
+  - **(d) Episode `position` is a sort key that's never reused.** "Ep N" is the episode's rank among those not deleted, so a restored episode returns to its place and nothing is renumbered in storage.
+  - **(e) Test commands:** `pnpm check` stays runnable without containers. A new root `pnpm test:services` runs every package's service-backed suite (the API's Postgres tests, the sync server's DynamoDB and S3 tests).
+  - **(f) Test isolation:** each test file creates its own throwaway database, dropped afterwards.
+- **What changes for writers:** nothing visible yet. **For the system:** the source of truth for who's in which room, and the one place that decides what each person may do.
+- **Status:** built and tested. (a)-(f) await Arnav's confirmation; (a) shapes step 3.
 
 ### D-039 · 2026-10-25 · Prototype v2 approved; Privacy contact address
 

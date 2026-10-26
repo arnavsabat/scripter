@@ -8,6 +8,15 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit -p ."
+    "migrate": "tsx --env-file-if-exists=../../.env src/db/migrate-cli.ts",
+    "typecheck": "tsc --noEmit -p .",
+    "test:services": "WR_TEST_SERVICES=1 vitest run"
+  },
+  "dependencies": {
+    "pg": "8.23.1"
+  },
+  "devDependencies": {
+    "@types/pg": "8.23.1",
+    "tsx": "4.23.15"
   }
 }

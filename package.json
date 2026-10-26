@@ -13,6 +13,7 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:services": "pnpm -r --if-present test:services",
     "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test",
     "dev:web": "pnpm --filter @wr/web dev",
     "services:up": "docker compose up -d",
