@@ -1,5 +1,6 @@
-// Outgoing email. The wording is D-033's "Plain" invitation; the transport arrives with SES in
-// accounts step 8. Until then the development mailer prints the link, and tests capture it.
+// Outgoing email. The wording is D-033's "Plain" invitation, sent through Amazon SES (D-030);
+// without a sender configured the development mailer prints the link, and tests capture it.
+import { SESv2Client, SendEmailCommand } from '@aws-sdk/client-sesv2';
 
 export interface Invitation {
   to: string;
@@ -31,6 +32,27 @@ export function invitationEmail(i: Invitation): Email {
       '',
       'This link works for 14 days. If you weren’t expecting this, you can ignore it.',
     ].join('\n'),
+  };
+}
+
+/** Amazon SES (D-030). Until the domain exists, `from` is a verified Gmail address (D-038). */
+export function sesMailer(from: string, region: string): Mailer {
+  const ses = new SESv2Client({ region });
+  return {
+    async send(email) {
+      await ses.send(
+        new SendEmailCommand({
+          FromEmailAddress: `Writers’ Room <${from}>`,
+          Destination: { ToAddresses: [email.to] },
+          Content: {
+            Simple: {
+              Subject: { Data: email.subject, Charset: 'UTF-8' },
+              Body: { Text: { Data: email.text, Charset: 'UTF-8' } },
+            },
+          },
+        }),
+      );
+    },
   };
 }
 

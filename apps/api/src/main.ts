@@ -5,7 +5,7 @@ import { cognitoIssuer, idTokenVerifier, tokenVerifier } from '@wr/auth';
 import pg from 'pg';
 import { buildApp } from './app';
 import { cognitoClient } from './auth/cognito';
-import { consoleMailer } from './mailer';
+import { consoleMailer, sesMailer } from './mailer';
 
 const env = process.env;
 const missing = [
@@ -35,7 +35,7 @@ const app = await buildApp({
     }),
     verifyId: idTokenVerifier(pool),
   },
-  mailer: consoleMailer, // SES replaces this in step 8
+  mailer: env.WR_SENDER_EMAIL ? sesMailer(env.WR_SENDER_EMAIL, env.COGNITO_REGION!) : consoleMailer, // development without SES: the email (and its link) is printed
   appUrl: env.APP_URL ?? 'http://localhost:5173',
   logger: true,
 });

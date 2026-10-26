@@ -1,0 +1,4 @@
+{
+  "app": "tsx src/app.ts",
+  "context": {}
+}

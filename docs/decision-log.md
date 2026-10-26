@@ -37,6 +37,9 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
+- **Accounts phase step 8, part 1 built (D-055): the CDK app, not yet deployed.**
+  - **Stacks, deployed in order:** `WrBudgets` ($40 a month, emailing at $20 and $40 actual and $40 forecast), then `WrEmail` (SES identities for the sender and the demo's two addresses), then `WrAuth` (the Cognito pool on Essentials with passwordless email codes, case-insensitive email usernames, a public USER_AUTH-only client, the sign-in domain, and Google once configured).
+  - **The API** sends invitations through SES when `WR_SENDER_EMAIL` is set.
 - **Accounts phase step 7 built (D-053), choices confirmed (D-054): the Share menu.**
   - **Copy invite link** copies `/e/<episode>` and says "copied" only if it was.
   - **Invite co-writer…** is the checklist of the series' writers (toggle, with Undo). The showrunner also gets the invite row, whose invitations assign this episode on acceptance.
@@ -143,6 +146,14 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Choices made while building accounts step 8, part 1 (D-055):**
+  - **(a)** One $40 budget with three alerts.
+  - **(b)** Three stacks, deployed in order.
+  - **(c)** The user pool survives stack deletion.
+  - **(d)** Google's client secret is kept in Secrets Manager (about $0.40 a month); to confirm at the Google step.
+  - **(e)** The sign-in code email uses Cognito's default wording, for now.
+  - **(f)** "Password" stays allowed at the pool level, as Cognito requires; our client allows only USER_AUTH.
+  - **(g)** The SES mailer.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -304,6 +315,40 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-055 · 2026-10-26 · Accounts phase step 8, part 1: the CDK app (budgets, SES, Cognito), not yet deployed
+
+- **What was built** (`infra/`, CDK 2.274.0, constructs 10.8.1, the `aws-cdk` CLI 2.1146.1):
+  - **`WrBudgets`:** one $40-a-month cost budget emailing Arnav when actual spend passes $20 and $40, and when the month is forecast to pass $40 (SPEC 5.5). It's deployed first. On the free plan nothing can be charged (D-038); the alarms stay for the paid plan.
+  - **`WrEmail`:** an SES email identity for the sender and for each demo address (D-038, D-054). Each gets a verification link to click. Cognito can't send from an unverified address, so this deploys before `WrAuth`.
+  - **`WrAuth`**, the Cognito user pool `writers-room`:
+    - **Plan and sign-in:** the Essentials plan; the email as username, case-insensitive (D-044 (b)); self sign-up; passwordless email codes (`EMAIL_OTP`).
+    - **Email:** sent through SES from the sender; the sign-up code email uses D-033's wording ("Your Writers’ Room code: {####}").
+    - **The app client** `writers-room-web` (D-031): public, no secret; `ALLOW_USER_AUTH` and refresh only; 1-hour access and ID tokens, 30-day refresh tokens; revocation on (D-044 (h)); user-existence errors hidden. Its OAuth code flow returns to `<app>/api/auth/google/callback`.
+    - **The domain** `<prefix>.auth.ca-central-1.amazoncognito.com`.
+    - **Outputs:** the pool ID, the client ID, the domain, and the redirect URI to give Google.
+    - **Google** is added only once its OAuth client exists (part 2).
+  - **Settings** come from `infra/.env.local` (git-ignored, D-054; `.env.local.example` lists them). The scripts are `pnpm --filter @wr/infra bootstrap`, `synth`, `deploy:budgets`, `deploy:email` and `deploy:auth`.
+  - **The API's SES mailer** (`@aws-sdk/client-sesv2` 3.1156.0, the SDK version the sync server already uses): when `WR_SENDER_EMAIL` is set, invitations go out through SES; otherwise they're printed.
+- **Tests:** 6 CDK assertions on the synthesized templates, with no AWS access:
+  - the budget's amount and its three alerts;
+  - one SES identity per address;
+  - the pool's Essentials plan, email-code policy, case-insensitive email username, SES sending and the code-email subject;
+  - the client's flows, the absent secret, token lifetimes, revocation and the callback;
+  - the pool being retained;
+  - Google added only when configured, with its secret read from Secrets Manager.
+
+  `pnpm check` passes (163 tests), and `cdk synth` builds all three templates.
+- **Choices Claude made while building, for Arnav to confirm:**
+  - **(a) One budget, three alerts.** A single $40 budget alerts at $20 actual, $40 actual and $40 forecast, rather than two budgets. AWS's first two budgets are free either way.
+  - **(b) Three stacks, deployed in order** (`WrBudgets`, then `WrEmail`, then `WrAuth`), so the alarms exist first and the addresses are verified before Cognito needs them.
+  - **(c) The user pool is retained.** It survives deleting its stack (`RemovalPolicy.RETAIN`), so accounts can't vanish by accident.
+  - **(d) Google's client secret lives in AWS Secrets Manager,** referenced by the template, so it's never in the repo or the template. It costs about $0.40 a month, covered by the free plan's credits. To confirm at the Google step; the alternative is passing it at deploy time, which leaves it visible in the CloudFormation template.
+  - **(e) The sign-in code email uses Cognito's default wording for now.** The *sign-up* code email has D-033's wording; this CDK version doesn't expose the template for the passwordless sign-in message. It gets checked on the real pool and changed if possible.
+  - **(f) "Password" stays allowed at the pool level** because Cognito requires it. The app client allows only `USER_AUTH`, the API never calls a password flow, and no user is ever given a password, so nobody can sign in with one through our app.
+  - **(g) The SES mailer** replaces the printing one whenever a sender is configured.
+- **What changes for writers:** nothing yet. Nothing is deployed.
+- **Status:** built and tested; awaiting Arnav's AWS account (D-038), then deployment, one stack at a time, after Arnav's OK. (a)-(g) await Arnav.
 
 ### D-054 · 2026-10-26 · D-053 confirmed; the email addresses for the AWS setup
 

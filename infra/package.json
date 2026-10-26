@@ -8,6 +8,19 @@
     ".": "./src/index.ts"
   },
   "scripts": {
-    "typecheck": "tsc --noEmit -p ."
+    "typecheck": "tsc --noEmit -p .",
+    "synth": "cdk synth --quiet",
+    "deploy:budgets": "cdk deploy WrBudgets",
+    "deploy:email": "cdk deploy WrEmail",
+    "deploy:auth": "cdk deploy WrAuth --exclusively",
+    "bootstrap": "cdk bootstrap"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.274.0",
+    "constructs": "10.8.1"
+  },
+  "devDependencies": {
+    "aws-cdk": "2.1146.1",
+    "tsx": "4.23.15"
   }
 }

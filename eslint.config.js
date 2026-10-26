@@ -21,6 +21,7 @@ export default defineConfig(
             'apps/web/vitest.config.ts',
             'apps/sync/vitest.config.ts',
             'apps/api/vitest.config.ts',
+            'infra/vitest.config.ts',
             'spike/vitest.config.ts',
           ],
         },
