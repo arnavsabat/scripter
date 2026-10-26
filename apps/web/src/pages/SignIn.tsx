@@ -181,24 +181,22 @@ export function SignIn({ invite }: { invite?: InvitePreview | null }) {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              if (code.length === step.codeLength) verify(code);
+              if (code.length >= 6) verify(code); // whatever its length, Continue sends it
             }}
           >
             <h1>Check your email</h1>
-            <p className="si-sub">
-              We sent a {step.codeLength}-digit code to {email.trim()}.
-            </p>
+            <p className="si-sub">We sent a code to {email.trim()}.</p>
             <input
               className="si-f code"
               inputMode="numeric"
               autoComplete="one-time-code"
-              maxLength={step.codeLength}
-              placeholder={`Enter ${step.codeLength}-digit code`}
+              maxLength={8}
+              placeholder="Enter the code"
               aria-label="Code"
               autoFocus
               value={code}
               onChange={(e) => {
-                const digits = e.target.value.replace(/\D/g, '').slice(0, step.codeLength);
+                const digits = e.target.value.replace(/\D/g, '').slice(0, 8);
                 setCode(digits);
                 if (digits.length === step.codeLength) verify(digits); // in as soon as the last digit lands
               }}

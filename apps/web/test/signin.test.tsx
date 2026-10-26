@@ -64,11 +64,11 @@ afterEach(() => {
 });
 
 describe('signing in with an email code', () => {
-  it('a new writer gets a 6-digit code, names themselves, and is in', async () => {
+  it('a new writer gets a code, names themselves, and is in', async () => {
     open();
     await enterEmail('riley@example.com');
-    expect($('.si-sub')!.textContent).toBe('We sent a 6-digit code to riley@example.com.');
-    expect(field().placeholder).toBe('Enter 6-digit code');
+    expect($('.si-sub')!.textContent).toBe('We sent a code to riley@example.com.');
+    expect(field().placeholder).toBe('Enter the code');
     await userEvent.type(field(), '123456'); // signs in as the last digit lands
     await until(() => heading() === 'What should the room call you?');
     await userEvent.fill(field(), 'Riley Chen');
@@ -76,7 +76,7 @@ describe('signing in with an email code', () => {
     await until(() => document.body.textContent?.includes('Signed in as Riley Chen'));
   });
 
-  it('a returning writer gets an 8-digit code and skips the name step', async () => {
+  it('a returning writer’s longer sign-in code works, and they skip the name step', async () => {
     open();
     await enterEmail('sam@example.com');
     await userEvent.type(field(), '123456');
@@ -86,8 +86,11 @@ describe('signing in with an email code', () => {
     await until(() => document.body.textContent?.includes('Signed in as Sam Jones'));
     await clickAction('Sign out');
     await enterEmail('SAM@example.com');
-    expect(field().placeholder).toBe('Enter 8-digit code');
-    await userEvent.type(field(), '12345678');
+    // An 8-digit sign-in code: nothing happens at six digits, and it signs in at the eighth.
+    await userEvent.type(field(), '123456');
+    await new Promise((r) => setTimeout(r, 200));
+    expect(heading()).toBe('Check your email');
+    await userEvent.type(field(), '78');
     await until(() => document.body.textContent?.includes('Signed in as Sam Jones'));
   });
 

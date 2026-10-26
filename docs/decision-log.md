@@ -37,12 +37,13 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 5 built (D-048): the web app's signed-out side.**
+- **Accounts phase step 5 built (D-048), choices confirmed (D-049): the web app's signed-out side.**
   - **Pages:** the sign-in page (Arnav's template), Terms, Privacy, and invitation links ("Join Fogline", accepted once signed in).
   - **Session:** the access token is kept in memory and renewed through the refresh cookie.
   - **Routing:** a tiny History-API router of our own.
   - **Tests:** the browser tests use a small fake API; the real API keeps its own tests.
   - **Removed:** the dev stub, from the browser too.
+  - **The code screen** reads "We sent a code to …", with no digit count (D-049).
 - **Accounts phase step 4 built (D-046), choices confirmed (D-047): the sync server enforces roles.**
   - **No dev stub.** The development stub is removed from the servers; they trust Cognito tokens only (the test key in tests).
   - **Access check at the home server.** It uses `canEdit` / `canView` through a pluggable access source (Postgres in production). View-only connections see everything, but their edits close with 4403.
@@ -135,16 +136,6 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **Choices made while building accounts step 5 (D-048):**
-  - **(a)** The code length per path ("6-digit" for sign-up, "8-digit" for sign-in), forced by Cognito.
-  - **(b)** Sign-in errors show in the shared toast.
-  - **(c)** A public invitation preview endpoint.
-  - **(d)** "Continue with Google" is a link.
-  - **(e)** The name step finishes before the app counts you as signed in.
-  - **(f)** The access token is renewed a minute early, with one 401 retry.
-  - **(g)** `devAuth.ts` is gone; `Identity` and `colorFor` are in `shared/identity.ts`.
-  - **(h)** A one-line signed-in placeholder until step 6.
-  - **(i)** `reloadAuthForTests()`.
 - **(a)** One person per verified email: `users` plus `user_identities`. Google sign-in and email codes reach the same account.
   - **(b)** `canView` and `canBeCoWriter` alongside `canEdit` / `canMerge`.
   - **(c)** Deleted series and episodes are simply never loaded, so the rule needs no "deleted" flag.
@@ -305,6 +296,25 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-049 · 2026-10-26 · The code screen names no digit count; D-048's other choices confirmed
+
+- **Decision (Arnav's call):** the code screen says **"We sent a code to maya@example.com."**, with the placeholder "Enter the code".
+  - It still signs in as soon as the code is complete, using the length the API reports (6 for sign-up, 8 for sign-in).
+  - Continue or Enter sends any 6-8-digit code, so nobody gets stuck if Cognito's lengths ever differ from what we expect.
+  - Prototype v2's wording is updated to match ("6-digit" removed). This supersedes D-048 (a).
+  - Rejected: naming the length ("We sent an 8-digit code…"). It's more specific, but it depends on Cognito's undocumented lengths staying as they are.
+- **Also (Arnav's call):** D-048 (b)-(i) stand:
+  - sign-in errors in the shared toast;
+  - the public invitation preview;
+  - Google as a link;
+  - the name step before "signed in";
+  - renewal a minute early, with one 401 retry;
+  - `devAuth.ts` removed;
+  - the placeholder until step 6;
+  - the test reload hook.
+- **What changes for writers:** the code screen never promises a length it might not deliver.
+- **Status:** Arnav's call. Built: browser tests updated, including one proving an 8-digit code doesn't submit at six digits. Step 6 (Home) is next.
 
 ### D-048 · 2026-10-26 · Accounts phase step 5: sign-in, Terms, Privacy and invitation links in the web app
 
