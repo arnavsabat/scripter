@@ -148,6 +148,8 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **D-080, what-ifs, built with these defaults:** 5-minute restore-point window; a fully sent what-if stays as is; restore confirmed inline in the snapshot row; the undo warning is a toast with Undo anyway · Keep; automatic snapshots only before sends and restores and when a what-if begins; no rename or delete for what-ifs yet; viewers can see what-ifs; only editors snapshot; 14 px snapshot rows; deleted scenes listed struck through; `--on-accent` for the dark-mode primary button; "This scene isn't in main yet."
+
 - ~~D-077: long toasts wrap~~: kept (D-079).
 
 - ~~D-071: pagination splits mid-line at sentence ends~~: decided in D-073 (industry standard).
@@ -178,6 +180,9 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 - ~~D-020: storage-backed tests not yet run~~: resolved in D-021. All 6 pass against DynamoDB Local and SeaweedFS, three runs in a row, including the SIGKILL crash of a real server process.
 - ~~D-020: no client heartbeat~~: decided in D-022 (ping every 5 s, give up after 10 s).
+- **D-080: Changes shows removed text inline,** so page view's breaks (computed from the script itself) don't account for it while Changes is on.
+- **D-080: a viewer opening a never-opened what-if sees it empty** (only an editor can seed it from its base).
+- **D-080: usage counting isn't built** ("what-if created", "scene sent", "script imported", "PDF exported"; SPEC 5.9).
 - **D-069: the leave prompt covers the open script only.** A script left for Home while still offline gets no prompt when Home is closed. A normal window keeps the copy and syncs it later; an incognito window loses it. Options to bring when it matters: prompt on Home too, or keep the script's connection open until it's synced.
 - **D-069: an unreachable API looks like being signed out.** A reload while the API is down shows the sign-in page, and trying to sign in then says "Something went wrong". Better: say the server can't be reached and keep retrying. Options to bring to Arnav.
 - **D-065: the API's production role needs `cognito-idp:AdminGetUser`** on the user pool only. This goes in the deploy phase's CDK stack for the API. Without it, every returning email sign-in fails.
@@ -315,6 +320,66 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-080 · 2026-10-27 · What-ifs built: forking, snapshots, the three-way comparison, Send to main, Compare, Review all, Changes
+
+Built without Arnav's input on his instruction (D-079); his open decisions are built with Claude's recommended defaults, listed under "Waiting on Arnav" below and in Proposed.
+
+- **The comparison** (`packages/schema/src/whatif.ts`, pure, with 18 tests):
+  - Scenes are compared by scene ID and content hash, three ways: the base snapshot the what-if was forked from, the what-if, and main as it is now. Blue means only the what-if changed it; amber means main did too; changes only main made are ignored.
+  - Added and deleted scenes count as changes. Moved scenes are found as the scenes outside a longest common subsequence of scene order, so swapping two scenes flags one of them, not every scene after them.
+  - **Split and combined scenes:** scenes that share a line (block ID) between the base and the what-if form a group, sent together. Sending half a split alone would delete the other half's lines from main until it arrived.
+  - **What was sent:** each what-if keeps a record of what it sent in its own Y.Doc (a `sent` map: the scene's lines, and the scene before it). That makes "Sent ✓" exact, and editing a sent scene again turns it blue (or amber if main changed it since), never permanently amber.
+  - `planSend` builds main's new lines: the what-if's version of each sent scene, placed after the scene before it in the what-if; deleted scenes go; lines that moved in from elsewhere leave their old place.
+  - `diffWords` is a word-level diff merged into phrases (the spike's diff was word by word).
+- **The API** (`apps/api/src/routes/drafts.ts`, migration 003, 8 tests on Postgres and SeaweedFS):
+  - Routes: list an episode's drafts; + New what-if (the browser sends main's current Yjs state, kept as an automatic snapshot "When “Name” began", and the what-if is based on it); + Snapshot; restore points before a send or a restore; a snapshot's bytes.
+  - Snapshot bytes live in S3 under `restore-points/` (SeaweedFS locally, memory in tests), per SPEC 5.2. That adds `@aws-sdk/client-s3`, the same SDK family and version the sync server already uses.
+  - Who may do what: forking and snapshots need edit rights (writers on their episodes, the showrunner); viewers can list and read. Every check goes through `canMerge`.
+- **The app:**
+  - **Routes:** `/e/<episode>/w/<what-if>`, so what-ifs have real links and back and forward work.
+  - **A what-if session** (`whatif/useWhatIf.ts`) holds the what-if (the editor), a live copy of main over its own sync connection, and the base snapshot. The comparison reruns at most once a frame.
+  - **Seeding:** a new what-if is seeded from its base snapshot's Yjs state when the server confirms it's empty. That's idempotent, so two people opening it at once can't duplicate it.
+  - **Send to main:**
+    1. A restore point (sends from one what-if within 5 minutes share one, server-side).
+    2. Main's new lines are written with y-prosemirror's own `updateYFragment` diff, in a transaction with the send's own origin. Unchanged lines aren't touched, so a co-writer typing in them loses nothing.
+    3. A Yjs UndoManager scoped to that origin, so Undo reverts exactly that send. If main changed those scenes since, the toast asks "…has changed in main since you sent it. Undo the send anyway?" with Undo anyway or Keep.
+    4. Then the heading pulse, "Sent ✓", and "“Name” sent to main · Undo". Amber scenes open Compare first with "Main changed this scene too, so compare it first".
+  - **Margin dots and keys:** a 10 px dot, 36 px left of the heading, with its ring when active. The popover sits in the margin (Send to main ⌘↵, Compare ⌘⇧↵; Ctrl on Windows and Linux). The keys act on the cursor's scene.
+  - **Compare:** the 340 px right panel follows the cursor and shows main's version with main's additions highlighted, plus "changed by NAME, time".
+    - The "changed by" comes from a per-scene record main's editors keep in main's Y.Doc (`whatif/sceneEdits.ts`), written 1.5 s after they stop typing in a scene.
+    - It has Send mine to main and the prototype's empty states. The sidebar collapses when the window is under 1300 px (the prototype's rule) and comes back on close. Esc closes the topmost thing: popover or menu, then Review all, then Compare.
+  - **Review all** and **Changes** follow the prototype's markup and wording. Changes shows additions in the ins colors and removals struck through in the del colors, inline, plus removed lines.
+  - **The Drafts tab:** Main ("Editing now · names", live even from a what-if), + New what-if, WHAT-IFS ("creator · time · N scenes differ", the count reported by whoever has the what-if open), and SNAPSHOTS with + Snapshot. Restore is an inline confirm, then one ordinary, undoable edit.
+  - **The draft switcher:** "Main ▾" or "Main › Name ▾", listing every draft with ✓ on the current one.
+- **Fixed on the way:**
+  - Toast actions now hide the toast *before* running, so a follow-up toast ("Send undone") isn't hidden at once.
+  - Root refetches drafts per URL and only redirects "isn't there any more" on a list fetched for that URL, which a new what-if's navigation would otherwise hit.
+  - A flaky Home test's click helper now waits for its target.
+- **Tests** (real Chromium, real sync server, fake API; 7 for what-ifs):
+  - At the document level: two writers sending different scenes at once both land; a co-writer typing in main during a send keeps their typing, in another scene and in an unchanged line of the same scene; Undo reverts only the send.
+  - In the app: fork; edit; the blue dot and navigator ●; amber after a co-writer's change; ⌘↵ with the pulse, toast, "Sent ✓" and main updated; Undo; amber's Send opening Compare with "changed by Sam" and the highlight; Send mine to main; Esc; Changes; Review all down to "Everything's in main"; the switcher.
+  - Re-editing a sent scene brings the dot back, and Undo after main changed asks first.
+  - A viewer gets no + New what-if or + Snapshot.
+  - + Snapshot, then restore with its restore point, then Undo.
+  - Claude checked screenshots against prototype v2: the popover, Compare, Review all with Changes, the Drafts tab.
+- **Waiting on Arnav (built with these defaults; each a one-line change):**
+  1. **Grouping window for restore points** (SPEC "a few minutes", open question 26): **5 minutes**, per what-if.
+  2. **A what-if after every scene is sent** (phase prompt): it **stays as it is**. Review all says "Everything's in main", the dots are gone, and the Drafts line reads "no changes yet". Alternatives: archive it automatically, or offer "Delete this what-if?".
+  3. **How restoring a snapshot is confirmed** (open question 28): an **inline confirm in the snapshot's row** ("Restore “Name”? Your draft as it is now is kept as a snapshot first." Restore · Cancel), like delete (D-037). Then one ordinary edit into the current draft, with a restore point before it and Undo in the toast.
+  4. **The warning before undoing an edited send** (open question 27): a **toast with Undo anyway · Keep** (no dialogs, SPEC 3.9).
+  5. **Automatic snapshots** (open question 29): only before sends, before restores, and when a what-if begins.
+  6. **Renaming and deleting what-ifs** (open question 30): **not built**. New what-ifs are "Untitled what-if", as in the prototype. **Viewers can see what-ifs** (read-only, can't fork, send or snapshot). **Only editors can take snapshots.**
+  7. **Snapshot row text** (open question 31): **14 px, as the prototype**.
+  8. **Scenes the what-if deleted:** listed in the Scenes tab where they were, struck through with their dot, and in Review all as "Name (deleted)". There's no margin dot, because there's no heading to put it on.
+  9. **The primary button in dark mode** (the open contrast issue): a new `--on-accent` token, white in light mode as the prototype, and #1C1C1E in dark mode, about 7:1 on the dark accent.
+  10. **Compare for a scene main doesn't have yet:** "This scene isn't in main yet." (not in the prototype).
+- **Known limits (open issues):**
+  - With Changes on, removed text is shown inline, so page view's breaks (computed from the script itself) don't account for it.
+  - A viewer opening a what-if nobody has opened yet sees it empty, since only an editor can seed it.
+  - Usage counting ("what-if created", "scene sent", SPEC 5.9) isn't built.
+  - The Drafts tab's what-if count is only as fresh as whoever last had that what-if open.
+- **Status:** built and tested; Arnav's decisions and hands-on testing pending.
 
 ### D-079 · 2026-10-27 · Real-pages phase approved: automatic (CONT'D), toasts wrap, four gaps for later
 

@@ -322,6 +322,47 @@ describe('what-ifs in the app (prototype v2)', () => {
     main.client.destroy();
   }, 90_000);
 
+  it('re-editing a sent scene brings its dot back; undoing after main changed it asks first', async () => {
+    const { mainDraftId } = await openEpisode('Harbor Lights', 'Pilot');
+    await clickText('.layer:not(.off) .tabs .ta', 'Drafts');
+    await clickText('.layer:not(.off) .left .ta', '+ New what-if');
+    await until(() => switcher() === 'Main › Untitled what-if ▾');
+    await until(() => paras().length === SCRIPT.length);
+    await clickEnd(1);
+    await userEvent.keyboard(' Then she smashes a plate.');
+    await until(() => $('.layer:not(.off) .dot.blue'));
+    await userEvent.keyboard(`{${MOD}>}{Enter}{/${MOD}}`);
+    await until(() => toast().startsWith('“Kitchen – Night” sent to main'));
+    await until(() => !$('.layer:not(.off) .dot'));
+    // A co-writer changes the sent kitchen in main...
+    const main = await open(mainDraftId, 'Sam');
+    await until(() => main.blocks().some((b) => b.text.endsWith('Then she smashes a plate.')));
+    writeBlocks(
+      main.doc,
+      withText(
+        main.blocks(),
+        'Mara stares at the sink. Then she smashes a plate.',
+        'Mara stares. Then she smashes a plate.',
+      ),
+      {},
+    );
+    await main.client.whenSynced();
+    // ...so Undo asks before reverting.
+    await clickText('.toast.show button', 'Undo');
+    await until(() =>
+      toast().startsWith(
+        '“Kitchen – Night” has changed in main since you sent it. Undo the send anyway?',
+      ),
+    );
+    await clickText('.toast.show button', 'Keep');
+    expect(main.blocks().map((b) => b.text)).toContain('Mara stares. Then she smashes a plate.');
+    // Editing the sent scene again in the what-if: the dot comes back (amber: main changed it since).
+    await clickEnd(1);
+    await userEvent.keyboard(' Twice.');
+    await until(() => $('.layer:not(.off) .dot.amber'));
+    main.client.destroy();
+  }, 90_000);
+
   it('a viewer can open a what-if’s drafts list but not start one or take a snapshot', async () => {
     await openEpisode('Harbor Lights', 'Low Tide');
     await clickText('.layer:not(.off) .tabs .ta', 'Drafts');
