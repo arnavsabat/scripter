@@ -15,6 +15,7 @@ import { exportPdf, pdfFileName } from './export/pdf';
 import { ScriptPage } from './editor/ScriptPage';
 import { useScriptEditor } from './editor/useScriptEditor';
 import type { Session } from './session';
+import { countUsage } from './usage';
 import { blocksOfState, docOfBlocks } from './whatif/docs';
 import {
   createSnapshot,
@@ -195,6 +196,7 @@ export function ScriptScreen({
     setOverlay(null);
     try {
       const r = await wi.send(ids);
+      countUsage('scene_sent', drafts?.episodeId, r.sent.length);
       setPulse(new Set(r.sent));
       setTimeout(() => setPulse(new Set()), 1300);
       toast.show(
@@ -360,6 +362,7 @@ export function ScriptScreen({
         },
         fileName: pdfFileName(exportInfo?.fileParts ?? [fallback]),
       });
+      countUsage('pdf_exported', drafts?.episodeId);
     } catch {
       toast.show('Couldn’t export the PDF. Please try again.');
     }

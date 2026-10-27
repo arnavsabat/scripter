@@ -104,6 +104,27 @@ describe('live status and "edited" (D-033)', () => {
   });
 });
 
+describe('usage counting (SPEC 5.9, D-082)', () => {
+  it('counts a session for everyone, and a 2+ writer session only once two can edit', async () => {
+    const { srv, access } = await withAccess();
+    access.set('Priya', DOC, 'view');
+    const maya = track(client(srv, 'Maya', DOC));
+    const priya = track(client(srv, 'Priya', DOC));
+    await Promise.all([maya.c.whenSynced(), priya.c.whenSynced()]);
+    await until(() => access.usage.length === 2);
+    expect(access.usage.every((u) => u.event === 'session_started')).toBe(true);
+    const sam = track(client(srv, 'Sam', DOC));
+    await sam.c.whenSynced();
+    await until(() => access.usage.some((u) => u.event === 'multi_writer_session'));
+    expect(
+      access.usage
+        .filter((u) => u.event === 'multi_writer_session')
+        .map((u) => u.userId)
+        .sort(),
+    ).toEqual(['u-maya', 'u-sam']); // the viewer isn't a writer
+  });
+});
+
 describe('through the forwarding hop', () => {
   it('the home server enforces access even when the writer connects to another server', async () => {
     const storage = memoryStorage();

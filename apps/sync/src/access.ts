@@ -6,6 +6,8 @@ import { colorFor, type Identity } from '@wr/shared';
 /** What a connection may do: type in the episode, or only read it (it still sees edits and presence). */
 export type Mode = 'edit' | 'view';
 
+export type SessionEvent = 'session_started' | 'multi_writer_session';
+
 export type AccessResult =
   | { ok: true; mode: Mode; seriesId: string; episodeId: string }
   | { ok: false; reason: 'none' | 'deleted' | 'unknown' };
@@ -31,6 +33,11 @@ export interface AccessSource {
   left(episodeId: string, userId: string): Promise<void>;
   /** "edited Oct 12": called at most once a minute per episode while edits arrive. */
   edited(episodeId: string): Promise<void>;
+  /**
+   * Usage counting (SPEC 5.9, D-082): a session, or a session with 2+ writers at once, for each
+   * person, counted at most once per 30 minutes per person per episode. Never content.
+   */
+  counted(event: SessionEvent, userIds: readonly string[], episodeId: string): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -46,6 +53,7 @@ export function memoryAccess(defaultMode: Mode | 'none' = 'edit') {
   const listeners: ((c: AccessChange) => void)[] = [];
   const presence = new Map<string, Set<string>>();
   const edits = new Map<string, number>();
+  const usage: { event: SessionEvent; userId: string; episodeId: string }[] = [];
   const key = (u: string, d: string) => `${u} ${d}`;
   const idFor = (name: string) => `u-${name.toLowerCase()}`;
   const source: AccessSource & {
@@ -53,6 +61,7 @@ export function memoryAccess(defaultMode: Mode | 'none' = 'edit') {
     notify(c: AccessChange): void;
     presence: Map<string, Set<string>>;
     edits: Map<string, number>;
+    usage: typeof usage;
   } = {
     identify(sub) {
       return Promise.resolve({ userId: idFor(sub), name: sub, color: colorFor(idFor(sub)) });
@@ -81,6 +90,14 @@ export function memoryAccess(defaultMode: Mode | 'none' = 'edit') {
       edits.set(episodeId, (edits.get(episodeId) ?? 0) + 1);
       return Promise.resolve();
     },
+    counted(event, userIds, episodeId) {
+      for (const userId of userIds)
+        if (
+          !usage.some((u) => u.event === event && u.userId === userId && u.episodeId === episodeId)
+        )
+          usage.push({ event, userId, episodeId });
+      return Promise.resolve();
+    },
     close: () => Promise.resolve(),
     set(name, docId, r) {
       rules.set(
@@ -95,6 +112,7 @@ export function memoryAccess(defaultMode: Mode | 'none' = 'edit') {
     },
     presence,
     edits,
+    usage,
   };
   return source;
 }

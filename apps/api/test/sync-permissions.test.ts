@@ -178,4 +178,17 @@ describe.skipIf(!servicesEnabled)('permissions at the sync server', () => {
     const live = home.series[0]!.episodes.find((e) => e.id === ep[0])!.live.map((p) => p.name);
     expect(live).toEqual(['Maya']);
   });
+  it('counts sessions in Postgres, once per 30 minutes per person per episode (D-082)', async () => {
+    await h.admin.query(`delete from usage_events`);
+    for (let i = 0; i < 2; i++) {
+      const m = open(maya, draft[0]!);
+      await m.c.whenSynced();
+      await new Promise((r) => setTimeout(r, 200));
+      m.c.destroy();
+    }
+    const { rows } = await h.admin.query<{ event: string; user_id: string; episode_id: string }>(
+      `select event, user_id, episode_id from usage_events`,
+    );
+    expect(rows).toEqual([{ event: 'session_started', user_id: maya.id, episode_id: ep[0] }]);
+  });
 });

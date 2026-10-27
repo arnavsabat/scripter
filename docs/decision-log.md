@@ -183,7 +183,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - ~~D-020: no client heartbeat~~: decided in D-022 (ping every 5 s, give up after 10 s).
 - **D-080: Changes shows removed text inline,** so page view's breaks (computed from the script itself) don't account for it while Changes is on.
 - **D-080: a viewer opening a never-opened what-if sees it empty** (only an editor can seed it from its base).
-- **D-080: usage counting isn't built** ("what-if created", "scene sent", "script imported", "PDF exported"; SPEC 5.9).
+- ~~D-080: usage counting isn't built~~: built in D-083.
 - **D-069: the leave prompt covers the open script only.** A script left for Home while still offline gets no prompt when Home is closed. A normal window keeps the copy and syncs it later; an incognito window loses it. Options to bring when it matters: prompt on Home too, or keep the script's connection open until it's synced.
 - **D-069: an unreachable API looks like being signed out.** A reload while the API is down shows the sign-in page, and trying to sign in then says "Something went wrong". Better: say the server can't be reached and keep retrying. Options to bring to Arnav.
 - **D-065: the API's production role needs `cognito-idp:AdminGetUser`** on the user pool only. This goes in the deploy phase's CDK stack for the API. Without it, every returning email sign-in fails.
@@ -321,6 +321,19 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-083 · 2026-10-27 · Usage counting and browser crash reports built (beta-readiness step 1)
+
+- **Built to D-082's calls:**
+  - **Migration 004** adds `episode_id` to `usage_events`, plus indexes.
+  - **The sync server** (the home server) counts `session_started` when someone joins a draft, and `multi_writer_session` for each writer once two or more people who can edit are in the same draft. Both go through the access source (`counted`), at most once per 30 minutes per person per episode, so reconnects and second tabs aren't new sessions. Viewers count as sessions, never as writers.
+  - **The API** counts `whatif_created` inside the same transaction that creates the what-if.
+  - **The browser** reports `scene_sent` (one per scene), `script_imported` and `pdf_exported` through `POST /api/usage`, which takes only those three events and only for an episode the caller can see. Unknown fields are stripped by the schema, so nothing else can be stored.
+  - **Crash reports:** uncaught errors and rejections in the browser go to `POST /api/client-errors` (public, so the sign-in page reports too; 20 a minute per address; at most 5 per page load). They're written to the API's log, CloudWatch on AWS, never the database: the error's message and stack, the app version (`VITE_WR_VERSION` at build) and the page's path.
+  - **`docs/metrics.md`:** what each event means, then the SQL for the weekly table, the weekly return rate, feature use, first-week cohorts and room sizes. Arnav's own accounts are left out with a psql variable, so no address is in the public repo. Every query was checked against synthetic rows.
+- **Claude's small choices (say if any should change):** the 30-minute session window; viewers count as sessions; a what-if writer counts as co-writing with someone in main (they're connected to main to compare and send); crash reports aren't tied to a user.
+- **Tests:** API (Postgres): browser events with who and which episode; refusals for server-only events, outsiders and the signed-out; the what-if count; crash reports accepted signed out, refused when too long, never stored. Sync: sessions counted for everyone, the 2+ writer session for writers only (memory), and the 30-minute window against real Postgres.
+- **Status:** built and tested to Arnav's D-082 calls; the small choices above are Claude's.
 
 ### D-082 · 2026-10-27 · Beta-readiness phase: the deploy, monitoring, load-test and usage decisions
 

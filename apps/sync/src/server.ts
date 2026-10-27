@@ -448,6 +448,7 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
             r.join(peer);
             joined = true;
             notePresent(r);
+            noteSession(r, me);
             // Handshake: our state vector (so the client sends what we lack), then everyone's presence.
             const e = encoding.createEncoder();
             encoding.writeVarUint(e, MSG_SYNC);
@@ -521,6 +522,18 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
     access
       .left(info.episodeId, info.userId)
       .catch((err: unknown) => logger.error('presence write failed', { err: String(err) }));
+  }
+  /** Usage (SPEC 5.9): a session for whoever joined, and one with 2+ writers once two can edit. */
+  function noteSession(room: Room, me: PeerInfo) {
+    const failed = (err: unknown) => logger.error('usage write failed', { err: String(err) });
+    access.counted('session_started', [me.userId], me.episodeId).catch(failed);
+    const writers = new Set<string>();
+    for (const peer of room.peers) {
+      const info = peerInfo.get(peer);
+      if (info?.mode === 'edit' && info.episodeId === me.episodeId) writers.add(info.userId);
+    }
+    if (writers.size >= 2)
+      access.counted('multi_writer_session', [...writers], me.episodeId).catch(failed);
   }
   function noteEdited(episodeId: string) {
     const now = Date.now();

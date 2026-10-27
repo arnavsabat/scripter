@@ -9,6 +9,7 @@ import { episodeFor, type Q } from '../access';
 import type { AppDeps } from '../app';
 import { notifyAccess, withTx } from '../db/tx';
 import { ApiError, forbidden, notFound } from '../errors';
+import { countUsage } from '../usage';
 
 /** Sends from one what-if within this many minutes share one restore point (D-080, proposed). */
 export const RESTORE_POINT_WINDOW_MINUTES = 5;
@@ -159,6 +160,7 @@ export function draftRoutes(app: FastifyInstance, { db, blobs }: AppDeps): void 
            values ($1, 'whatif', $2, $3, $4) returning id`,
           [episode.id, whatIfName, snapshotId, req.user.id],
         );
+        await countUsage(c, 'whatif_created', req.user.id, episode.id);
         return r.rows[0]!.id;
       });
       const { draft } = await draftFor(db, req.user.id, id, 'view');

@@ -125,6 +125,19 @@ export function pgAccess(databaseUrl: string, logger: Logger): AccessSource {
       await db.query(`update episodes set edited_at = now() where id = $1`, [episodeId]);
     },
 
+    async counted(event, userIds, episodeId) {
+      if (!userIds.length) return;
+      await db.query(
+        `insert into usage_events (event, user_id, episode_id)
+         select $1, u, $3 from unnest($2::uuid[]) as u
+          where not exists (
+            select 1 from usage_events e
+             where e.event = $1 and e.user_id = u and e.episode_id = $3
+               and e.occurred_at > now() - interval '30 minutes')`,
+        [event, userIds, episodeId],
+      );
+    },
+
     async close() {
       closed = true;
       await listener?.end().catch(() => {});

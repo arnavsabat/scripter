@@ -16,6 +16,7 @@ import { localCopies } from '../localCopies';
 import { navigate } from '../router';
 import { initials } from '../session';
 import { toggleTheme, useTheme } from '../theme';
+import { countUsage } from '../usage';
 import { MembersPanel } from './MembersPanel';
 import {
   episodeLabel,
@@ -102,6 +103,7 @@ export function HomeScreen({ me, data, reload, select }: Props) {
         name: result.title,
       });
       pendingImports.set(r.episodeId, result.blocks);
+      countUsage('script_imported', r.episodeId);
       navigate(`/e/${r.episodeId}`);
       const pages = paginate(result.blocks.map((b, i) => ({ id: String(i), ...b }))).pages.length;
       toast.show(result.report.message(result.title, pages));

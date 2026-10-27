@@ -5,8 +5,10 @@ import 'prosemirror-view/style/prosemirror.css';
 import './base.css';
 import { Root } from './Root';
 import { initTheme } from './theme';
+import { reportCrashes } from './usage';
 
 initTheme(); // before the first paint, so a chosen theme never flashes the other one
+reportCrashes();
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
 

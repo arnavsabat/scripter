@@ -13,6 +13,7 @@ import { draftRoutes } from './routes/drafts';
 import { episodeRoutes } from './routes/episodes';
 import { homeRoutes } from './routes/home';
 import { invitationRoutes } from './routes/invitations';
+import { reportRoutes } from './routes/reports';
 import { seriesRoutes } from './routes/series';
 
 export interface User {
@@ -83,5 +84,6 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   episodeRoutes(app, deps);
   invitationRoutes(app, deps);
   draftRoutes(app, deps);
+  reportRoutes(app, deps);
   return app;
 }
