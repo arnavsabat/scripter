@@ -171,3 +171,21 @@ button.snap:not([disabled]):hover {
   font-size: 13px;
   font-weight: 600;
 }
+
+/* The what-if's name in the switcher, renamed by clicking it (D-080). */
+.sw .wn[role='button'] {
+  border-radius: 4px;
+  padding: 1px 3px;
+  margin: -1px -3px;
+}
+.sw .wn[role='button']:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+.sw input.wn {
+  font: inherit;
+  font-size: 13px;
+  font-weight: 400;
+  padding: 1px 4px;
+  margin: -1px -4px;
+}

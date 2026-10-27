@@ -197,7 +197,12 @@ function Episode({
     };
   }, [id, draft, draftsAsked]);
   const drafts = fetched?.list ?? null;
-  const current = drafts?.find((d) => (draft ? d.id === draft : d.kind === 'main')) ?? null;
+  const found = drafts?.find((d) => (draft ? d.id === draft : d.kind === 'main')) ?? null;
+  // Until the list for a newly opened draft arrives, keep the last one on screen: the script
+  // screen stays mounted (its sidebar tab, page view) and only the editor changes.
+  const [lastShown, setLastShown] = useState<DraftInfo | null>(null);
+  if (found && found !== lastShown) setLastShown(found);
+  const current = found ?? (fetched?.for !== draft ? lastShown : null);
   // A what-if link that doesn't exist (any more), by a list fetched for it: back to main.
   useEffect(() => {
     if (fetched && draft && fetched.for === draft && !fetched.list.some((d) => d.id === draft)) {
@@ -226,33 +231,43 @@ function Episode({
     };
   }, [id, toast, isNew]);
 
+  // The session only changes when the draft does (not when its list is fetched again).
+  const draftId = current?.id ?? null;
+  const baseSnapshotId = current?.kind === 'whatif' ? current.baseSnapshotId : null;
   const session = useMemo<Session | null>(
     () =>
-      episode &&
-      current && {
-        serverUrl: syncUrls,
-        docId: current.id,
-        identity: { userId: me.id, name: me.name, color: colorFor(me.id) },
-        token: auth.token,
-        canEdit: episode.canEdit,
-        // Just imported from a file on Home (D-077): written in once the server confirms empty.
-        ...(pendingImports.get(episode.id)
-          ? {
-              seed: pendingImports.get(episode.id)!,
-              onSeeded: () => pendingImports.clear(episode.id),
-            }
-          : {}),
-        // A what-if starts as its base snapshot of main; on main, who changes what (D-080).
-        ...(current.kind === 'whatif' && current.baseSnapshotId
-          ? { seedState: () => snapshotState(current.baseSnapshotId!) }
-          : { trackSceneEditsAs: me.name }),
-      },
-    [episode, current, me, syncUrls],
+      !episode || !draftId
+        ? null
+        : {
+            serverUrl: syncUrls,
+            docId: draftId,
+            identity: { userId: me.id, name: me.name, color: colorFor(me.id) },
+            token: auth.token,
+            canEdit: episode.canEdit,
+            // Just imported from a file on Home (D-077): written in once the server confirms empty.
+            ...(pendingImports.get(episode.id)
+              ? {
+                  seed: pendingImports.get(episode.id)!,
+                  onSeeded: () => pendingImports.clear(episode.id),
+                }
+              : {}),
+            // A what-if starts as its base snapshot of main; on main, who changes what (D-080).
+            ...(baseSnapshotId
+              ? { seedState: () => snapshotState(baseSnapshotId) }
+              : { trackSceneEditsAs: me.name }),
+          },
+    [episode, draftId, baseSnapshotId, me, syncUrls],
   );
 
   /** The server closed us for good (D-046): access changed, or the episode was deleted. */
   const onFatal = async (reason: string) => {
     if (!episode) return;
+    // A what-if deleted while you were in it: back to main (D-080).
+    if (reason === 'deleted' && current?.kind === 'whatif') {
+      toast.show(`“${current.name}” was deleted.`);
+      setDraftsAsked((n) => n + 1);
+      return navigate(`/e/${episode.id}`, { replace: true });
+    }
     if (reason === 'deleted' || reason === 'bad episode') {
       toast.show(
         reason === 'deleted'
@@ -304,6 +319,9 @@ function Episode({
         list: drafts ?? [current],
         current,
         me: { id: me.id, name: me.name },
+        canManage: (d) =>
+          d.kind === 'whatif' &&
+          (episode.role === 'showrunner' || (d.createdBy?.id === me.id && episode.canEdit)),
         reload: () => setDraftsAsked((n) => n + 1),
         open: (draftId) => navigate(draftId ? `/e/${episode.id}/w/${draftId}` : `/e/${episode.id}`),
       }}

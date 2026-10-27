@@ -55,6 +55,11 @@ export const createSnapshot = (
 
 export const snapshotState = (snapshotId: string) => apiBytes(`/api/snapshots/${snapshotId}/state`);
 
+export const renameDraft = (draftId: string, name: string) =>
+  api('PATCH', `/api/drafts/${draftId}`, { name });
+
+export const deleteDraft = (draftId: string) => api('DELETE', `/api/drafts/${draftId}`);
+
 export const reportScenesDiffer = (draftId: string, scenesDiffer: number) =>
   api('PATCH', `/api/drafts/${draftId}`, { scenesDiffer });
 

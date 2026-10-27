@@ -148,7 +148,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **D-080, what-ifs, built with these defaults:** 5-minute restore-point window; a fully sent what-if stays as is; restore confirmed inline in the snapshot row; the undo warning is a toast with Undo anyway · Keep; automatic snapshots only before sends and restores and when a what-if begins; no rename or delete for what-ifs yet; viewers can see what-ifs; only editors snapshot; 14 px snapshot rows; deleted scenes listed struck through; `--on-accent` for the dark-mode primary button; "This scene isn't in main yet."
+- **D-080, what-ifs, still Claude's defaults** (the window, fully sent what-ifs, restore confirm and rename/delete were decided in D-081): the undo warning is a toast with Undo anyway · Keep; automatic snapshots only before sends and restores and when a what-if begins; viewers can see what-ifs; only editors snapshot; 14 px snapshot rows; deleted scenes listed struck through; `--on-accent` for the dark-mode primary button; "This scene isn't in main yet."
 
 - ~~D-077: long toasts wrap~~: kept (D-079).
 
@@ -320,6 +320,22 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-081 · 2026-10-27 · What-if decisions confirmed; renaming and deleting what-ifs built
+
+- **Arnav's calls** (D-080's defaults confirmed):
+  1. Sends from one what-if within **5 minutes** share one restore point.
+  2. A what-if **stays as it is** once every scene is sent ("Everything's in main").
+  3. A snapshot restore is confirmed **inline in its row**, then it's one ordinary edit with Undo.
+  4. **Renaming and deleting what-ifs, built now.** Both are for whoever started the what-if, or the showrunner (`canManage`, checked in the API).
+     - **Rename:** click the what-if's name in the switcher ("Main › **Darker ending** ▾"), as episode titles (D-033). Clicking "Main ›" or ▾ still opens the menu. While renaming, the switcher is plain text with the field, since an input can't sit inside a button.
+     - **Delete:** a hover × on its Drafts row, an inline confirm ("Delete “Name” for everyone?"), then "“Name” deleted". The what-if is soft-deleted, and a `wr_access` NOTIFY moves anyone in it back to main with "“Name” was deleted." There's no restore for deleted what-ifs (unlike episodes in D-037); say if you want one.
+  - Rejected: 15 or 1 minutes; offering to delete or auto-archiving a fully sent what-if; a one-click restore with Undo; restoring into a new what-if; rename only, or neither.
+- **Fixed on the way:**
+  - Root's session depended on the draft *object*, so every refetch of the drafts list (after a rename) tore down and reconnected the editor. It now depends on the draft's ID and base snapshot.
+  - While switching drafts, Root briefly had no current draft and unmounted the script screen, which flashed blank and lost the sidebar tab and page view. It now keeps the last draft on screen until the new one arrives.
+- **Tests:** an API test of who may rename and delete (and that main can't be). A browser test: rename by clicking the name, the menu still opening, then delete from the row back to main.
+- **Status:** Arnav's calls; built and tested. The remaining D-080 defaults (undo warning, automatic snapshots, snapshot text size, deleted-scene rows, `--on-accent`, "This scene isn't in main yet.", viewers seeing what-ifs) stay as built unless Arnav changes them.
 
 ### D-080 · 2026-10-27 · What-ifs built: forking, snapshots, the three-way comparison, Send to main, Compare, Review all, Changes
 

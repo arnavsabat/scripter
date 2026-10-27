@@ -319,8 +319,20 @@ export function fakeRooms(users: Map<string, FakeUser>) {
       const fd = dr && findDraft(dr[1]!);
       if (dr && fd && fd.s.members.get(me.id)) {
         const { s, e, d } = fd;
+        const manage = s.members.get(me.id) === 'showrunner' || d.createdBy === me.id;
         if (!dr[2] && m === 'PATCH') {
-          if (d.kind === 'whatif') d.scenesDiffer = Number((await body()).scenesDiffer);
+          const b = await body();
+          if (d.kind === 'whatif' && b.scenesDiffer !== undefined)
+            d.scenesDiffer = Number(b.scenesDiffer);
+          if (b.name !== undefined) {
+            if (d.kind !== 'whatif' || !manage) return forbidden();
+            d.name = b.name;
+          }
+          return { status: 200, body: { ok: true } };
+        }
+        if (!dr[2] && m === 'DELETE') {
+          if (d.kind !== 'whatif' || !manage) return forbidden();
+          whatIfs.splice(whatIfs.indexOf(d), 1);
           return { status: 200, body: { ok: true } };
         }
         if (dr[2] && m === 'GET')

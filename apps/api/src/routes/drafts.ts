@@ -2,12 +2,12 @@
 // of main (main only, never another what-if); a snapshot is a draft's Yjs state, kept as a blob
 // and listed in the Drafts tab. The scripts themselves stay on the sync service: the browser sends
 // the state it has open when it forks or takes a snapshot.
-import { canMerge } from '@wr/shared';
+import { canMerge, type Access } from '@wr/shared';
 import type { FastifyInstance } from 'fastify';
 import { randomUUID } from 'node:crypto';
 import { episodeFor, type Q } from '../access';
 import type { AppDeps } from '../app';
-import { withTx } from '../db/tx';
+import { notifyAccess, withTx } from '../db/tx';
 import { ApiError, forbidden, notFound } from '../errors';
 
 /** Sends from one what-if within this many minutes share one restore point (D-080, proposed). */
@@ -84,8 +84,12 @@ async function draftFor(q: Q, userId: string, draftId: string, need: 'view' | 'e
   const { episode, access, scope } = await episodeFor(q, userId, draft.episode_id, 'view');
   if (need === 'edit' && !canMerge(access, scope))
     throw forbidden('You can’t change this episode. Ask the showrunner to add you as a writer.');
-  return { draft, episode };
+  return { draft, episode, access };
 }
+
+/** Renaming and deleting a what-if: whoever started it, or the showrunner (D-080). */
+const canManage = (draft: DraftRow, access: Access, userId: string) =>
+  access.role === 'showrunner' || (draft.created_by === userId && access.role === 'writer');
 
 function decodeState(base64: string): Uint8Array {
   const bytes = Buffer.from(base64, 'base64');
@@ -162,26 +166,56 @@ export function draftRoutes(app: FastifyInstance, { db, blobs }: AppDeps): void 
     },
   );
 
-  // The what-if's "N scenes differ", counted by whoever has it open.
-  app.patch<{ Params: { id: string }; Body: { scenesDiffer: number } }>(
+  // The what-if's "N scenes differ", counted by whoever has it open; and renaming it (D-080:
+  // its creator or the showrunner).
+  app.patch<{ Params: { id: string }; Body: { scenesDiffer?: number; name?: string } }>(
     '/api/drafts/:id',
     {
       schema: {
         params: idParams,
         body: {
           type: 'object',
-          required: ['scenesDiffer'],
-          properties: { scenesDiffer: { type: 'integer', minimum: 0, maximum: 100_000 } },
+          minProperties: 1,
+          properties: { scenesDiffer: { type: 'integer', minimum: 0, maximum: 100_000 }, name },
         },
       },
     },
     async (req) => {
-      const { draft } = await draftFor(db, req.user.id, req.params.id, 'view');
-      if (draft.kind !== 'whatif') return { ok: true };
-      await db.query(`update drafts set scenes_differ = $2 where id = $1`, [
-        draft.id,
-        req.body.scenesDiffer,
-      ]);
+      const { draft, access } = await draftFor(db, req.user.id, req.params.id, 'view');
+      if (draft.kind !== 'whatif') {
+        if (req.body.name !== undefined) throw forbidden('Main can’t be renamed.');
+        return { ok: true };
+      }
+      if (req.body.name !== undefined) {
+        if (!canManage(draft, access, req.user.id))
+          throw forbidden('Only whoever started this what-if, or the showrunner, can rename it.');
+        await db.query(`update drafts set name = $2 where id = $1`, [
+          draft.id,
+          req.body.name.trim(),
+        ]);
+      }
+      if (req.body.scenesDiffer !== undefined)
+        await db.query(`update drafts set scenes_differ = $2 where id = $1`, [
+          draft.id,
+          req.body.scenesDiffer,
+        ]);
+      return { ok: true };
+    },
+  );
+
+  // Deleting a what-if (D-080): its creator or the showrunner. Anyone in it is moved to main.
+  app.delete<{ Params: { id: string } }>(
+    '/api/drafts/:id',
+    { schema: { params: idParams } },
+    async (req) => {
+      const { draft, episode, access } = await draftFor(db, req.user.id, req.params.id, 'view');
+      if (draft.kind !== 'whatif') throw forbidden('Main can’t be deleted on its own.');
+      if (!canManage(draft, access, req.user.id))
+        throw forbidden('Only whoever started this what-if, or the showrunner, can delete it.');
+      await withTx(db, async (c) => {
+        await c.query(`update drafts set deleted_at = now() where id = $1`, [draft.id]);
+        await notifyAccess(c, { series: episode.series.id, episode: episode.id });
+      });
       return { ok: true };
     },
   );

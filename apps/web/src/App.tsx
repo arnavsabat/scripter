@@ -19,8 +19,11 @@ import { blocksOfState, docOfBlocks } from './whatif/docs';
 import {
   createSnapshot,
   createWhatIf,
+  deleteDraft,
   listSnapshots,
+  renameDraft,
   snapshotState,
+  type DraftInfo,
   type SnapshotInfo,
 } from './whatif/drafts';
 import { useWhatIf, type WhatIfInfo } from './whatif/useWhatIf';
@@ -321,6 +324,26 @@ export function ScriptScreen({
     }
   };
 
+  // Renaming and deleting what-ifs (D-080): whoever started one, or the showrunner.
+  const renameWhatIf = (name: string) => {
+    if (!current || current.kind !== 'whatif') return;
+    renameDraft(current.id, name).then(
+      () => drafts?.reload(),
+      (err: unknown) => toast.show(err instanceof ApiFailure ? err.message : 'Couldn’t rename it.'),
+    );
+  };
+  const removeWhatIf = async (d: DraftInfo) => {
+    if (!drafts) return;
+    try {
+      await deleteDraft(d.id);
+      if (d.id === current?.id) drafts.open(null);
+      drafts.reload();
+      toast.show(`“${d.name}” deleted`);
+    } catch (err) {
+      toast.show(err instanceof ApiFailure ? err.message : 'Couldn’t delete it.');
+    }
+  };
+
   // Share › Export PDF: the pages exactly as page view shows them (D-076).
   const exportScript = async () => {
     const view = handle.editor?.view;
@@ -370,6 +393,14 @@ export function ScriptScreen({
           ? {
               drafts: {
                 label: current.kind === 'main' ? 'Main' : `Main › ${current.name}`,
+                ...(current.kind === 'whatif'
+                  ? {
+                      whatIf: {
+                        name: current.name,
+                        onRename: drafts.canManage(current) ? renameWhatIf : null,
+                      },
+                    }
+                  : {}),
                 items: drafts.list.map((d) => ({
                   label: d.kind === 'main' ? 'Main' : d.name,
                   current: d.id === current.id,
@@ -418,6 +449,7 @@ export function ScriptScreen({
                 onNewWhatIf={() => void newWhatIf()}
                 onSnapshot={() => void takeSnapshot()}
                 onRestore={(snap) => void restore(snap)}
+                onDelete={(d) => void removeWhatIf(d)}
               />
             ) : (
               // No episode around it (the tests' bare editor): just main, and who's in it.

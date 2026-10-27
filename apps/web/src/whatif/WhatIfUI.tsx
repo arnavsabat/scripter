@@ -21,6 +21,8 @@ export interface DraftsContext {
   list: DraftInfo[];
   current: DraftInfo;
   me: { id: string; name: string };
+  /** Renaming and deleting what-ifs: whoever started one, or the showrunner (D-080). */
+  canManage: (d: DraftInfo) => boolean;
   reload: () => void;
   /** null = main. */
   open: (draftId: string | null) => void;
@@ -252,6 +254,7 @@ export function DraftsTab({
   onNewWhatIf,
   onSnapshot,
   onRestore,
+  onDelete,
 }: {
   drafts: DraftsContext;
   /** Who's in main right now. */
@@ -263,8 +266,10 @@ export function DraftsTab({
   onNewWhatIf: () => void;
   onSnapshot: () => void;
   onRestore: (s: SnapshotInfo) => void;
+  onDelete: (d: DraftInfo) => void;
 }) {
   const [confirming, setConfirming] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const onMain = drafts.current.kind === 'main';
   const whatIfs = drafts.list.filter((d) => d.kind === 'whatif');
   const meta = (d: DraftInfo) => {
@@ -295,19 +300,54 @@ export function DraftsTab({
       </div>
       <div className="lab">WHAT-IFS</div>
       <div className="list" style={{ paddingTop: 0 }}>
-        {whatIfs.map((d) => (
-          <button
-            key={d.id}
-            type="button"
-            className={`row big${d.id === drafts.current.id ? ' sel' : ''}`}
-            onClick={() => drafts.open(d.id)}
-          >
-            <span>
-              {d.name}
-              <small>{meta(d)}</small>
-            </span>
-          </button>
-        ))}
+        {whatIfs.map((d) =>
+          deleting === d.id ? (
+            <div key={d.id} className="row big cf cfs">
+              <span className="cfq">Delete “{d.name}” for everyone?</span>
+              <span className="cfa">
+                <TextAction
+                  label="Delete"
+                  className="del"
+                  onClick={() => {
+                    setDeleting(null);
+                    onDelete(d);
+                  }}
+                />
+                <TextAction label="Cancel" onClick={() => setDeleting(null)} />
+              </span>
+            </div>
+          ) : (
+            <div
+              key={d.id}
+              className={`row big${drafts.canManage(d) ? ' hasx' : ''}${d.id === drafts.current.id ? ' sel' : ''}`}
+              role="button"
+              tabIndex={0}
+              onClick={() => drafts.open(d.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') drafts.open(d.id);
+              }}
+            >
+              <span>
+                {d.name}
+                <small>{meta(d)}</small>
+              </span>
+              {drafts.canManage(d) && (
+                <button
+                  type="button"
+                  className="rx"
+                  title="Delete"
+                  aria-label={`Delete ${d.name}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleting(d.id);
+                  }}
+                >
+                  <Icon name="x" />
+                </button>
+              )}
+            </div>
+          ),
+        )}
       </div>
       <div className="lab r">
         <span>SNAPSHOTS</span>

@@ -196,6 +196,27 @@ describe.skipIf(!servicesEnabled)('what-ifs and snapshots', () => {
     expect((await drafts(arnav)).find((d) => d.id === wi.id)!.scenesDiffer).toBe(3);
   });
 
+  it('renaming and deleting a what-if: its creator or the showrunner only', async () => {
+    const r = await maya.call<Draft>('POST', `/api/episodes/${episode}/whatifs`, {
+      state: state('x'),
+    });
+    const id = r.body.id;
+    expect(r.body.name).toBe('Untitled what-if');
+    expect((await priya.call('PATCH', `/api/drafts/${id}`, { name: 'Nope' })).status).toBe(403);
+    expect((await maya.call('PATCH', `/api/drafts/${id}`, { name: 'Darker still' })).status).toBe(
+      200,
+    );
+    expect((await drafts(arnav)).find((d) => d.id === id)!.name).toBe('Darker still');
+    expect((await maya.call('PATCH', `/api/drafts/${main.id}`, { name: 'Main 2' })).status).toBe(
+      403,
+    );
+    expect((await priya.call('DELETE', `/api/drafts/${id}`)).status).toBe(403);
+    expect((await maya.call('DELETE', `/api/drafts/${main.id}`)).status).toBe(403);
+    expect((await arnav.call('DELETE', `/api/drafts/${id}`)).status).toBe(200); // the showrunner
+    expect((await drafts(maya)).some((d) => d.id === id)).toBe(false);
+    expect((await maya.call('GET', `/api/drafts/${id}/snapshots`)).status).toBe(404);
+  });
+
   it('the sync service can open the what-if like any draft: access follows the episode', async () => {
     const wi = (await drafts(maya)).find((d) => d.kind === 'whatif')!;
     const { rows } = await h.admin.query<{ episode_id: string }>(

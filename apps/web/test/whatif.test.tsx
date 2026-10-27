@@ -363,6 +363,44 @@ describe('what-ifs in the app (prototype v2)', () => {
     main.client.destroy();
   }, 90_000);
 
+  it('rename a what-if by clicking its name; delete it with × and an inline confirm', async () => {
+    await openEpisode('Harbor Lights', 'Pilot');
+    await clickText('.layer:not(.off) .tabs .ta', 'Drafts');
+    await clickText('.layer:not(.off) .left .ta', '+ New what-if');
+    await until(() => switcher() === 'Main › Untitled what-if ▾');
+    // Click the name (not "Main ›" or ▾): an inline field.
+    await clickEl($('.layer:not(.off) .toolbar .sw .wn')!, 5, 5);
+    await until(() => $('.layer:not(.off) .toolbar input.wn'));
+    await userEvent.fill(
+      $<HTMLInputElement>('.layer:not(.off) .toolbar input.wn')!,
+      'Darker ending',
+    );
+    await userEvent.keyboard('{Enter}');
+    await until(() => switcher() === 'Main › Darker ending ▾');
+    await until(() =>
+      $$('.layer:not(.off) .left .row.big').some((r) => text(r).startsWith('Darker ending')),
+    );
+    // Clicking "Main ›" still opens the menu.
+    await commands.clickAt('.layer:not(.off) .toolbar .sw', 4, 8);
+    await until(
+      () =>
+        $$('.layer:not(.off) .menu[aria-label="Drafts"] .mi').map(text).join('|') ===
+        'Main|Darker ending✓',
+    );
+    await userEvent.keyboard('{Escape}');
+    // Delete it from its row: back on main, and gone from the list.
+    await clickEl($('.layer:not(.off) .left .row.big.hasx .rx')!, 6, 6);
+    await until(
+      () => text($('.layer:not(.off) .left .cfq')) === 'Delete “Darker ending” for everyone?',
+    );
+    await clickText('.layer:not(.off) .left .cfa .ta', 'Delete');
+    await until(() => toast() === '“Darker ending” deleted');
+    await until(() => switcher() === 'Main ▾');
+    await until(
+      () => !$$('.layer:not(.off) .left .row.big').some((r) => text(r).startsWith('Darker ending')),
+    );
+  }, 60_000);
+
   it('a viewer can open a what-if’s drafts list but not start one or take a snapshot', async () => {
     await openEpisode('Harbor Lights', 'Low Tide');
     await clickText('.layer:not(.off) .tabs .ta', 'Drafts');
