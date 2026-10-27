@@ -18,16 +18,20 @@ describe.skipIf(!servicesEnabled)('migrations', () => {
 
   it('applies every migration to an empty database, then has nothing left to do', async () => {
     const c = await db.client();
-    expect(await migrate(c)).toEqual(['001_accounts_and_rooms', '002_recent']);
+    expect(await migrate(c)).toEqual(['001_accounts_and_rooms', '002_recent', '003_whatifs']);
     expect(await migrate(c)).toEqual([]);
     const { rows } = await c.query<{ version: string }>('select version from schema_migrations');
-    expect(rows.map((r) => r.version)).toEqual(['001_accounts_and_rooms', '002_recent']);
+    expect(rows.map((r) => r.version)).toEqual([
+      '001_accounts_and_rooms',
+      '002_recent',
+      '003_whatifs',
+    ]);
   });
 
   it('two runners starting at once apply each migration exactly once', async () => {
     const [a, b] = await Promise.all([db.client(), db.client()]);
     const [ra, rb] = await Promise.all([migrate(a), migrate(b)]);
-    expect([...ra, ...rb].sort()).toEqual(['001_accounts_and_rooms', '002_recent']);
+    expect([...ra, ...rb].sort()).toEqual(['001_accounts_and_rooms', '002_recent', '003_whatifs']);
   });
 
   it('a failing migration leaves nothing behind and is not recorded', async () => {

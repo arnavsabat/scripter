@@ -5,9 +5,11 @@ import type { IdTokenVerifier, TokenVerifier } from '@wr/auth';
 import Fastify, { type FastifyInstance } from 'fastify';
 import type pg from 'pg';
 import type { CognitoClient } from './auth/cognito';
+import type { BlobStore } from './blobs';
 import { ApiError } from './errors';
 import type { Mailer } from './mailer';
 import { authRoutes } from './routes/auth';
+import { draftRoutes } from './routes/drafts';
 import { episodeRoutes } from './routes/episodes';
 import { homeRoutes } from './routes/home';
 import { invitationRoutes } from './routes/invitations';
@@ -35,6 +37,8 @@ export interface AppDeps {
   /** Signing in (step 3): the Cognito client, and the ID-token check used to link sign-ins (D-041). */
   auth: { cognito: CognitoClient; verifyId: IdTokenVerifier };
   mailer: Mailer;
+  /** Snapshot bytes (D-080): S3 on AWS, SeaweedFS locally, memory in tests. */
+  blobs: BlobStore;
   /** Where the web app lives, for links in emails (e.g. https://…/i/<token>). */
   appUrl: string;
   logger?: boolean;
@@ -78,5 +82,6 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
   seriesRoutes(app, deps);
   episodeRoutes(app, deps);
   invitationRoutes(app, deps);
+  draftRoutes(app, deps);
   return app;
 }

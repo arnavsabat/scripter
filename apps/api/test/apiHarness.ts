@@ -7,6 +7,7 @@ import pg from 'pg';
 import { buildApp } from '../src/app';
 import { cognitoClient } from '../src/auth/cognito';
 import { migrate } from '../src/db/migrate';
+import { memoryBlobs } from '../src/blobs';
 import { memoryMailer } from '../src/mailer';
 import { fakeCognito } from './fakeCognito';
 import { createTestDb } from './testDb';
@@ -30,6 +31,7 @@ export async function apiHarness() {
   const db = new pg.Pool({ connectionString: tdb.url, max: 5 });
   const issuer = await createTestIssuer();
   const mailer = memoryMailer();
+  const blobs = memoryBlobs();
   const cognito = await fakeCognito(issuer);
   const app = await buildApp({
     db,
@@ -46,6 +48,7 @@ export async function apiHarness() {
       verifyId: idTokenVerifier(issuer.trusted),
     },
     mailer,
+    blobs,
     appUrl: 'https://app.test',
   });
 

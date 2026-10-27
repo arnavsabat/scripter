@@ -4,6 +4,7 @@
 import { cognitoIssuer, idTokenVerifier, tokenVerifier } from '@wr/auth';
 import pg from 'pg';
 import { buildApp } from './app';
+import { memoryBlobs, s3Blobs } from './blobs';
 import { cognitoClient } from './auth/cognito';
 import { consoleMailer, sesMailer } from './mailer';
 
@@ -20,6 +21,20 @@ if (missing.length) {
     `The API needs ${missing.join(', ')} (see .env.example). Cognito arrives in step 8.`,
   );
   process.exit(1);
+}
+
+function blobsFromEnv() {
+  if (!env.S3_SNAPSHOT_BUCKET || (!env.S3_ENDPOINT && env.WR_STORAGE !== 'aws')) {
+    console.warn('[blobs] no S3 configured: snapshots are kept in memory (development only)');
+    return memoryBlobs();
+  }
+  return s3Blobs({
+    bucket: env.S3_SNAPSHOT_BUCKET,
+    region: env.AWS_REGION ?? 'us-east-1',
+    ...(env.S3_ENDPOINT ? { endpoint: env.S3_ENDPOINT } : {}),
+    ...(env.S3_ACCESS_KEY_ID ? { accessKeyId: env.S3_ACCESS_KEY_ID } : {}),
+    ...(env.S3_SECRET_ACCESS_KEY ? { secretAccessKey: env.S3_SECRET_ACCESS_KEY } : {}),
+  });
 }
 
 const db = new pg.Pool({ connectionString: env.DATABASE_URL, max: 10 });
@@ -41,6 +56,9 @@ const app = await buildApp({
     verifyId: idTokenVerifier(pool),
   },
   mailer: env.WR_SENDER_EMAIL ? sesMailer(env.WR_SENDER_EMAIL, env.COGNITO_REGION!) : consoleMailer, // development without SES: the email (and its link) is printed
+  // Snapshot bytes (D-080): the same bucket as the sync service's, under restore-points/. Locally
+  // that's SeaweedFS (S3_ENDPOINT); never real AWS by accident (WR_STORAGE=aws for that).
+  blobs: blobsFromEnv(),
   appUrl: env.APP_URL ?? 'http://localhost:5173',
   logger: true,
 });
