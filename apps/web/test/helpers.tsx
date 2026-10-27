@@ -160,6 +160,7 @@ export async function clickEndOf(index: number, scope: ParentNode = document) {
   const box = p.getBoundingClientRect();
   const last = rects.at(-1) ?? box;
   const host = p.closest<HTMLElement>('[data-slot]');
-  const selector = `${host ? `[data-slot="${host.dataset.slot}"] ` : ''}.script > p:nth-child(${index + 1})`;
+  // nth-of-type, not nth-child: page-break widgets sit between the paragraphs (D-074).
+  const selector = `${host ? `[data-slot="${host.dataset.slot}"] ` : ''}.script > p:nth-of-type(${index + 1})`;
   await commands.clickAt(selector, last.right - box.left + 1, last.top - box.top + 8);
 }

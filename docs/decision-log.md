@@ -310,6 +310,16 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-075 · 2026-10-27 · Viewport anchoring in page view, tested with two writers
+
+- **What was needed:** block-ID anchoring already held your line still through co-writers' edits (D-013). Page view added two ways to break it, both fixed:
+  1. **Page breaks animated every size change.** A co-writer's edit that moved a break above you would ease it into place over 240 ms, after the anchoring had already corrected. Breaks now animate only during the collapse itself (`.pv-anim`, set by `editor/pageView.ts`); an edit moves them at once.
+  2. **The browser's own scroll anchoring** (`overflow-anchor`) could correct the same shift a second time. It's now off for the script's scroller, leaving only ours.
+- **Test** (`pages.test.tsx`): two writers side by side on a 40-scene script. Sam reads with his cursor 70% of the way down; Maya adds six lines near the top, moving every page break below. Sam's line moves less than 1 px on every update, in both the continuous view and page view.
+- **Found on the way:** the tests' `clickEndOf` helper used `p:nth-child`, which also counts page-break widgets, so clicks landed on a later line. It's now `nth-of-type`.
+- **As designed (D-013):** the anchor is your cursor's line when it's on screen, otherwise the first line on screen.
+- **Status:** built and tested.
+
 ### D-074 · 2026-10-27 · Page view built on the pagination output; wrapping made exact; two bugs found on the way
 
 - **How page view works** (`apps/web/src/editor/pagesPlugin.ts`):

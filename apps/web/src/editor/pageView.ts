@@ -6,25 +6,27 @@ import type { EditorView } from 'prosemirror-view';
 const MOTION_MS = 240;
 
 export function holdViewDuringToggle(view: EditorView | undefined) {
-  const scroller = view?.dom.closest('.in');
   const app = view?.dom.closest('.app');
-  if (!view || !(scroller instanceof HTMLElement) || !app) return;
+  if (!view || !app) return;
+  // The page breaks animate only while this is set (script.css): an edit moves them at once.
+  app.classList.add('pv-anim');
+  const start = performance.now();
+  const scroller = view.dom.closest('.in');
   const top = (el: Element) =>
-    el.getBoundingClientRect().top - scroller.getBoundingClientRect().top;
-  const visible = (el: Element) => top(el) + el.clientHeight > 0 && top(el) < scroller.clientHeight;
+    el.getBoundingClientRect().top - (scroller as HTMLElement).getBoundingClientRect().top;
+  const visible = (el: Element) =>
+    scroller instanceof HTMLElement &&
+    top(el) + el.clientHeight > 0 &&
+    top(el) < scroller.clientHeight;
   const $head = view.state.selection.$head;
   const cursor = $head.depth > 0 ? view.nodeDOM($head.before(1)) : null;
   const anchor =
     cursor instanceof Element && visible(cursor)
       ? cursor
       : [...view.dom.querySelectorAll('.el')].find(visible);
-  if (!anchor) return;
-  const before = top(anchor);
-  // Lets split-paragraph breaks animate in too (script.css: @starting-style under .pv-anim).
-  app.classList.add('pv-anim');
-  const start = performance.now();
+  const before = anchor ? top(anchor) : 0;
   const tick = () => {
-    scroller.scrollTop += top(anchor) - before;
+    if (anchor && scroller instanceof HTMLElement) scroller.scrollTop += top(anchor) - before;
     if (performance.now() - start < MOTION_MS + 80) requestAnimationFrame(tick);
     else app.classList.remove('pv-anim');
   };

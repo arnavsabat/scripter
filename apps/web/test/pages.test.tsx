@@ -6,7 +6,17 @@ import type { ElementType } from '@wr/schema';
 import { afterEach, describe, expect, it } from 'vitest';
 import { commands } from 'vitest/browser';
 import '../src/script.css';
-import { clickEndOf, mount, newEpisode, seed, sleep, unmountAll, until } from './helpers';
+import {
+  clickEndOf,
+  mount,
+  newEpisode,
+  press,
+  seed,
+  sleep,
+  type,
+  unmountAll,
+  until,
+} from './helpers';
 
 afterEach(() => unmountAll());
 
@@ -283,4 +293,42 @@ describe('page view', () => {
     await sleep(400);
     expect(Math.abs(target.getBoundingClientRect().top - before)).toBeLessThan(2);
   }, 30_000);
+});
+
+describe('viewport anchoring with two writers (SPEC 5.8)', () => {
+  it('a co-writer’s edits above you never move what you’re reading, in either view', async () => {
+    const ep = newEpisode();
+    const seeded = script(11, 40);
+    await seed(ep, seeded);
+    const maya = await mount('Maya', ep, 'left');
+    const sam = await mount('Sam', ep, 'right');
+    const count = (app: { host: HTMLElement }) =>
+      app.host.querySelectorAll('.script > p.el').length;
+    await until(() => count(maya) === seeded.length && count(sam) === seeded.length, 5000);
+    const samParas = () => [...sam.host.querySelectorAll<HTMLElement>('.script > p.el')];
+
+    for (const view of ['open', 'page'] as const) {
+      if (view === 'page') {
+        await commands.clickAt('[data-slot="right"] button[aria-label="Hide sidebar"]', 10, 10);
+        await sleep(400);
+      }
+      // Sam reads (and has the cursor in) a line well down the script.
+      const target = samParas()[Math.floor(seeded.length * 0.7)]!;
+      target.scrollIntoView({ block: 'center' });
+      await clickEndOf(samParas().indexOf(target), sam.host);
+      const before = target.getBoundingClientRect().top;
+      const n = count(sam);
+      // Maya adds lines near the top: enough to move every page break below.
+      await clickEndOf(2, maya.host);
+      for (let i = 0; i < 6; i++) {
+        await press('{Enter}');
+        await type('A new line of action that pushes everything below it down the page.');
+        await until(() => count(sam) === n + i + 1, 5000);
+        expect(
+          Math.abs(target.getBoundingClientRect().top - before),
+          `${view} view, line ${i}`,
+        ).toBeLessThan(1);
+      }
+    }
+  }, 60_000);
 });

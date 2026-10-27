@@ -232,15 +232,21 @@
   width: 816px;
   margin-left: calc(-144px - var(--indent, 0px));
   user-select: none;
-  transition: height 0.24s ease;
 }
 .left-closed .pgb {
   height: var(--h);
+}
+/* Only the collapse itself animates (editor/pageView.ts sets .pv-anim for its 240 ms): a break
+   that moves because of an edit changes at once, so a co-writer's edit can't drift your view. */
+.pv-anim .pgb {
+  transition: height 0.24s ease;
 }
 /* A break inside a paragraph (a split speech or action) exists only in page view: in the
    continuous column the paragraph wraps as one. */
 .pgb.mid {
   display: none;
+}
+.pv-anim .pgb.mid {
   transition:
     height 0.24s ease,
     display 0.24s allow-discrete;

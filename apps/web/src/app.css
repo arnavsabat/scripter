@@ -186,6 +186,9 @@ button {
   position: absolute;
   inset: 0;
   overflow: auto;
+  /* Our own anchoring keeps your line still through co-writers' edits (D-013, D-075); the
+     browser's built-in scroll anchoring would correct the same shift a second time. */
+  overflow-anchor: none;
 }
 
 /* ---- Sidebar (SPEC 3.6) ---- */
