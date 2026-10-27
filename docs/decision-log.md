@@ -304,6 +304,12 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-064 · 2026-10-26 · `pnpm services:up` waits for Postgres to be ready
+
+- **Issue (from Arnav's demo setup):** `pnpm services:up && pnpm --filter @wr/api migrate` failed with "Connection terminated unexpectedly". On a fresh start, Docker reports the containers as started while Postgres is still initializing, so the migration connected too early. A retry seconds later reported "up to date".
+- **Fix (a tooling fix, no design change):** `services:up` is now `docker compose up -d --wait`. It returns only once Postgres's existing health check (`pg_isready`) passes.
+- **Status:** fixed.
+
 ### D-063 · 2026-10-26 · Google sign-in deployed; the first attempt failed on resource order and rolled back
 
 - **Arnav's part (done):**
