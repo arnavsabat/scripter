@@ -30,6 +30,7 @@ import {
 import type { Awareness } from 'y-protocols/awareness';
 import type * as Y from 'yjs';
 import { caretStyle } from './presence';
+import { pagesPlugin } from './pagesPlugin';
 import { warningsPlugin } from './warningsPlugin';
 
 export const FRAGMENT = 'script';
@@ -115,6 +116,7 @@ export function createEditor(
     keymap(baseKeymap),
     idPlugin({ isRemote }),
     warningsPlugin(hooks.onWarning),
+    pagesPlugin(),
   ];
 
   // Filled in right after the view exists; y-prosemirror dispatches during construction.

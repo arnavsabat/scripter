@@ -17,19 +17,29 @@
   min-height: 1056px;
   flex-shrink: 0;
   box-sizing: border-box;
-  padding: 96px 96px 96px 144px;
+  /* The right margin is half a pixel short of 1 in: Chromium lays text out in 1/64 px, so a
+     column exactly N characters wide can lose its last character to rounding (D-074). */
+  padding: 96px 95.5px 96px 144px;
   background: var(--page);
   color: var(--ink);
   box-shadow: 0 0 0 rgba(0, 0, 0, 0);
   transition: box-shadow 0.24s ease;
 }
-/* Page view: the page's shadow appears as the desk color spreads around it (SPEC 3.7). */
+/* Page view: the page's shadow appears as the desk color spreads around it (SPEC 3.7), and the
+   page grows to hold every page, the last one full height. */
 .left-closed .page {
+  min-height: calc(var(--pages, 1) * (1056px + 24px) - 24px);
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.12),
     0 8px 24px rgba(0, 0, 0, 0.08);
 }
 
+/* Line-end spaces hang past the edge, as pagination counts them (D-072). ProseMirror's own
+   stylesheet says break-spaces, which would start the next line with the space; this selector
+   outranks it whatever order the stylesheets load in. */
+.ProseMirror.script {
+  white-space: pre-wrap;
+}
 .script {
   font-family: var(--font-script);
   font-size: 16px;
@@ -66,11 +76,11 @@
 }
 .el[data-type='parenthetical'] {
   --indent: 153.6px; /* starts at 3.1 in */
-  width: 230.4px; /* 2.4 in */
+  width: 230.9px; /* 2.4 in, plus the half-pixel of slack (D-074) */
 }
 .el[data-type='dialogue'] {
   --indent: 96px; /* starts at 2.5 in */
-  width: 336px; /* 3.5 in */
+  width: 336.5px; /* 3.5 in, plus the half-pixel of slack (D-074) */
 }
 /* Parentheticals and dialogue sit directly under their cue, and under each other. */
 .el[data-type='character'] + .el[data-type='parenthetical'],
@@ -78,7 +88,14 @@
 .el[data-type='parenthetical'] + .el[data-type='dialogue'],
 .el[data-type='dialogue'] + .el[data-type='parenthetical'],
 .el[data-type='parenthetical'] + .el[data-type='parenthetical'],
-.el[data-type='dialogue'] + .el[data-type='dialogue'] {
+.el[data-type='dialogue'] + .el[data-type='dialogue'],
+/* ...also with a page break between them, so the column is the same with or without breaks. */
+.el[data-type='character'] + .pgb + .el[data-type='parenthetical'],
+.el[data-type='character'] + .pgb + .el[data-type='dialogue'],
+.el[data-type='parenthetical'] + .pgb + .el[data-type='dialogue'],
+.el[data-type='dialogue'] + .pgb + .el[data-type='parenthetical'],
+.el[data-type='parenthetical'] + .pgb + .el[data-type='parenthetical'],
+.el[data-type='dialogue'] + .pgb + .el[data-type='dialogue'] {
   margin-top: 0;
 }
 .el[data-type='transition'] {
@@ -202,4 +219,63 @@
 :root[data-theme='dark'] .rc-name {
   background: var(--rc-pale);
   color: var(--rc);
+}
+
+/* ---- Page breaks (SPEC 3.7, 3.8; D-074) ----
+   One widget per break (editor/pagesPlugin.ts), positioned against the page's full width. With
+   the sidebar open it has no height; in page view it holds the rest of the page, the gap and the
+   next page's top margin. Its contents are placed in page coordinates (px from the page's left). */
+.pgb {
+  position: relative;
+  height: 0;
+  overflow: hidden;
+  width: 816px;
+  margin-left: calc(-144px - var(--indent, 0px));
+  user-select: none;
+  transition: height 0.24s ease;
+}
+.left-closed .pgb {
+  height: var(--h);
+}
+/* A break inside a paragraph (a split speech or action) exists only in page view: in the
+   continuous column the paragraph wraps as one. */
+.pgb.mid {
+  display: none;
+  transition:
+    height 0.24s ease,
+    display 0.24s allow-discrete;
+}
+.left-closed .pgb.mid {
+  display: block;
+}
+@starting-style {
+  .pv-anim.left-closed .pgb.mid {
+    height: 0;
+  }
+}
+.pgb > * {
+  position: absolute;
+}
+.pgl {
+  left: 144px; /* 1.5 in */
+  white-space: pre;
+  color: var(--ink);
+}
+.pgl.pgcue {
+  left: 355.2px; /* 3.7 in, where character cues start */
+}
+.pgl.pgr {
+  right: 95.5px; /* right-aligned to 7.5 in, like transitions (and the column's half-pixel of slack) */
+  text-align: right;
+}
+/* The desk between two pages, wide enough to cover the page's side shadow, with the page above
+   casting its shadow onto it. */
+.pgband {
+  left: -24px;
+  right: -24px;
+  height: 24px;
+  background: var(--desk);
+  box-shadow:
+    inset 0 9px 10px -10px rgba(0, 0, 0, 0.22),
+    inset 0 -4px 5px -5px rgba(0, 0, 0, 0.12);
 }

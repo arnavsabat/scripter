@@ -1,4 +1,7 @@
-import { colorFor } from '@wr/shared';
+import { blockAttrs, blockType, newId, schema, type ElementType } from '@wr/schema';
+import { SyncClient, colorFor, type SocketLike } from '@wr/shared';
+import { prosemirrorToYXmlFragment } from 'y-prosemirror';
+import * as Y from 'yjs';
 import { createRoot, type Root } from 'react-dom/client';
 import { commands, userEvent } from 'vitest/browser';
 
@@ -11,6 +14,7 @@ import '@wr/shared/tokens.css';
 import 'prosemirror-view/style/prosemirror.css';
 import '../src/base.css';
 import { App } from '../src/App';
+import { FRAGMENT } from '../src/editor/createEditor';
 import type { Session } from '../src/session';
 
 export const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? 'Meta' : 'Control';
@@ -29,6 +33,27 @@ export function session(name: string, docId: string): Session {
   const token = async () =>
     (await fetch(`${CONTROL}/token?name=${encodeURIComponent(name)}`)).text();
   return { serverUrl: SYNC, docId, identity, token };
+}
+
+/** Puts a script on the server before anyone opens it, the way a co-writer's edits arrive. */
+export async function seed(docId: string, blocks: { type: ElementType; text: string }[]) {
+  const ydoc = new Y.Doc();
+  const nodes = blocks.map((b) =>
+    blockType.create(
+      blockAttrs(b.type, newId(), b.type === 'scene_heading' ? newId('s') : null),
+      b.text ? schema.text(b.text) : null,
+    ),
+  );
+  prosemirrorToYXmlFragment(schema.nodes.doc.create(null, nodes), ydoc.getXmlFragment(FRAGMENT));
+  const client = new SyncClient({
+    serverUrl: SYNC,
+    docId,
+    token: session('Seeder', docId).token,
+    doc: ydoc,
+    socket: (url) => new WebSocket(url) as unknown as SocketLike,
+  });
+  await client.whenSynced();
+  client.destroy();
 }
 
 export interface MountedApp {

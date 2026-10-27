@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Pure pagination function over document blocks.",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./breaks": "./src/breaks.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit -p . && tsc --noEmit -p test"

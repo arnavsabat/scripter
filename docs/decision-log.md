@@ -148,7 +148,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **D-071: pagination splits mid-line at sentence ends** (Final Draft and Highland style), rather than only where a sentence ends at a line end.
+- ~~D-071: pagination splits mid-line at sentence ends~~: decided in D-073 (industry standard).
 
 - **AWS cost levers for the deploy phase (proposed 2026-10-24, decided then):** these keep SPEC 5.5's infrastructure unchanged.
   - **Estimated cost:** about $40-50 a month on demand in `ca-central-1`. The load balancer (about $18), the small Postgres (about $15), public IPv4 addresses (about $3.65 each) and the container (about $10) make up most of it. This corrects Claude's earlier, too-low "$25-45".
@@ -309,6 +309,36 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-074 · 2026-10-27 · Page view built on the pagination output; wrapping made exact; two bugs found on the way
+
+- **How page view works** (`apps/web/src/editor/pagesPlugin.ts`):
+  - The script stays one editable column. A ProseMirror plugin paginates the document on every change, incrementally (D-072), and draws one widget per page break: the rest of the page, the bottom margin, a 24 px desk-colored band, and the next page's top margin.
+  - The widget also draws (MORE) at the cue column, (CONTINUED) on the page's last line, right-aligned to 7.5 in, the page number "12." at 7.5 in and 0.5 in from the top (industry position; none on page 1), CONTINUED: at 1.5 in, and NAME (CONT'D).
+  - With the sidebar open the widgets have zero height, giving the continuous column, and splits inside a paragraph aren't drawn at all, so nothing rewraps. Collapsing grows them over the same 240 ms. The cursor's line is held still through the motion (`editor/pageView.ts`).
+  - The page grows to hold every page, with the last one full height.
+  - Decorations are rebuilt from the document each time (rule 2, D-012), with stable keys so unchanged breaks keep their DOM.
+- **Wrapping made exact.** Probing found three things the first wrap model (D-072) got wrong:
+  1. **Rounding:** Chromium lays text out in 1/64 px, so a column exactly N × 9.6 px wide can lose its last character. Every column now has half a pixel of slack: the right margin is 95.5 px, dialogue 336.5 px and parentheticals 230.9 px. That's invisible, and nowhere near room for another character.
+  2. **Break opportunities** are now Chromium's measured pair table for 80 characters (`packages/pagination/src/breaks.ts`, generated), replacing hand-written rules that were partly wrong (for example, two hyphens *can* part).
+  3. **One context rule:** a hyphen right before a digit binds to it like a minus sign, unless the hyphen follows a letter or digit.
+  - `.ProseMirror.script` now uses `white-space: pre-wrap`, so line-end spaces hang; ProseMirror's `break-spaces` would start the next line with them.
+- **Tests (real Chromium):**
+  - `break-table.test.tsx` re-measures the table and the hyphen rule, and fails, printing a new table, if Chromium changes.
+  - `pages.test.tsx`: 2,000 generated paragraphs wrap identically in the browser and the model. In page view, every line of a 37-page generated script sits exactly where the pagination output puts it, with the right page heights and page numbers. The continuous view is identical to having no breaks. Collapsing and reopening keeps the cursor's line within 2 px.
+  - Screenshots checked by Claude, light and dark: a scene continuing over a break, and a speech split with (MORE)/(CONT'D).
+- **Bugs found and fixed along the way:**
+  - **Opening a script with no copy on this device added an empty line at the top.** The editor started on an empty document and y-prosemirror wrote its placeholder line into Yjs, which then merged above the server's first line. That hit every first open of an existing script on a device (a co-writer's, or later an imported one). Now, with no local copy, the editor waits for the server's document (`useScriptEditor.ts`); with a local copy, it still opens at once.
+  - Two class-name clashes in the new widget: `.cue` (the toolbar's sync status) and `.right` (the right panel). Renamed to `pgcue` and `pgr`.
+- **Known limits:** characters Courier Prime lacks (emoji, CJK) fall back to wider fonts; and the table is Chromium's (WebKit and Firefox are to be checked before the beta).
+- **Status:** built and tested.
+
+### D-073 · 2026-10-27 · Standing direction: script behavior follows industry standard
+
+- **Arnav's call:** everything about the actual writing of the script (formatting, pagination, PDF, import) should be industry standard, with Final Draft as the reference, because Writers' Room should eventually be a real competitor. The base has to be there, along with quality-of-life features. Claude follows the standard without asking, logs each choice, and asks only where Arnav's input is needed: product and UI decisions, and conventions that conflict with something he explicitly chose.
+- **Resolves D-071's proposal:** split action and dialogue at a sentence end even mid-line, as Final Draft does.
+- **To raise with Arnav, not change silently:** Final Draft's default adds (CONT'D) when a character speaks again after action; Arnav chose page-break continueds only (D-071).
+- **Status:** Arnav's call.
 
 ### D-072 · 2026-10-27 · Pagination package built: Chromium's wrap rules, the page layout, incremental recomputation
 

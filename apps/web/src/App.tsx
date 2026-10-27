@@ -5,6 +5,7 @@ import { ToastProvider, useToast } from './components/Toast';
 import type { ShareContext } from './components/CoWriterMenu';
 import { Toolbar, type EpisodeTitle } from './components/Toolbar';
 import { handleMarginKey, topInPage } from './editor/marginKeys';
+import { holdViewDuringToggle } from './editor/pageView';
 import { ScriptPage } from './editor/ScriptPage';
 import { useScriptEditor } from './editor/useScriptEditor';
 import type { Session } from './session';
@@ -76,6 +77,7 @@ export function ScriptScreen({ session, title, share, onBack, onFatal }: ScriptS
         sidebarOpen={sidebarOpen}
         onToggleSidebar={() => {
           setOverlay(null);
+          holdViewDuringToggle(handle.editor?.view);
           setSidebarOpen((open) => !open);
         }}
         overlay={overlay}

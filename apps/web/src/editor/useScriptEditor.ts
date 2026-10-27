@@ -83,19 +83,7 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
     // 1. This device's copy first, so the script (and any unsynced offline work) shows at once.
     void local.whenSynced.then(() => {
       if (cancelled || !mountRef.current) return;
-      const ed = createEditor(
-        mountRef.current,
-        ydoc,
-        awareness,
-        {
-          onChange: sync,
-          onCombine: (c) => onCombine(c, () => undo(ed.view.state)),
-          onWarning: (id, anchor) => onWarning(id, anchor),
-          onKeyDown: (view, event) => onKeyDown(view, event),
-        },
-        session.canEdit !== false,
-      );
-      created = ed;
+      const mount = mountRef.current;
 
       // 2. Then the server: the handshake sends what it lacks and brings what we lack.
       client = new SyncClient({
@@ -107,7 +95,34 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
         socket: (url) => new WebSocket(url) as unknown as SocketLike,
       });
       const c = client;
-      let seeded = false;
+      const fragment = ydoc.getXmlFragment(FRAGMENT);
+
+      // The editor needs a document to show. With no copy on this device yet, it waits for the
+      // server's: opened on an empty document, it would write its placeholder line into Yjs,
+      // and that line would merge into the script above the server's first line (D-074).
+      const open = () => {
+        if (created || cancelled) return;
+        const ed = createEditor(
+          mount,
+          ydoc,
+          awareness,
+          {
+            onChange: sync,
+            onCombine: (comb) => onCombine(comb, () => undo(ed.view.state)),
+            onWarning: (id, anchor) => onWarning(id, anchor),
+            onKeyDown: (view, event) => onKeyDown(view, event),
+          },
+          session.canEdit !== false,
+        );
+        created = ed;
+        sync(ed.view, false);
+        // Ready to type, unless something else already has the keyboard (a new script's title,
+        // waiting to be named).
+        const active = document.activeElement;
+        if (!active || active === document.body) ed.view.focus();
+        setEditor(ed);
+      };
+
       // Which of this browser's copies hold edits the server hasn't acknowledged (D-050).
       const noteLocalEdit = (_: Uint8Array, origin: unknown) => {
         if (origin !== c && origin !== local) localCopies.markUnsynced(session.docId);
@@ -126,16 +141,11 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
           setCue(c.cue);
           if (c.synced) localCopies.markSynced(session.docId);
           if (c.fatal) setRefusal({ session, fatal: c.fatal });
-          // A brand-new episode: once the server has confirmed it's empty, start with one action
-          // line. Never from a view-only session: that would be an edit.
-          if (
-            !seeded &&
-            session.canEdit !== false &&
-            c.caughtUp &&
-            ydoc.getXmlFragment(FRAGMENT).length === 0
-          ) {
-            seeded = true;
-            seedNewScript(ydoc);
+          if (!created && c.caughtUp) {
+            // A brand-new episode: the server has confirmed it's empty, so start with one action
+            // line. Never from a view-only session: that would be an edit.
+            if (session.canEdit !== false && fragment.length === 0) seedNewScript(ydoc);
+            open();
           }
         }),
       );
@@ -157,12 +167,7 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
         window.removeEventListener('offline', offline);
       });
 
-      sync(ed.view, false);
-      // Ready to type, unless something else already has the keyboard (a new script's title,
-      // waiting to be named).
-      const active = document.activeElement;
-      if (!active || active === document.body) ed.view.focus();
-      setEditor(ed);
+      if (fragment.length > 0) open();
     });
 
     return () => {

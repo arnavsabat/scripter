@@ -1,7 +1,9 @@
 // Line wrapping by character count (SPEC 5.8): Courier Prime is monospace, so a line is a
-// number of characters, never a DOM measurement. The rules reproduce how Chromium wraps the
-// script (`white-space: pre-wrap`, `overflow-wrap: break-word`), as probed in D-072; a browser
-// test holds the two together across a generated corpus.
+// number of characters, never a DOM measurement. It reproduces how Chromium wraps the script
+// (`white-space: pre-wrap`, `overflow-wrap: break-word`): spaces hang at a break, and the break
+// opportunities come from a table measured in the browser (breaks.ts, D-072, D-074). Browser
+// tests hold the two together across a generated corpus.
+import { BREAK_CHARS, BREAK_TABLE, HYPHEN_DIGIT } from './breaks';
 
 export interface WrappedLine {
   /** The line as drawn: trailing spaces removed (they hang past the right edge). */
@@ -20,29 +22,10 @@ interface Unit {
 
 const COMBINING = /\p{M}/u;
 const SPACE = ' ';
-/** Breaks are allowed after these (Chromium, D-072). */
-const BREAK_AFTER = new Set(['-', '–', '—', '…', '?']);
-/** ...unless the next character is one of these (quotes, closing brackets, more punctuation). */
-const NO_BREAK_BEFORE = new Set([
-  '"',
-  "'",
-  '“',
-  '”',
-  '‘',
-  '’',
-  ')',
-  ']',
-  '}',
-  '»',
-  '!',
-  '?',
-  '.',
-  ',',
-  ':',
-  ';',
-  '…',
-]);
-const DASHES = new Set(['-', '–', '—']);
+const INDEX = new Map([...BREAK_CHARS].map((c, i) => [c, i]));
+const LETTER = INDEX.get('a')!;
+const DIGIT = INDEX.get('1')!;
+const classOf = (ch: string) => INDEX.get(ch) ?? (/\p{Nd}/u.test(ch) ? DIGIT : LETTER);
 
 function units(text: string): Unit[] {
   const out: Unit[] = [];
@@ -59,21 +42,25 @@ function units(text: string): Unit[] {
   return out;
 }
 
-/** May a line break between `u[j-1]` and `u[j]`? (Spaces are handled by the caller.) */
+/** May a line break between `u[j-1]` and `u[j]`? After a run of spaces always; otherwise as
+ * Chromium's measured tables say (D-074). Combining marks go with the character before them. */
 function breakBefore(u: Unit[], j: number): boolean {
-  const prev = u[j - 1]!.ch;
-  const next = u[j]!.ch;
+  const at = (k: number) => (k >= 0 && k < u.length ? first(u[k]!.ch) : '');
+  const prev = at(j - 1);
+  const next = at(j);
   if (prev === SPACE) return next !== SPACE;
   if (next === SPACE) return false;
-  // An em dash may start a line, unless it follows another dash or an opening quote.
-  if (next === '—') return !DASHES.has(prev) && !NO_BREAK_BEFORE.has(prev) && prev !== '“';
-  if (!BREAK_AFTER.has(prev)) return false;
-  // Runs of dashes ("--", "—-") break only after the last one.
-  if (DASHES.has(prev) && DASHES.has(next)) return false;
-  // A hyphen may be followed by a quote ("-\"") and still break; the others may not.
-  if (prev === '-' || prev === '–') return true;
-  return !NO_BREAK_BEFORE.has(next);
+  const p = classOf(prev);
+  const n = classOf(next);
+  // A hyphen before a digit binds to it, unless the hyphen follows a letter or digit.
+  if (prev === '-' && n === DIGIT) {
+    const before = at(j - 2);
+    return before !== '' && before !== SPACE && HYPHEN_DIGIT[classOf(before)] === '1';
+  }
+  return BREAK_TABLE[p]![n] === '1';
 }
+
+const first = (ch: string) => String.fromCodePoint(ch.codePointAt(0)!);
 
 /**
  * Wraps `text` into lines of at most `width` characters. Greedy, like the browser: each line
