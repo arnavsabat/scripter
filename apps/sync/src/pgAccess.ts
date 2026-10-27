@@ -11,6 +11,8 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
 export function pgAccess(databaseUrl: string, logger: Logger): AccessSource {
   const db = new pg.Pool({ connectionString: databaseUrl, max: 5 });
+  // A dropped idle connection is replaced on the next query; unhandled, it would stop the server.
+  db.on('error', (err) => logger.error('access database connection lost', { err: String(err) }));
   let listener: pg.Client | null = null;
   let closed = false;
 

@@ -310,6 +310,31 @@ describe('losing access while writing (D-046)', () => {
     await until(() => text($('.layer:not(.off) .vo')) === 'View only');
   });
 
+  it('taken off, put back and taken off again: each change takes effect without a refresh', async () => {
+    await openAsArnav();
+    await clickText('.left .row', 'Harbor Lights');
+    await until(() => episodeRows().includes('Ep 1 · Pilot'));
+    await clickText('.home .ep .nm', 'Ep 1 · Pilot');
+    await until(() => $('.layer:not(.off) .script[contenteditable="true"]'));
+    const doc = `ep-${location.pathname.split('/').pop()!.slice(0, 8)}`;
+    const change = async (assigned: boolean) => {
+      await fetch(`/__fake/${assigned ? 'assign' : 'unassign'}`, {
+        method: 'POST',
+        body: JSON.stringify({ episode: 'Pilot', name: 'Arnav' }),
+      });
+      await fetch(`${CONTROL}/access?name=Arnav&doc=${doc}&mode=${assigned ? 'edit' : 'view'}`);
+    };
+    const editable = () => !!$('.layer:not(.off) .script[contenteditable="true"]');
+    await change(false);
+    await until(() => text($('.layer:not(.off) .vo')) === 'View only', 8000);
+    await change(true);
+    await until(() => toast() === 'You can edit this episode now.', 8000);
+    await until(editable, 8000);
+    // The second refusal is the same kind as the first; it must still be acted on (D-066).
+    await change(false);
+    await until(() => text($('.layer:not(.off) .vo')) === 'View only' && !editable(), 8000);
+  });
+
   it('the episode deleted: back to Home with a toast', async () => {
     await openAsArnav();
     await until(() => episodeRows().length === 3);

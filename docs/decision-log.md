@@ -305,6 +305,27 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-066 · 2026-10-26 · Demo steps 8-10: a stale "access changed" state, the database restart crash, and a step-10 setup mix-up
+
+Found in Arnav's demo run. All three are bugs or tooling fixes, with no design change.
+
+- **(1) Co-writer toggles sometimes left the screen stuck on "offline" until a refresh (steps 8-9).**
+  - **Cause:** the editor hook kept the server's last refusal (`fatal`) and never cleared it.
+    - Unticking (edit → view) fully remounts the script screen, so that worked.
+    - Ticking (view → edit) reuses the same screen, so `fatal` stayed `'forbidden'`.
+    - The next untick's refusal was also `'forbidden'`. React saw no change, so the page never reloaded the episode.
+  - **Fix:** the refusal is now kept together with the session it belongs to, so a new session starts clean (`apps/web/src/editor/useScriptEditor.ts`).
+  - **Test:** a new browser test (untick, tick, untick) hung at the third step before the fix and passes after it.
+- **(2) The API died when Postgres restarted (the "Something went wrong" sign-in after step 10).**
+  - **Cause:** `pnpm cluster:down` stops Postgres too. `pg`'s pool raises an error for a dropped idle connection, and with no listener Node treats that as fatal.
+  - **Fix:** the API's pool and the sync server's access pool now log the error and replace the connection on the next query.
+  - **Checked:** with the API holding an idle connection, a Postgres restart is logged and the next request is answered normally. The sync server's listener reconnects.
+- **(3) Step 10 never reached the cluster from the browser.**
+  - **Cause:** the `dev:web` from 21:18 (no `VITE_SYNC_URLS`, so it used the single server on :4000, which had been stopped) was still serving the windows on 5173. The restart with the cluster URLs started a second copy, which Vite quietly moved to 5174. So both windows showed "reconnecting" throughout. The demo script said "restart" without "stop the old one first"; Claude's mistake.
+  - **Failover itself, reproduced:** the real containers (same image, Postgres access, DynamoDB, the Docker network), with only the token check swapped for a test key. Two writers typed through random servers, and sync-1, the episode's home, was killed. Both were back and converging within about 4 s, with every word present. The repro files and containers were removed afterwards.
+  - **Fix:** `vite.config.ts` uses `strictPort`, so a second `dev:web` fails loudly instead of moving ports. Port 5174 isn't an allowed Google return address or `APP_URL` either.
+- **Status:** fixed and tested; step 10 to re-run with the corrected instructions.
+
 ### D-065 · 2026-10-26 · Telling a half-finished sign-up from a confirmed account: ask Cognito (supersedes D-061's fix)
 
 - **Issue (Arnav, demo step 2):** signing back in to a confirmed account failed with "That code has expired".

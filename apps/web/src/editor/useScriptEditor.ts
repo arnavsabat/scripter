@@ -46,8 +46,15 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
   const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
   const [others, setOthers] = useState<PresenceUser[]>([]);
   const [cue, setCue] = useState<Cue>(null);
-  /** Why the server turned this connection away for good (4403, 4410…), for the page to act on. */
-  const [fatal, setFatal] = useState<SyncClient['fatal']>(null);
+  /**
+   * Why the server turned this connection away for good (4403, 4410…), for the page to act on.
+   * Kept with its session: a new session starts clean, so a second refusal of the same kind
+   * still reaches the page (D-066).
+   */
+  const [refusal, setRefusal] = useState<{ session: Session; fatal: SyncClient['fatal'] } | null>(
+    null,
+  );
+  const fatal = refusal?.session === session ? refusal.fatal : null;
 
   // Effect Events always see the latest handlers without re-creating the editor.
   const onCombine = useEffectEvent(handlers.onCombine);
@@ -111,7 +118,7 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
         c.onChange(() => {
           setCue(c.cue);
           if (c.synced) localCopies.markSynced(session.docId);
-          if (c.fatal) setFatal(c.fatal);
+          if (c.fatal) setRefusal({ session, fatal: c.fatal });
           // A brand-new episode: once the server has confirmed it's empty, start with one action
           // line. Never from a view-only session: that would be an edit.
           if (

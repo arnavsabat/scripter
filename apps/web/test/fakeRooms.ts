@@ -429,6 +429,12 @@ export function fakeRooms(users: Map<string, FakeUser>) {
       for (const e of s.episodes)
         if (e.name === episodeName) e.writers = e.writers.filter((w) => w !== uid);
   }
+  function assign(episodeName: string, name: string) {
+    const uid = user(name).id;
+    for (const s of all)
+      for (const e of s.episodes)
+        if (e.name === episodeName && !e.writers.includes(uid)) e.writers.push(uid);
+  }
 
-  return { handle, seed, user, unassign, reset: () => ((all.length = 0), opened.clear()) };
+  return { handle, seed, user, unassign, assign, reset: () => ((all.length = 0), opened.clear()) };
 }

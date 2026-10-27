@@ -64,9 +64,9 @@ export async function startFakeApi(issuer: TestIssuer) {
       }
       // Test shortcut: sign in as someone (sets the refresh cookie), optionally with the
       // prototype's sample room seeded from their point of view.
-      if (path === '/__fake/unassign') {
+      if (path === '/__fake/unassign' || path === '/__fake/assign') {
         const b = await read(req);
-        rooms.unassign(b.episode!, b.name!);
+        rooms[path === '/__fake/assign' ? 'assign' : 'unassign'](b.episode!, b.name!);
         return send(res, 200, { ok: true });
       }
       if (path === '/__fake/login') {
