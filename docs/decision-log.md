@@ -322,6 +322,33 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-088 · 2026-10-27 · Visual audit against prototype v2 (beta-readiness step 5): every difference fixed or explained
+
+- **How:** a browser test (`apps/web/test/parity.test.tsx`, `parity.ts`) loads prototype v2 in an iframe beside the real app, drives both into the same state, and compares the computed styles of every element they share, property by property (sizes, weights, colors, spacing, borders, radii, shadows, widths of fixed-size things), in both themes. It covers 20 states: sign-in; Home; the account menu; an inline delete confirm; Members; a script; the Drafts tab; the Share menu; a toast; Invite co-writer…; page view; a what-if; its dot popover; Compare; Changes; and Review all. With `VITE_PARITY_SHOTS=1` it also saves a screenshot pair of each state, which Claude reviewed by eye. It's now a guard: every expected difference is listed in the test with its reason, and anything new fails.
+- **Fixed (the app was wrong):**
+  1. **The Members invite footer** squeezed "Invite to The Long Night" into a narrow column beside the field, and Invite ran off the panel. Compare's footer rule (`.rf`, flex) applied to it once the what-if styles loaded, which in the real bundle is always. It's block again, as the prototype has it.
+  2. **Menus and the dot popover were 10 px narrower.** The app drew menus border-box, the prototype content-box (a 200 px menu draws 210 px). Menus are content-box now; the element menu stays border-box so it still fits inside the 1.5 in margin (D-014).
+  3. **Review all opened under its own icon,** 34 px left of where the prototype puts it (its right edge with Share's). It now opens against the toolbar's right group.
+  4. **Review all's rows were 30 px,** not 32 (a rule-order clash with `.mi`).
+  5. **Drafts rows' second line and Home's invitation line sat 2 px high:** a rule meant only for a scene row's "Sent ✓" reached them.
+  6. **One-line toasts were 39 px, not 36:** D-077's wrapping change had also raised the line height. Back to the prototype's; long toasts still wrap.
+- **Found on the way, now fixed:**
+  - **Members and Invite co-writer… showed an empty panel or menu while loading** (a gap in D-085). They now show skeleton rows.
+  - **D-085's empty note** broke "what-if" at its hyphen across two lines. It now uses a non-breaking hyphen.
+- **Different on purpose (each already logged, or explained in the test):**
+  - **Page geometry:** true screenplay geometry (D-003), and no page number on page 1 (SPEC 3.7).
+  - **Additions the prototype doesn't have:** Home's Import action (D-071), and the Share menu's Export PDF (D-076).
+  - **Dark-mode "Send mine to main"** uses dark text (`--on-accent`, D-080).
+  - **The nudged tokens** (D-086).
+  - **Avatar colors** come from each person's ID (D-018).
+  - **Snapshot rows** round on hover, because they're clickable for restore (D-081).
+  - **Compare's preview** keeps a cue on the line right above its dialogue, as the script does, where the prototype's preview puts a gap between them (industry standard, D-073).
+  - **Opening Compare under 1300 px** collapses the sidebar (the prototype's own rule; its state was set directly in the audit).
+- **Artifacts, not differences:** different sample content (row counts, text lengths), hover or focus left by the click that opened a state, and the closed sidebar measuring 0 px in both.
+- **Not comparable:** the element menu and the formatting warning aren't in either prototype (they came from D-014), so they're checked by their own tests.
+- **Also:** D-087's three-writer guards now allow at most one key over 50 ms (the full suite in parallel once stalled a single key at 56 ms; alone, the slowest is 24 ms) and still record the slowest.
+- **Status:** Claude's fixes to match the source of truth (no product change); the reasons for each difference are in the test.
+
 ### D-087 · 2026-10-27 · Performance pass (beta-readiness step 4): three writers on 110 pages, both views
 
 - **How it was measured:** the existing 110-page typing test, plus two new ones (`apps/web/test/perf.test.tsx`). Two co-writers type about five keys a second (with pauses) and show their cursors while Maya reads and types, in the open view and page view. Then the same in a what-if while the co-writers type in main, so the live three-way comparison reruns on their every keystroke. The co-writers run in the test sync server's Node process (`test/syncServer.ts`, `/writers`), not in the browser tab, so their own work isn't counted against the frames being measured. Each run records the editor's work per update, the browser's keydown-to-paint time (Event Timing), every frame's length, and long tasks.

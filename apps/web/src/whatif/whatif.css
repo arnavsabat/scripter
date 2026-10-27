@@ -11,7 +11,7 @@
 .nd.amber {
   color: var(--amber);
 }
-.left .row small {
+.left .row > small {
   margin: 0;
   font-size: 12px;
   color: var(--muted);
@@ -58,7 +58,7 @@ button.snap:not([disabled]):hover {
 .menu.rv {
   width: 270px;
 }
-.rvr {
+.mi.rvr {
   height: 32px;
 }
 .rvr .rvn {

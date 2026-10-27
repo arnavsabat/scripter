@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ApiFailure, api } from '../api';
 import type { Me } from '../auth';
 import { Icon } from '../components/Icons';
+import { RowsSkeleton } from '../components/Skeleton';
 import { Menu, type MenuItem } from '../components/Menu';
 import { useToast } from '../components/Toast';
 import { initials } from '../session';
@@ -132,7 +133,8 @@ export function MembersPanel({
         <span>
           <b>Members</b>
           <small>
-            {n} {n === 1 ? 'person' : 'people'}
+            {/* Until the list arrives: no count yet (a skeleton below, D-084). */}
+            {!list ? '\u00a0' : `${n} ${n === 1 ? 'person' : 'people'}`}
             {invited.length ? ` · ${invited.length} invited` : ''}
           </small>
         </span>
@@ -147,6 +149,7 @@ export function MembersPanel({
         </button>
       </div>
       <div className="rb ml">
+        {!list && <RowsSkeleton widths={['55%', '42%', '48%']} />}
         {members.map((m) =>
           removing === m.id ? (
             <div key={m.id} className="mrow cf cfs">

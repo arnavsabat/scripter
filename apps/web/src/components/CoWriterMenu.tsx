@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ApiFailure, api } from '../api';
 import { initials } from '../session';
 import { Menu } from './Menu';
+import './skeleton.css';
 import { useToast } from './Toast';
 
 export interface ShareContext {
@@ -114,6 +115,13 @@ export function CoWriterMenu({ ctx, onClose }: { ctx: ShareContext; onClose: () 
       <div className="lab" style={{ padding: '8px 10px 6px' }}>
         CO-WRITERS
       </div>
+      {!members &&
+        // Loading: two skeleton rows where the writers will be (D-084).
+        ['58%', '44%'].map((w) => (
+          <div key={w} className="sk-mi sk-wrap" aria-hidden="true">
+            <span className="sk" style={{ width: w }} />
+          </div>
+        ))}
       {members && !writers.length && <div className="none">No writers in this series yet.</div>}
       {writers.map((m) => (
         <button

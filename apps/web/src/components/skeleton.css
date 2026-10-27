@@ -30,6 +30,15 @@
 .sk-wrap .ep:hover {
   background: none;
 }
+.sk-mi {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 10px;
+}
+.sk-mi .sk {
+  margin: 0;
+}
 .sk-script {
   pointer-events: none;
 }

@@ -190,7 +190,7 @@ describe('empty states (D-084)', () => {
     await clickText('.left .tab', 'Drafts');
     await until(() => $$('.left .list > .none').length === 2);
     expect($$('.left .list > .none').map(text)).toEqual([
-      'No what-ifs yet. Try an idea with + New what-if.',
+      'No what-ifs yet. Try an idea with + New what‑if.',
       'No snapshots yet.',
     ]);
   });

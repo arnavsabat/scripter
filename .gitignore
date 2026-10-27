@@ -11,3 +11,6 @@ cdk.out/
 
 # Vitest browser-mode attachments (failure screenshots)
 .vitest/
+
+# Parity screenshots (D-088)
+apps/web/test/.shots/

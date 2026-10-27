@@ -278,7 +278,7 @@ small {
   font-size: 13px;
   line-height: 1.2;
   color: var(--text);
-  box-sizing: border-box;
+  /* Widths are the content box, as in the prototype: a 200 px menu draws 210 px (D-088). */
 }
 .menu.below {
   top: 36px;
@@ -329,7 +329,8 @@ small {
   width: max-content;
   max-width: min(600px, calc(100vw - 32px));
   box-sizing: border-box;
-  line-height: 1.45;
+  /* The prototype's line height, so a one-line toast is its 36 px (D-088). */
+  line-height: normal;
   z-index: 50;
   transition:
     opacity 0.2s ease,
@@ -362,6 +363,11 @@ small {
   align-self: stretch;
   display: flex;
   align-items: center;
+}
+/* Review all opens against the toolbar's right group, its right edge with Share's, as in the
+   prototype (D-088). */
+.anchor[data-review] {
+  position: static;
 }
 
 /* Offline / syncing cue (D-018 item 6): quiet text after the draft switcher. */

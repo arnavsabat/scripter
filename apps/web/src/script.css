@@ -129,6 +129,7 @@
 .elmenu {
   left: 4px;
   width: 132px;
+  box-sizing: border-box; /* 132 px in all, so it stays inside the margin */
 }
 .elmenu .mi {
   gap: 6px;

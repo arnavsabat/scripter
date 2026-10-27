@@ -264,6 +264,11 @@
   padding: 14px 20px;
   border-top: 1px solid var(--line2);
 }
+/* The invite footer stacks its label over the field (prototype .rf.inv), whatever Compare's
+   footer rule says (D-088). */
+.rf.inv {
+  display: block;
+}
 .mrow {
   display: flex;
   align-items: center;

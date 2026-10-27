@@ -312,7 +312,7 @@ export function DraftsTab({
       <div className="list" style={{ paddingTop: 0 }}>
         {whatIfs.length === 0 && (
           <p className="none">
-            No what-ifs yet.{canEdit ? ' Try an idea with + New what-if.' : ''}
+            No what-ifs yet.{canEdit ? ' Try an idea with + New what‑if.' : ''}
           </p>
         )}
         {whatIfs.map((d) =>
