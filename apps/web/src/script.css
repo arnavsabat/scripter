@@ -290,3 +290,53 @@
 .autocont {
   user-select: none;
 }
+
+/* ---- What-ifs (SPEC 3.9, D-080; values from prototype v2) ---- */
+/* The margin dot: 10 px, 36 px left of the heading text, centered on its line. */
+.dot {
+  position: absolute;
+  left: calc(-1 * var(--indent) - 36px);
+  top: 3px;
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  cursor: pointer;
+}
+.dot.blue {
+  background: var(--accent);
+}
+.dot.amber {
+  background: var(--amber);
+}
+.dot.blue.on {
+  box-shadow: 0 0 0 4px var(--blue-ring);
+}
+.dot.amber.on {
+  box-shadow: 0 0 0 4px var(--amber-ring);
+}
+/* After a send, the heading pulses: a blue-ring background fading over 1.2 s. */
+.el.pulse {
+  animation: pulse 1.2s ease;
+}
+@keyframes pulse {
+  0%,
+  40% {
+    background: var(--blue-ring);
+  }
+  100% {
+    background: transparent;
+  }
+}
+/* Changes: what the what-if added (ins colors) and removed (del colors, struck through). */
+.chg-ins {
+  background: var(--ins-bg);
+  color: var(--ins-fg);
+}
+.chg-del {
+  background: var(--del-bg);
+  color: var(--del-fg);
+  text-decoration: line-through;
+  user-select: none;
+}

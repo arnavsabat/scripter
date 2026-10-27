@@ -145,6 +145,10 @@ export async function startFakeApi(issuer: TestIssuer) {
       if (m === 'POST' && path === '/api/invitations/accept')
         accepted.push(`${me.email} ${(await body()).token}`);
       const r = await rooms.handle(m ?? 'GET', path, body, me);
+      if (r?.raw) {
+        res.writeHead(r.status, { 'content-type': 'application/octet-stream' });
+        return void res.end(r.raw);
+      }
       if (r) return send(res, r.status, r.body);
       return fail(res, 404, 'not_found', 'That doesn’t exist.');
     })();

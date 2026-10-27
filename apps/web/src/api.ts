@@ -46,3 +46,11 @@ export async function api<T>(method: Method, path: string, body?: unknown): Prom
 export async function publicApi<T>(method: Method, path: string, body?: unknown): Promise<T> {
   return read<T>(await send(method, path, body, null));
 }
+
+/** A signed-in GET of raw bytes (a snapshot's state, D-080). */
+export async function apiBytes(path: string): Promise<Uint8Array> {
+  let res = await send('GET', path, undefined, await auth.token());
+  if (res.status === 401) res = await send('GET', path, undefined, await auth.retry());
+  if (!res.ok) await read(res);
+  return new Uint8Array(await res.arrayBuffer());
+}

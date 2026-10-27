@@ -4,6 +4,7 @@ import type { Cue } from '@wr/shared';
 import type { Overlay } from '../App';
 import type { PresenceUser } from '../editor/presence';
 import { initials } from '../session';
+import type { ReactNode } from 'react';
 import { CoWriterMenu, type ShareContext } from './CoWriterMenu';
 import { Icon } from './Icons';
 import { Menu } from './Menu';
@@ -33,6 +34,10 @@ interface Props {
   cue: Cue;
   /** Share › Export PDF (D-071): anyone who can open the script, viewers included. */
   onExport?: () => void;
+  /** The draft switcher (D-080): "Main ▾" or "Main › Darker ending ▾", with ✓ on the current one. */
+  drafts?: { label: string; items: { label: string; current: boolean; onSelect: () => void }[] };
+  /** Inside a what-if only: the Changes toggle and Review all (SPEC 3.9). */
+  whatIf?: { changes: boolean; onToggleChanges: () => void; review: ReactNode | null };
 }
 
 const CUE_TEXT = {
@@ -53,10 +58,13 @@ export function Toolbar({
   others,
   cue,
   onExport,
+  drafts,
+  whatIf,
 }: Props) {
   const toast = useToast();
   const close = () => setOverlay(null);
-  const toggle = (kind: 'draft' | 'share') => setOverlay(overlay?.kind === kind ? null : { kind });
+  const toggle = (kind: 'draft' | 'share' | 'review') =>
+    setOverlay(overlay?.kind === kind ? null : { kind });
 
   return (
     <header className="toolbar">
@@ -101,14 +109,14 @@ export function Toolbar({
             aria-expanded={overlay?.kind === 'draft'}
             onClick={() => toggle('draft')}
           >
-            Main ▾
+            {drafts?.label ?? 'Main'} ▾
           </button>
           {overlay?.kind === 'draft' && (
             <Menu
               label="Drafts"
               style={{ left: 0 }}
               onClose={close}
-              items={[{ label: 'Main', current: true, onSelect: () => {} }]}
+              items={drafts?.items ?? [{ label: 'Main', current: true, onSelect: () => {} }]}
             />
           )}
         </span>
@@ -135,6 +143,34 @@ export function Toolbar({
           </span>
         )}
         {others.length > 0 && <span className="dv" aria-hidden="true" />}
+        {whatIf && (
+          <>
+            <button
+              type="button"
+              className={`ib${whatIf.changes ? ' on' : ''}`}
+              title="Show changes from main"
+              aria-label="Show changes from main"
+              aria-pressed={whatIf.changes}
+              onClick={whatIf.onToggleChanges}
+            >
+              <Icon name="chg" />
+            </button>
+            <span className="anchor" data-review>
+              <button
+                type="button"
+                className={`ib${overlay?.kind === 'review' ? ' on' : ''}`}
+                title="Review all changes"
+                aria-label="Review all changes"
+                aria-haspopup="menu"
+                aria-expanded={overlay?.kind === 'review'}
+                onClick={() => toggle('review')}
+              >
+                <Icon name="rev" />
+              </button>
+              {overlay?.kind === 'review' && whatIf.review}
+            </span>
+          </>
+        )}
         <button
           type="button"
           className={`ib${overlay?.kind === 'share' || overlay?.kind === 'cowriter' ? ' on' : ''}`}

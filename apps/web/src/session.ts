@@ -16,6 +16,10 @@ export interface Session {
   /** An imported script to write into the new, empty document (D-077), then `onSeeded`. */
   seed?: readonly BlockSpec[];
   onSeeded?: () => void;
+  /** A what-if's starting state, its base snapshot of main (D-080): applied when it's empty. */
+  seedState?: () => Promise<Uint8Array>;
+  /** On main: record who changes each scene, for Compare's "changed by" (D-080). */
+  trackSceneEditsAs?: string;
 }
 
 /** Two-letter initials for an avatar: "Maya" → "MA", "Sam Jones" → "SJ". */

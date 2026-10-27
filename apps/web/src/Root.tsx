@@ -9,6 +9,7 @@ import { ToastProvider, useToast } from './components/Toast';
 import { HomeScreen } from './home/HomeScreen';
 import { useHome } from './home/useHome';
 import { pendingImports } from './import/pending';
+import { listDrafts, snapshotState, type DraftInfo } from './whatif/drafts';
 import { localCopies } from './localCopies';
 import { Privacy, Terms } from './pages/Legal';
 import { SignIn, type InvitePreview } from './pages/SignIn';
@@ -97,7 +98,14 @@ function SignedIn({
       </div>
       {shown && (
         <Layer visible={onEpisode}>
-          <Episode key={shown} id={shown} me={me} syncUrls={syncUrls} onChanged={reload} />
+          <Episode
+            key={shown}
+            id={shown}
+            draft={route.name === 'episode' ? route.draft : null}
+            me={me}
+            syncUrls={syncUrls}
+            onChanged={reload}
+          />
         </Layer>
       )}
       {route.name === 'invite' && (
@@ -157,20 +165,46 @@ interface OpenedEpisode {
   draftId: string;
 }
 
-/** /e/<id>: the script screen on the episode's main draft, as this person (D-046). */
+/** /e/<id>, or /e/<id>/w/<draft>: the script screen on main or a what-if, as this person (D-046, D-080). */
 function Episode({
   id,
+  draft,
   me,
   syncUrls,
   onChanged,
 }: {
   id: string;
+  draft: string | null;
   me: Me;
   syncUrls: string | readonly string[];
   onChanged: () => void;
 }) {
   const toast = useToast();
   const [episode, setEpisode] = useState<OpenedEpisode | null>(null);
+  // The Drafts tab: main and the what-ifs (D-080), fetched again whenever the URL's draft changes.
+  const [fetched, setFetched] = useState<{ list: DraftInfo[]; for: string | null } | null>(null);
+  const [draftsAsked, setDraftsAsked] = useState(0);
+  useEffect(() => {
+    let live = true;
+    listDrafts(id).then(
+      (list) => {
+        if (live) setFetched({ list, for: draft });
+      },
+      () => {},
+    );
+    return () => {
+      live = false;
+    };
+  }, [id, draft, draftsAsked]);
+  const drafts = fetched?.list ?? null;
+  const current = drafts?.find((d) => (draft ? d.id === draft : d.kind === 'main')) ?? null;
+  // A what-if link that doesn't exist (any more), by a list fetched for it: back to main.
+  useEffect(() => {
+    if (fetched && draft && fetched.for === draft && !fetched.list.some((d) => d.id === draft)) {
+      toast.show('That what-if isn’t there any more.');
+      navigate(`/e/${id}`, { replace: true });
+    }
+  }, [fetched, draft, id, toast]);
   // A script made with + New script / + New episode opens with its title ready to type (D-033).
   const [isNew] = useState(() => new URLSearchParams(location.search).get('new') === '1');
 
@@ -194,9 +228,10 @@ function Episode({
 
   const session = useMemo<Session | null>(
     () =>
-      episode && {
+      episode &&
+      current && {
         serverUrl: syncUrls,
-        docId: episode.draftId,
+        docId: current.id,
         identity: { userId: me.id, name: me.name, color: colorFor(me.id) },
         token: auth.token,
         canEdit: episode.canEdit,
@@ -207,8 +242,12 @@ function Episode({
               onSeeded: () => pendingImports.clear(episode.id),
             }
           : {}),
+        // A what-if starts as its base snapshot of main; on main, who changes what (D-080).
+        ...(current.kind === 'whatif' && current.baseSnapshotId
+          ? { seedState: () => snapshotState(current.baseSnapshotId!) }
+          : { trackSceneEditsAs: me.name }),
       },
-    [episode, me, syncUrls],
+    [episode, current, me, syncUrls],
   );
 
   /** The server closed us for good (D-046): access changed, or the episode was deleted. */
@@ -235,7 +274,8 @@ function Episode({
     // Reload the server's version in the new mode. Losing edit access discards edits the
     // server never accepted (D-046), so this device's copy goes too.
     setEpisode(null);
-    if (!now.canEdit) await localCopies.clear(episode.draftId);
+    if (!now.canEdit)
+      for (const d of drafts ?? [{ id: episode.draftId }]) await localCopies.clear(d.id);
     toast.show(
       now.canEdit
         ? 'You can edit this episode now.'
@@ -244,7 +284,7 @@ function Episode({
     setEpisode(now);
   };
 
-  if (!session || !episode) return null;
+  if (!session || !episode || !current) return null;
   const prefix = episode.series.isSeries ? `Ep ${episode.number} · ` : '';
   return (
     <ScriptScreen
@@ -259,6 +299,14 @@ function Episode({
         me: me.id,
       }}
       onFatal={(r) => void onFatal(r)}
+      drafts={{
+        episodeId: episode.id,
+        list: drafts ?? [current],
+        current,
+        me: { id: me.id, name: me.name },
+        reload: () => setDraftsAsked((n) => n + 1),
+        open: (draftId) => navigate(draftId ? `/e/${episode.id}/w/${draftId}` : `/e/${episode.id}`),
+      }}
       exportInfo={{
         title: episode.series.isSeries ? episode.series.name : episode.name,
         ...(episode.series.isSeries ? { episode: episode.name } : {}),

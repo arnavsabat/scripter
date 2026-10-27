@@ -32,6 +32,7 @@ import type { Awareness } from 'y-protocols/awareness';
 import type * as Y from 'yjs';
 import { caretStyle } from './presence';
 import { pagesPlugin } from './pagesPlugin';
+import { whatIfPlugin } from '../whatif/whatIfPlugin';
 import { warningsPlugin } from './warningsPlugin';
 
 export const FRAGMENT = 'script';
@@ -68,6 +69,8 @@ export interface EditorHooks {
 export interface ScriptEditor {
   view: EditorView;
   undoManager: Y.UndoManager;
+  /** The draft's document (what-ifs read their send records from it, D-080). */
+  ydoc: Y.Doc;
   destroy(): void;
 }
 
@@ -124,6 +127,7 @@ export function createEditor(
     idPlugin({ isRemote }),
     warningsPlugin(hooks.onWarning),
     pagesPlugin(),
+    whatIfPlugin(),
   ];
 
   // Filled in right after the view exists; y-prosemirror dispatches during construction.
@@ -162,5 +166,5 @@ export function createEditor(
     .undoManager;
   late.undoManager = undoManager;
 
-  return { view, undoManager, destroy: () => view.destroy() };
+  return { view, undoManager, ydoc, destroy: () => view.destroy() };
 }

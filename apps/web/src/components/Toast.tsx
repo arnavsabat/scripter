@@ -54,8 +54,9 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             key={a.label}
             type="button"
             onClick={() => {
-              a.run();
+              // Hide first: an action may show a toast of its own ("Send undone").
               setVisible(false);
+              a.run();
             }}
           >
             {a.label}

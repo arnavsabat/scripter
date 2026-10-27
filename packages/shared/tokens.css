@@ -20,6 +20,8 @@
   --line2: #ececef;
   --accent: #2f6db5;
   --accent-bg: #e6e7eb;
+  /* Text on accent buttons (D-080, proposed): white, as the prototype; dark in dark mode for 4.5:1. */
+  --on-accent: #ffffff;
   --desk: #e9e9ec;
   --page: #ffffff;
   --ink: #111111;
@@ -64,6 +66,7 @@
     --line2: #2f2f33;
     --accent: #6ea2e6;
     --accent-bg: #34363c;
+    --on-accent: #1c1c1e;
     --desk: #26262a;
     --page: #1c1c1e;
     --ink: #e8e8ea;
@@ -96,6 +99,7 @@
   --line2: #2f2f33;
   --accent: #6ea2e6;
   --accent-bg: #34363c;
+  --on-accent: #1c1c1e;
   --desk: #26262a;
   --page: #1c1c1e;
   --ink: #e8e8ea;

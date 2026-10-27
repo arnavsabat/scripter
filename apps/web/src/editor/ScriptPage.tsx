@@ -10,7 +10,13 @@ interface Props {
   view: EditorView | undefined;
   overlay: Overlay;
   setOverlay: (o: Overlay) => void;
+  /** A what-if's margin-dot popover (SPEC 3.9): Send to main, Compare. */
+  onSendScene?: (sceneId: string) => void;
+  onCompareScene?: (sceneId: string) => void;
 }
+
+/** ⌘ on a Mac, Ctrl elsewhere (SPEC 3.9). */
+const MOD = /Mac|iPhone|iPad/.test(navigator.platform) ? '⌘' : 'Ctrl';
 
 function blockPosById(view: EditorView, id: string) {
   let found = -1;
@@ -20,12 +26,21 @@ function blockPosById(view: EditorView, id: string) {
   return found;
 }
 
-export function ScriptPage({ mountRef, view, overlay, setOverlay }: Props) {
+export function ScriptPage({
+  mountRef,
+  view,
+  overlay,
+  setOverlay,
+  onSendScene,
+  onCompareScene,
+}: Props) {
   // A click anywhere outside a margin overlay closes it.
   useEffect(() => {
-    if (overlay?.kind !== 'element' && overlay?.kind !== 'warning') return;
+    if (overlay?.kind !== 'element' && overlay?.kind !== 'warning' && overlay?.kind !== 'dot')
+      return;
     const outside = (e: MouseEvent) => {
-      if (!(e.target as Element).closest('.page-overlay')) setOverlay(null);
+      const t = e.target as Element;
+      if (!t.closest('.page-overlay') && !t.closest('.dot')) setOverlay(null);
     };
     document.addEventListener('mousedown', outside);
     return () => document.removeEventListener('mousedown', outside);
@@ -97,6 +112,33 @@ export function ScriptPage({ mountRef, view, overlay, setOverlay }: Props) {
                     {label}
                   </button>
                 ))}
+              </div>
+            )}
+            {overlay?.kind === 'dot' && (
+              <div
+                className="menu pop page-overlay"
+                role="menu"
+                aria-label="Send to main or compare"
+                style={{ top: overlay.top + 22, left: 144 - 214 }}
+              >
+                <button
+                  type="button"
+                  className="mi"
+                  role="menuitem"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onSendScene?.(overlay.sceneId)}
+                >
+                  Send to main<span>{MOD}↵</span>
+                </button>
+                <button
+                  type="button"
+                  className="mi"
+                  role="menuitem"
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => onCompareScene?.(overlay.sceneId)}
+                >
+                  Compare<span>{MOD}⇧↵</span>
+                </button>
               </div>
             )}
           </div>

@@ -10,6 +10,7 @@ import { IndexeddbPersistence } from 'y-indexeddb';
 import { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
 import { localCopies } from '../localCopies';
+import { trackSceneEdits } from '../whatif/sceneEdits';
 import type { Session } from '../session';
 import {
   FRAGMENT,
@@ -96,6 +97,16 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
       });
       const c = client;
       const fragment = ydoc.getXmlFragment(FRAGMENT);
+      let seeding = false;
+      // On main, who changes each scene (Compare's "changed by", D-080).
+      if (session.trackSceneEditsAs && session.canEdit !== false)
+        cleanups.push(
+          trackSceneEdits(
+            ydoc,
+            session.trackSceneEditsAs,
+            (origin) => origin !== c && origin !== local,
+          ),
+        );
 
       // The editor needs a document to show. With no copy on this device yet, it waits for the
       // server's: opened on an empty document, it would write its placeholder line into Yjs,
@@ -141,10 +152,27 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
           setCue(c.cue);
           if (c.synced) localCopies.markSynced(session.docId);
           if (c.fatal) setRefusal({ session, fatal: c.fatal });
-          if (!created && c.caughtUp) {
+          if (!created && !seeding && c.caughtUp) {
+            const empty = session.canEdit !== false && fragment.length === 0;
+            // A new what-if: its base snapshot of main. Applying it twice (two people opening
+            // it at once) changes nothing: it's the same Yjs state either way (D-080).
+            if (empty && session.seedState) {
+              seeding = true;
+              session.seedState().then(
+                (state) => {
+                  if (cancelled) return;
+                  Y.applyUpdate(ydoc, state);
+                  open();
+                },
+                () => {
+                  if (!cancelled) open();
+                },
+              );
+              return;
+            }
             // A brand-new episode: the server has confirmed it's empty, so start with one action
             // line. Never from a view-only session: that would be an edit.
-            if (session.canEdit !== false && fragment.length === 0) {
+            if (empty) {
               seedNewScript(ydoc, session.seed);
               session.onSeeded?.();
             }

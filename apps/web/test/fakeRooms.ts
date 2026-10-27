@@ -36,7 +36,7 @@ interface Series {
   invites: Invite[];
   deletedAt: string | null;
 }
-type Reply = { status: number; body: unknown } | null;
+type Reply = { status: number; body: unknown; raw?: Buffer } | null;
 
 const now = () => new Date().toISOString();
 const err = (status: number, error: string, message: string) => ({
@@ -126,6 +126,65 @@ export function fakeRooms(users: Map<string, FakeUser>) {
       const e = s.episodes.find((x) => x.id === id);
       if (e) return { s, e };
     }
+    return null;
+  };
+
+  // What-ifs and snapshots (D-080), as apps/api/src/routes/drafts.ts does them.
+  interface FakeDraft {
+    id: string;
+    episodeId: string;
+    kind: 'main' | 'whatif';
+    name: string;
+    baseSnapshotId: string | null;
+    createdBy: string;
+    createdAt: string;
+    scenesDiffer: number;
+  }
+  interface FakeSnapshot {
+    id: string;
+    draftId: string;
+    kind: 'automatic' | 'manual';
+    label: string;
+    createdBy: string;
+    createdAt: string;
+    fromDraftId: string | null;
+    bytes: Buffer;
+  }
+  const whatIfs: FakeDraft[] = [];
+  const snapshots: FakeSnapshot[] = [];
+  const person = (id: string) => {
+    for (const u of users.values()) if (u.id === id) return { id, name: u.name };
+    return { id, name: '' };
+  };
+  const draftsOf = (s: Series, e: Episode): FakeDraft[] => [
+    {
+      id: e.draftId,
+      episodeId: e.id,
+      kind: 'main',
+      name: 'Main',
+      baseSnapshotId: null,
+      createdBy: [...s.members].find(([, r]) => r === 'showrunner')?.[0] ?? '',
+      createdAt: e.editedAt,
+      scenesDiffer: 0,
+    },
+    ...whatIfs.filter((d) => d.episodeId === e.id),
+  ];
+  const draftJson = (d: FakeDraft) => ({ ...d, createdBy: person(d.createdBy) });
+  const snapJson = (x: FakeSnapshot) => ({
+    id: x.id,
+    draftId: x.draftId,
+    kind: x.kind,
+    label: x.label,
+    createdBy: person(x.createdBy),
+    createdAt: x.createdAt,
+    fromDraftId: x.fromDraftId,
+  });
+  const findDraft = (id: string) => {
+    for (const s of all)
+      for (const e of s.episodes) {
+        const d = draftsOf(s, e).find((x) => x.id === id);
+        if (d) return { s, e, d };
+      }
     return null;
   };
   const people = (ids: string[]) =>
@@ -224,6 +283,91 @@ export function fakeRooms(users: Map<string, FakeUser>) {
     me: FakeUser,
   ): Promise<Reply> {
     if (m === 'GET' && path === '/api/home') return { status: 200, body: home(me) };
+    {
+      const ed = /^\/api\/episodes\/([0-9a-f-]{36})\/(drafts|whatifs)$/.exec(path);
+      const found = ed && findEpisode(ed[1]!);
+      if (ed && found && !found.e.deletedAt && found.s.members.get(me.id)) {
+        if (ed[2] === 'drafts')
+          return { status: 200, body: { drafts: draftsOf(found.s, found.e).map(draftJson) } };
+        if (!canEdit(found.s, found.e, me.id)) return forbidden();
+        const b = await body();
+        const base: FakeSnapshot = {
+          id: randomUUID(),
+          draftId: found.e.draftId,
+          kind: 'automatic',
+          label: `When “${b.name ?? 'Untitled what-if'}” began`,
+          createdBy: me.id,
+          createdAt: now(),
+          fromDraftId: null,
+          bytes: Buffer.from(b.state!, 'base64'),
+        };
+        snapshots.push(base);
+        const d: FakeDraft = {
+          id: randomUUID(),
+          episodeId: found.e.id,
+          kind: 'whatif',
+          name: b.name ?? 'Untitled what-if',
+          baseSnapshotId: base.id,
+          createdBy: me.id,
+          createdAt: now(),
+          scenesDiffer: 0,
+        };
+        whatIfs.push(d);
+        return { status: 200, body: draftJson(d) };
+      }
+      const dr = /^\/api\/drafts\/([^/]+?)(\/snapshots)?$/.exec(path);
+      const fd = dr && findDraft(dr[1]!);
+      if (dr && fd && fd.s.members.get(me.id)) {
+        const { s, e, d } = fd;
+        if (!dr[2] && m === 'PATCH') {
+          if (d.kind === 'whatif') d.scenesDiffer = Number((await body()).scenesDiffer);
+          return { status: 200, body: { ok: true } };
+        }
+        if (dr[2] && m === 'GET')
+          return {
+            status: 200,
+            body: {
+              snapshots: snapshots
+                .filter((x) => x.draftId === d.id)
+                .reverse()
+                .map(snapJson),
+            },
+          };
+        if (dr[2] && m === 'POST') {
+          if (!canEdit(s, e, me.id)) return forbidden();
+          const b = await body();
+          let label = 'Snapshot';
+          if (b.reason === 'send') {
+            const from = findDraft(b.fromDraftId ?? '')?.d;
+            label = `Before sending from “${from?.name ?? 'Untitled what-if'}”`;
+            const recent = snapshots.findLast(
+              (x) =>
+                x.draftId === d.id &&
+                x.fromDraftId === b.fromDraftId &&
+                Date.now() - new Date(x.createdAt).getTime() < 5 * 60_000,
+            );
+            if (recent) return { status: 200, body: { snapshot: snapJson(recent), reused: true } };
+          } else if (b.reason === 'restore')
+            label = `Before restoring “${snapshots.find((x) => x.id === b.restoringId)?.label ?? 'a snapshot'}”`;
+          const snap: FakeSnapshot = {
+            id: randomUUID(),
+            draftId: d.id,
+            kind: b.reason === 'manual' ? 'manual' : 'automatic',
+            label,
+            createdBy: me.id,
+            createdAt: now(),
+            fromDraftId: b.reason === 'send' ? (b.fromDraftId ?? null) : null,
+            bytes: Buffer.from(b.state!, 'base64'),
+          };
+          snapshots.push(snap);
+          return { status: 200, body: { snapshot: snapJson(snap), reused: false } };
+        }
+      }
+      const st = /^\/api\/snapshots\/([0-9a-f-]{36})\/state$/.exec(path);
+      const snap = st && snapshots.find((x) => x.id === st[1]);
+      if (snap && findDraft(snap.draftId)?.s.members.get(me.id))
+        return { status: 200, body: null, raw: snap.bytes };
+    }
     if (m === 'POST' && path === '/api/series') {
       const b = await body();
       const isSeries = b.kind === 'series';
@@ -436,5 +580,11 @@ export function fakeRooms(users: Map<string, FakeUser>) {
         if (e.name === episodeName && !e.writers.includes(uid)) e.writers.push(uid);
   }
 
-  return { handle, seed, user, unassign, assign, reset: () => ((all.length = 0), opened.clear()) };
+  const reset = () => {
+    all.length = 0;
+    opened.clear();
+    whatIfs.length = 0;
+    snapshots.length = 0;
+  };
+  return { handle, seed, user, unassign, assign, reset };
 }

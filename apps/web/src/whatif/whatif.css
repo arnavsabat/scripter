@@ -1,0 +1,173 @@
+/* The what-if UI (SPEC 3.6, 3.9; D-080): values from prototype v2. Colors are tokens only. */
+
+/* Scenes tab markers and the legend */
+.nd {
+  font-size: 13px;
+  flex-shrink: 0;
+}
+.nd.blue {
+  color: var(--accent);
+}
+.nd.amber {
+  color: var(--amber);
+}
+.left .row small {
+  margin: 0;
+  font-size: 12px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.row.gone {
+  color: var(--muted);
+  text-decoration: line-through;
+  cursor: default;
+}
+.legend {
+  margin-top: auto;
+  padding: 14px 20px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* SNAPSHOTS rows (14 px as the prototype; see D-080's open question) */
+.snap {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: left;
+  color: var(--text);
+}
+button.snap:not([disabled]):hover {
+  background: var(--hover);
+}
+.snap small {
+  display: block;
+  font-size: 12px;
+  color: var(--muted);
+}
+.snap.cf {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Review all */
+.menu.rv {
+  width: 270px;
+}
+.rvr {
+  height: 32px;
+}
+.rvr .rvn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+  min-width: 0;
+}
+.rvr .nd {
+  font-size: 9px;
+}
+.rvr .ck {
+  width: 14px;
+  text-align: right;
+  font-size: 13px;
+  color: var(--accent);
+}
+.rvr .ta {
+  font-size: 13px;
+}
+.mi.send {
+  color: var(--accent);
+  font-weight: 600;
+}
+.mi.send[disabled] {
+  color: var(--muted);
+  font-weight: 400;
+  cursor: default;
+}
+.mi.send[disabled]:hover {
+  background: none;
+}
+
+/* Compare */
+.rb.cv {
+  padding: 20px;
+}
+.pv {
+  font-family: var(--font-script);
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+.pv .b {
+  margin-top: 14px;
+}
+.pv .b:first-child,
+.pv .b.h {
+  margin-top: 0;
+}
+.pv .b.h,
+.pv .b.c,
+.pv .b.t {
+  text-transform: uppercase; /* shown in capitals, stored as typed (D-014) */
+}
+.pv .b.c {
+  margin-left: 104px;
+}
+.pv .b.p {
+  margin-left: 76px;
+}
+.pv .b.d {
+  margin-left: 48px;
+  width: 180px;
+}
+.pv .b.t {
+  text-align: right;
+}
+.pv .b.c + .b.p,
+.pv .b.c + .b.d,
+.pv .b.p + .b.d,
+.pv .b.d + .b.p {
+  margin-top: 0;
+}
+.pv ins {
+  background: var(--ins-bg);
+  color: var(--ins-fg);
+  text-decoration: none;
+}
+.rp .note,
+.rp .empty {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 18px;
+  line-height: 1.45;
+}
+.rp .empty {
+  margin-top: 0;
+}
+.rp .rf {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.rp .rf small {
+  font-size: 12px;
+  color: var(--muted);
+}
+/* The primary button: accent background, 13 px weight 600 (SPEC 3.9). */
+.pb {
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: var(--accent);
+  color: var(--on-accent);
+  font-size: 13px;
+  font-weight: 600;
+}
