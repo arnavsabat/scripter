@@ -244,6 +244,8 @@ Phase 3:
 
 ## Future versions
 
+- **Editable title page (D-076):** draft date, contact block, "based on", and credit wording, exported with the script. v1 generates one from the names we have.
+
 From SPEC Part 2 (seams in v1, not built): the AI continuity checker and its eval harness; the Beats tab and beat board with card drag-and-drop; the Outline tab; dragging scenes to reorder them; comments and notes tabs; revision color tags on snapshots; export to Final Draft or Fountain; cross-episode proposals; scene-level locks; the series-level product (bible, cross-episode continuity); the timeline checker; setup/payoff and prop/costume tracking; pitch voting; the script jam and public launch.
 
 Dropped entirely: Arc's "take main's version into this what-if".
@@ -309,6 +311,25 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-076 · 2026-10-27 · PDF export: drawn from the pagination output, with an auto title page
+
+- **Arnav's call (from options):** an **auto title page** [recommended]. It shows the title (the series name and the episode in quotes, or the script's name), then "Written by" and the episode's writers, or the showrunners if nobody is assigned. A team is joined with "&", the WGA credit convention. It's unnumbered.
+  - Rejected: no title page (not industry standard for a finished PDF); a title page editor now (new UI and data beyond SPEC, needing a mockup first).
+  - An editable title page (draft date, contact, "based on") is a future version.
+- **Built:**
+  - `apps/web/src/export/pdf.ts`: `layoutPages()` and `layoutTitlePage()` are pure, saying where each string goes in points. They read the same pagination items page view draws, so page breaks, page numbers, (MORE), (CONT'D), (CONTINUED) and CONTINUED: match by construction.
+  - `exportPdf()` loads `pdf-lib` and `@pdf-lib/fontkit` only on export, embeds Courier Prime subset (a typical script is about 19 KB), sets title, author and creator, and downloads "Series - Ep 3 - Name.pdf" (or "Name.pdf").
+  - The baseline comes from Courier Prime's metrics (2048 units per em, ascent 1600, descent 700), the way the browser centers the 16 px line.
+  - **Share › Export PDF** sits under a separator after the invite items, for everyone who can open the script, viewers included (D-071).
+  - The font is now self-hosted for screen and PDF (`apps/web/public/fonts`, with its OFL license). Google Fonts is gone from `index.html`.
+- **Tests (real Chromium):**
+  - In page view, every line on screen, read from the DOM (text and position, converted to points), equals every string the PDF draws, on every page.
+  - Share › Export PDF produces a valid PDF: pages = script pages + 1, US Letter, title set, Courier Prime embedded as FontFile2.
+  - The title page is centered and laid out as above.
+  - Claude also rendered the exported file to images and checked them.
+- **Not built (SPEC 5.9):** usage counting has no endpoint yet, so "PDF exported" isn't recorded. It's on the beta-readiness checklist.
+- **Status:** Arnav's call (title page); built and tested.
 
 ### D-075 · 2026-10-27 · Viewport anchoring in page view, tested with two writers
 

@@ -81,7 +81,7 @@ describe('Copy invite link', () => {
   it('copies a link to this episode and says so', async () => {
     await openEpisode('The Long Night', 'Ep 3 · The Long Night');
     await openShare();
-    expect(shareItems()).toEqual(['Copy invite link', 'Invite co-writer…']);
+    expect(shareItems()).toEqual(['Copy invite link', 'Invite co-writer…', 'Export PDF']);
     await clickText('.menu[aria-label="Share"] .mi', 'Copy invite link');
     await until(() => toast() === 'Link to “Ep 3 · The Long Night” copied');
     expect(await navigator.clipboard.readText()).toBe(
@@ -124,9 +124,9 @@ describe('Invite co-writer… (D-032)', () => {
     await until(() => coWriters()[1] === 'MAMaya ✓');
   });
 
-  it('someone who can’t edit the episode only gets Copy invite link', async () => {
+  it('someone who can’t edit the episode gets Copy invite link and Export PDF', async () => {
     await openEpisode('Harbor Lights', 'Ep 2 · Low Tide');
     await openShare();
-    expect(shareItems()).toEqual(['Copy invite link']);
+    expect(shareItems()).toEqual(['Copy invite link', 'Export PDF']);
   });
 });

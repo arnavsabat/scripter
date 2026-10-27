@@ -31,6 +31,8 @@ interface Props {
   /** Co-writers in this episode right now (SPEC 3.5 presence avatars). */
   others: PresenceUser[];
   cue: Cue;
+  /** Share › Export PDF (D-071): anyone who can open the script, viewers included. */
+  onExport?: () => void;
 }
 
 const CUE_TEXT = {
@@ -50,6 +52,7 @@ export function Toolbar({
   setOverlay,
   others,
   cue,
+  onExport,
 }: Props) {
   const toast = useToast();
   const close = () => setOverlay(null);
@@ -165,6 +168,7 @@ export function Toolbar({
               ...(share?.canEdit
                 ? [{ label: 'Invite co-writer…', onSelect: () => setOverlay({ kind: 'cowriter' }) }]
                 : []),
+              ...(onExport ? [{ label: 'Export PDF', separated: true, onSelect: onExport }] : []),
             ]}
           />
         )}

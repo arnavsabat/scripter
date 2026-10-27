@@ -5,7 +5,9 @@ import { ToastProvider, useToast } from './components/Toast';
 import type { ShareContext } from './components/CoWriterMenu';
 import { Toolbar, type EpisodeTitle } from './components/Toolbar';
 import { handleMarginKey, topInPage } from './editor/marginKeys';
+import { pagesKey } from './editor/pagesPlugin';
 import { holdViewDuringToggle } from './editor/pageView';
+import { exportPdf, pdfFileName } from './export/pdf';
 import { ScriptPage } from './editor/ScriptPage';
 import { useScriptEditor } from './editor/useScriptEditor';
 import type { Session } from './session';
@@ -39,9 +41,26 @@ interface ScriptScreenProps {
   onBack?: () => void;
   /** The server turned this connection away for good (4403 access changed, 4410 deleted…). */
   onFatal?: (reason: NonNullable<ReturnType<typeof useScriptEditor>['fatal']>) => void;
+  /** What the exported PDF's title page and file are called (D-076). */
+  exportInfo?: ExportInfo;
 }
 
-export function ScriptScreen({ session, title, share, onBack, onFatal }: ScriptScreenProps) {
+export interface ExportInfo {
+  title: string;
+  episode?: string;
+  fileParts: string[];
+  /** The names for "Written by", looked up when someone exports. */
+  writers: () => Promise<string[]>;
+}
+
+export function ScriptScreen({
+  session,
+  title,
+  share,
+  onBack,
+  onFatal,
+  exportInfo,
+}: ScriptScreenProps) {
   const toast = useToast();
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [tab, setTab] = useState<SidebarTab>('scenes');
@@ -60,6 +79,27 @@ export function ScriptScreen({ session, title, share, onBack, onFatal }: ScriptS
       if (docChanged && overlay?.kind === 'warning') setOverlay(null);
     },
   });
+
+  // Share › Export PDF: the pages exactly as page view shows them (D-076).
+  const exportScript = async () => {
+    const view = handle.editor?.view;
+    const pagination = view && pagesKey.getState(view.state)?.pagination;
+    if (!pagination) return;
+    const fallback = typeof title === 'string' ? title : (title?.text ?? 'Untitled script');
+    try {
+      const writers = (await exportInfo?.writers().catch(() => [])) ?? [];
+      await exportPdf(pagination, {
+        titlePage: {
+          title: exportInfo?.title ?? fallback,
+          ...(exportInfo?.episode ? { episode: exportInfo.episode } : {}),
+          writers,
+        },
+        fileName: pdfFileName(exportInfo?.fileParts ?? [fallback]),
+      });
+    } catch {
+      toast.show('Couldn’t export the PDF. Please try again.');
+    }
+  };
 
   const reportFatal = useEffectEvent((reason: NonNullable<typeof handle.fatal>) =>
     onFatal?.(reason),
@@ -84,6 +124,7 @@ export function ScriptScreen({ session, title, share, onBack, onFatal }: ScriptS
         setOverlay={setOverlay}
         others={handle.others}
         cue={handle.cue}
+        onExport={() => void exportScript()}
       />
       <div className="body">
         <Sidebar

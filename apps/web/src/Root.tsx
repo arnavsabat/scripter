@@ -251,6 +251,23 @@ function Episode({
         me: me.id,
       }}
       onFatal={(r) => void onFatal(r)}
+      exportInfo={{
+        title: episode.series.isSeries ? episode.series.name : episode.name,
+        ...(episode.series.isSeries ? { episode: episode.name } : {}),
+        fileParts: episode.series.isSeries
+          ? [episode.series.name, `Ep ${episode.number}`, episode.name]
+          : [episode.name],
+        // "Written by": the episode's writers, or the showrunners if nobody is assigned.
+        writers: async () => {
+          const { members } = await api<{
+            members: { name: string; role: string; episodes: string[] }[];
+          }>('GET', `/api/series/${episode.series.id}/members`);
+          const assigned = members.filter((m) => m.episodes.includes(episode.id));
+          return (assigned.length ? assigned : members.filter((m) => m.role === 'showrunner')).map(
+            (m) => m.name,
+          );
+        },
+      }}
       title={{
         text: prefix + episode.name,
         value: episode.name,

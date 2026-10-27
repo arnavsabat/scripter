@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-075) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-076) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -106,5 +106,6 @@ REPO WORKING NOTES
   - Every script column has half a pixel of slack (1/64 px rounding); keep it in any new column.
   - Page view is `apps/web/src/editor/pagesPlugin.ts`: one widget per break, zero height while the sidebar is open.
   - Seed long scripts in web tests with `seed()` from `test/helpers.tsx`.
+  - PDF export (`apps/web/src/export/pdf.ts`) draws the same pagination items as page view; Courier Prime is self-hosted in `apps/web/public/fonts` for both (D-076).
 - **Home and the handoff (D-051):** `apps/web/src/home/` (`HomeScreen`, `MembersPanel`, `useHome`, `home.css`). Home and the script are two layers in `Root.tsx` that crossfade. The theme lives in `theme.ts`; unsynced local copies are tracked in `localCopies.ts` for the safe sign-out. The editor never takes focus from something else on load.
 - **Web app routing and session (D-048):** `apps/web/src/router.ts` (a tiny History-API router), `auth.ts` (the access token in memory, refreshed through the cookie), `api.ts` (one 401 retry), `Root.tsx` (the pages). Browser tests reach `test/fakeApi.ts` through the `/api` proxy. Click text actions in tests with `commands.clickAt('button[data-t="…"]', …)`, not `userEvent.click`.
