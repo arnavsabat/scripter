@@ -366,7 +366,11 @@ importers:
         specifier: 6.2.13
         version: 6.2.13
 
-  packages/pagination: {}
+  packages/pagination:
+    dependencies:
+      '@wr/schema':
+        specifier: workspace:*
+        version: link:../schema
 
   packages/schema:
     dependencies:

@@ -148,6 +148,8 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **D-071: pagination splits mid-line at sentence ends** (Final Draft and Highland style), rather than only where a sentence ends at a line end.
+
 - **AWS cost levers for the deploy phase (proposed 2026-10-24, decided then):** these keep SPEC 5.5's infrastructure unchanged.
   - **Estimated cost:** about $40-50 a month on demand in `ca-central-1`. The load balancer (about $18), the small Postgres (about $15), public IPv4 addresses (about $3.65 each) and the container (about $10) make up most of it. This corrects Claude's earlier, too-low "$25-45".
   - **The levers:**
@@ -307,6 +309,60 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-072 · 2026-10-27 · Pagination package built: Chromium's wrap rules, the page layout, incremental recomputation
+
+- **Why wrapping had to be probed:** page view and the PDF only match if our character-count wrapping (SPEC 5.8, never the DOM) breaks lines exactly where the browser does. A throwaway browser test printed Chromium's line breaks for crafted strings in Courier Prime. Findings:
+  - **Spaces:** under ProseMirror's default `white-space: break-spaces`, a space that doesn't fit wraps to the *start* of the next line, so lines can begin with a visible space. Under `pre-wrap`, line-end spaces hang off the edge, which is the classic typewriter and PDF behavior. **Plan: the script switches to `pre-wrap`** (done with page view, step 2).
+  - **Break opportunities:** after `-`, `--`, `–`, `—`, `…` and `?` (hyphens even before digits), and before `—`. Never at `/ . , : ; ! ( ) [ ] " ’`. A quote or closing bracket right after `?`, `…` or `—` removes that break. Runs of dashes break only after the last one.
+  - **Long words** break at exactly the line width (`overflow-wrap: break-word`).
+  - **Combining accents** take no width. No-break spaces and non-breaking hyphens never break.
+  - **Known limit:** characters Courier Prime lacks (emoji, CJK) fall back to another font of a different width, so wrapping can drift for them. These were Chromium's results; WebKit and Firefox are to be checked before the beta.
+- **Built** (`packages/pagination`, pure, no DOM):
+  - `wrap.ts`: greedy wrapping by those rules, with offsets back into the text.
+  - `geometry.ts`: 54 lines per page; columns of 60, 38, 24 and 35 characters; spacing mirroring `script.css`.
+  - `paginate.ts`: places blocks until one doesn't fit, then tries break points from the latest backwards (a sentence split inside a block, or a break between blocks), taking the first that satisfies every rule (D-071).
+  - If no break satisfies the rules (a page-long paragraph with no sentence end), the page is filled to the last line that fits instead of left empty.
+  - Line counts are memoized by element type and text.
+  - Incremental: pages whose layout never looked at or past the first changed block are reused, and layout restarts from there. Each page records the furthest block it read, including look-ahead into a speech.
+- **Tests:** 35 in plain Node.
+  - The wrap rules.
+  - Every pagination rule: headings, shots and cues never last; (MORE)/(CONT'D) with 2+ lines each side; parenthetical stranding; transitions kept with the block before; action splits at sentence ends, mid-line included; scene continueds; capitals counted (ß becomes SS).
+  - Properties over 30 generated scripts: every page fits; every character appears exactly once and in order; the rules hold. Incremental recomputation matches a full one after 250 random edits.
+- **Speed** (118 pages, 1,919 blocks, M2): a full layout takes 2.0 ms median (3.3 ms p95). An incremental re-layout takes 1.95 ms for an edit near the start, 0.9 ms for one in the middle, and 0.04 ms for one near the end.
+- **Status:** built and tested. The browser-parity corpus test comes with page view.
+
+### D-071 · 2026-10-27 · Real-pages phase: placement, import handling, libraries and pagination conventions
+
+Arnav's calls, from options Claude presented (recommendations in brackets):
+
+- **Export** lives in the Share menu: a separator, then "Export PDF". Anyone who can open the script, viewers included, can export. [Recommended.] Rejected: a toolbar icon (adds a control to a deliberately minimal toolbar); a title menu (changes click-to-rename, D-033).
+- **Import** is an "Import" text action beside "+ New script" in Home's toolbar, with the same hover style. It creates a new plain script from the file and opens it. [Recommended.] Rejected: turning "+ New script" and "+ New episode" into menus (two clicks for every new script); drag-and-drop (no visible affordance). Importing straight into a series as an episode is a later option.
+- **Unsupported import elements:** [recommended]
+  - Script text is kept as Action: centered text, lyrics, "General" paragraphs, act breaks.
+  - Metadata isn't imported: notes, synopses, sections, boneyard, revision marks.
+  - Bold, italic and underline are dropped (plain text in v1).
+  - The title page's title becomes the script name.
+  - Dual dialogue becomes one speech after the other.
+  - The summary toast lists every conversion and omission plainly.
+  - Rejected: keeping everything as Action (clutter, and wrong pagination until cleaned up); dropping everything unsupported (real script text could go missing).
+- **Libraries:** `pdf-lib` (named in SPEC 5.7) and `@pdf-lib/fontkit` (needed to embed a custom font). Courier Prime's files (SIL Open Font License) are self-hosted and used for both the screen and the PDF, replacing Google Fonts. [Recommended.] Rejected: keeping Google Fonts on screen (two copies of the font that could differ).
+- **Pagination conventions:**
+  - (CONT'D) on a character cue appears only where a speech splits across pages. [Recommended.] Rejected: Final Draft's automatic continueds after action (visual noise).
+  - **Scene continueds are on** (Arnav chose this over the recommended "off"). When a scene runs across a page break, the page ends with a blank line and "(CONTINUED)" right-aligned at 7.5 in, and the next page starts with "CONTINUED:" at 1.5 in and a blank line. Both count within the 54 lines.
+    - They appear only when the break falls inside a scene: never before the first scene heading, and never right before a new heading.
+    - These details are Claude's defaults, following Final Draft's; Arnav can change them.
+  - A dialogue split keeps at least 2 lines on each side; otherwise the whole speech moves to the next page. [Recommended.] Rejected: 1 line (orphaned single lines).
+  - Shots follow the scene-heading rule: never the last thing on a page. [Recommended.]
+- **Settled by existing decisions, not reopened:**
+  - With the sidebar open, the script stays Highland's continuous column (imported log, Arnav's call).
+  - Collapsed, real pages appear on the desk color, with page numbers (SPEC 3.7: page numbers fade in only in page view) and (MORE)/(CONT'D).
+  - Lines per page: 54. That's the 9 in text area at 6 lines per inch, matching the 1 in margins we already render (SPEC says "about 54-55").
+- **Claude's defaults, stated to Arnav:**
+  - A 24 px desk-colored gap between pages, matching the desk's side padding.
+  - The page-break gaps grow during the existing 240 ms collapse, so the motion stays seamless.
+- **Proposed, awaiting Arnav:** split action and dialogue at a sentence end even mid-line, with the rest starting fresh on the next page (Final Draft and Highland do this). The alternative, splitting only where a sentence ends exactly at a line end, leaves emptier pages.
+- **Status:** Arnav's calls, except the item marked proposed.
 
 ### D-070 · 2026-10-26 · Accounts phase approved; remaining by-hand checks booked for later
 
