@@ -5,6 +5,7 @@ import type { Overlay } from '../App';
 import type { PresenceUser } from '../editor/presence';
 import { initials } from '../session';
 import { useState, type ReactNode } from 'react';
+import { PanelBoundary } from './Boundary';
 import { CoWriterMenu, type ShareContext } from './CoWriterMenu';
 import { Icon } from './Icons';
 import { Menu } from './Menu';
@@ -236,7 +237,11 @@ export function Toolbar({
             ]}
           />
         )}
-        {overlay?.kind === 'cowriter' && share && <CoWriterMenu ctx={share} onClose={close} />}
+        {overlay?.kind === 'cowriter' && share && (
+          <PanelBoundary quiet>
+            <CoWriterMenu ctx={share} onClose={close} />
+          </PanelBoundary>
+        )}
       </div>
     </header>
   );

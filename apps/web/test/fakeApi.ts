@@ -21,6 +21,10 @@ export async function startFakeApi(issuer: TestIssuer) {
   const refresh = new Map<string, string>(); // cookie -> email
   const accepted: string[] = [];
   const rooms = fakeRooms(users);
+  // Outages and slow answers (D-084): every /api request a 503 (as CloudFront says when the API is
+  // away), or GET /api/home and /api/episodes/<id> held for a while.
+  let down = false;
+  let slowMs = 0;
 
   const read = async (req: IncomingMessage) => {
     let raw = '';
@@ -54,7 +58,18 @@ export async function startFakeApi(issuer: TestIssuer) {
       const url = new URL(req.url ?? '/', 'http://local');
       const path = url.pathname;
       const m = req.method;
+      if (path === '/__fake/down' || path === '/__fake/slow') {
+        const b = (await read(req)) as unknown as { down?: boolean; ms?: number };
+        if (path === '/__fake/down') down = !!b.down;
+        else slowMs = b.ms ?? 0;
+        return send(res, 200, { ok: true });
+      }
+      if (down && path.startsWith('/api/')) return fail(res, 503, 'unavailable', 'Unavailable');
+      if (slowMs && m === 'GET' && (path === '/api/home' || /^\/api\/episodes\/[^/]+$/.test(path)))
+        await new Promise((r) => setTimeout(r, slowMs));
       if (path === '/__fake/reset') {
+        down = false;
+        slowMs = 0;
         users.clear();
         tokens.clear();
         refresh.clear();

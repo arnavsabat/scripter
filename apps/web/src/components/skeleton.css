@@ -1,0 +1,63 @@
+/* Loading skeletons (D-084): gray bars shaped like what's coming, in existing tokens (line2 on the
+   page and Home, sel on the sidebar). They appear 150 ms in, so fast loads show nothing, then
+   pulse gently. Reduced motion (base.css) turns both animations off: shown at once, still. */
+.sk-wrap {
+  animation: sk-in 0.16s ease 0.15s both;
+}
+.sk {
+  display: block;
+  height: 10px;
+  margin: 3px 0;
+  border-radius: 3px;
+  background: var(--line2);
+  animation: sk-pulse 1.4s ease-in-out 0.3s infinite;
+}
+.left .sk {
+  background: var(--sel);
+}
+.sk.title {
+  height: 14px;
+  margin: 2px 0 6px;
+}
+.row .sk,
+.ep .sk {
+  margin: 0;
+}
+.sk-rows .row {
+  cursor: default;
+}
+.sk-rows .row:hover,
+.sk-wrap .ep:hover {
+  background: none;
+}
+.sk-script {
+  pointer-events: none;
+}
+.page .offline-note {
+  position: absolute;
+  top: 96px;
+  left: 144px;
+  right: 96px;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  padding-top: 120px;
+}
+@keyframes sk-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes sk-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useEffectEvent, useMemo, useState } from 'react
 import { undo as yUndo } from 'y-prosemirror';
 import * as Y from 'yjs';
 import { ApiFailure } from './api';
+import { PanelBoundary } from './components/Boundary';
 import { Sidebar, type SidebarTab } from './components/Sidebar';
 import { ToastProvider, useToast } from './components/Toast';
 import type { ShareContext } from './components/CoWriterMenu';
@@ -418,12 +419,14 @@ export function ScriptScreen({
                 changes,
                 onToggleChanges: () => setChanges((c) => !c),
                 review: (
-                  <ReviewMenu
-                    comparison={wi.comparison}
-                    onSend={(ids) => void doSend(ids)}
-                    onCompare={(id) => openCompare(id)}
-                    onClose={() => setOverlay(null)}
-                  />
+                  <PanelBoundary quiet>
+                    <ReviewMenu
+                      comparison={wi.comparison}
+                      onSend={(ids) => void doSend(ids)}
+                      onCompare={(id) => openCompare(id)}
+                      onClose={() => setOverlay(null)}
+                    />
+                  </PanelBoundary>
                 ),
               },
             }
@@ -436,6 +439,7 @@ export function ScriptScreen({
           scenes={handle.scenes}
           currentSceneId={handle.currentSceneId}
           onJump={handle.jumpTo}
+          loading={!handle.editor}
           {...(comparison !== undefined ? { comparison } : {})}
           drafts={
             drafts && current ? (
@@ -448,7 +452,7 @@ export function ScriptScreen({
                 }
                 canEdit={canEdit}
                 liveDiffer={wi.comparison ? pendingScenes(wi.comparison).length : null}
-                snapshots={snapshots?.draft === current.id ? snapshots.list : []}
+                snapshots={snapshots?.draft === current.id ? snapshots.list : null}
                 onNewWhatIf={() => void newWhatIf()}
                 onSnapshot={() => void takeSnapshot()}
                 onRestore={(snap) => void restore(snap)}
@@ -478,21 +482,26 @@ export function ScriptScreen({
           setOverlay={setOverlay}
           onSendScene={trySend}
           onCompareScene={(id) => openCompare(id)}
+          waiting={handle.editor ? null : handle.cue === 'offline' ? 'offline' : 'loading'}
         />
         {whatIfInfo && (
           <aside className="right" aria-label="Compare">
             {compareOpen && (
-              <ComparePanel
-                scene={
-                  (handle.currentSceneId && wi.comparison?.byId.get(handle.currentSceneId)) || null
-                }
-                mainScene={handle.currentSceneId ? wi.mainScene(handle.currentSceneId) : null}
-                base={handle.currentSceneId ? wi.baseFor(handle.currentSceneId) : null}
-                lastEdit={handle.currentSceneId ? wi.lastEdit(handle.currentSceneId) : null}
-                canSend={canEdit}
-                onSend={(id) => void doSend([id])}
-                onClose={closeCompare}
-              />
+              <PanelBoundary>
+                <ComparePanel
+                  scene={
+                    (handle.currentSceneId && wi.comparison?.byId.get(handle.currentSceneId)) ||
+                    null
+                  }
+                  mainScene={handle.currentSceneId ? wi.mainScene(handle.currentSceneId) : null}
+                  base={handle.currentSceneId ? wi.baseFor(handle.currentSceneId) : null}
+                  lastEdit={handle.currentSceneId ? wi.lastEdit(handle.currentSceneId) : null}
+                  canSend={canEdit}
+                  onSend={(id) => void doSend([id])}
+                  onClose={closeCompare}
+                  loading={!wi.comparison}
+                />
+              </PanelBoundary>
             )}
           </aside>
         )}

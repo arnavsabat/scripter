@@ -13,20 +13,23 @@ export function countUsage(event: BrowserEvent, episodeId: string | undefined, c
 const VERSION = (import.meta.env.VITE_WR_VERSION as string | undefined) ?? 'dev';
 const MAX_REPORTS = 5; // per page load, so a looping error can't flood the log
 
-/** Sends uncaught errors and rejections to the API's log (CloudWatch on AWS). */
+let reports = 0;
+
+/** Sends one crash to the API's log (CloudWatch on AWS): the error, never the script. */
+export function reportCrash(err: unknown) {
+  if (reports >= MAX_REPORTS) return;
+  reports += 1;
+  const e = err instanceof Error ? err : new Error(String(err));
+  void publicApi('POST', '/api/client-errors', {
+    message: `${e.name}: ${e.message}`.slice(0, 2000),
+    ...(e.stack ? { stack: e.stack.slice(0, 8000) } : {}),
+    version: VERSION,
+    where: location.pathname.slice(0, 200),
+  }).catch(() => {});
+}
+
+/** Reports uncaught errors and rejections; crashes caught by a boundary report themselves. */
 export function reportCrashes() {
-  let sent = 0;
-  const report = (err: unknown) => {
-    if (sent >= MAX_REPORTS) return;
-    sent += 1;
-    const e = err instanceof Error ? err : new Error(String(err));
-    void publicApi('POST', '/api/client-errors', {
-      message: `${e.name}: ${e.message}`.slice(0, 2000),
-      ...(e.stack ? { stack: e.stack.slice(0, 8000) } : {}),
-      version: VERSION,
-      where: location.pathname.slice(0, 200),
-    }).catch(() => {});
-  };
-  window.addEventListener('error', (e) => report(e.error ?? e.message));
-  window.addEventListener('unhandledrejection', (e) => report(e.reason));
+  window.addEventListener('error', (e) => reportCrash(e.error ?? e.message));
+  window.addEventListener('unhandledrejection', (e) => reportCrash(e.reason));
 }

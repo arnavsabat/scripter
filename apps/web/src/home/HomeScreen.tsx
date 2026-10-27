@@ -7,7 +7,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiFailure, api } from '../api';
 import { auth, type Me } from '../auth';
 import { Icon } from '../components/Icons';
+import { PanelBoundary } from '../components/Boundary';
 import { RenameTitle } from '../components/RenameTitle';
+import { EpisodesSkeleton, RowsSkeleton } from '../components/Skeleton';
 import { TextAction } from '../components/TextAction';
 import { useToast } from '../components/Toast';
 import { ImportError, parseScript, type ImportResult } from '../import/importScript';
@@ -162,26 +164,30 @@ export function HomeScreen({ me, data, reload, select }: Props) {
       <div className="body">
         <aside className="left" aria-label="Your scripts">
           <div className="in slide">
-            <Sidebar
-              data={data}
-              current={current}
-              confirm={confirm}
-              onSelect={(id) => {
-                setSel(id);
-                setConfirm(null);
-              }}
-              onAsk={setConfirm}
-              onCancel={() => setConfirm(null)}
-              onDelete={remove}
-              onAccept={accept}
-              onRestore={restore}
-            />
+            <PanelBoundary>
+              <Sidebar
+                data={data}
+                current={current}
+                confirm={confirm}
+                onSelect={(id) => {
+                  setSel(id);
+                  setConfirm(null);
+                }}
+                onAsk={setConfirm}
+                onCancel={() => setConfirm(null)}
+                onDelete={remove}
+                onAccept={accept}
+                onRestore={restore}
+              />
+            </PanelBoundary>
           </div>
         </aside>
         <main className="center">
           <div className="in slide">
             <div className="home">
-              {!data ? null : !current ? (
+              {!data ? (
+                <EpisodesSkeleton />
+              ) : !current ? (
                 <div className="emptyh">
                   No scripts yet.
                   <br />
@@ -214,13 +220,15 @@ export function HomeScreen({ me, data, reload, select }: Props) {
         </main>
         <aside className="right" aria-label="Members">
           {current && members && (
-            <MembersPanel
-              key={current.id}
-              s={current}
-              me={me}
-              onClose={() => setMembers(false)}
-              onChanged={reload}
-            />
+            <PanelBoundary>
+              <MembersPanel
+                key={current.id}
+                s={current}
+                me={me}
+                onClose={() => setMembers(false)}
+                onChanged={reload}
+              />
+            </PanelBoundary>
           )}
         </aside>
       </div>
@@ -428,7 +436,7 @@ function Sidebar({
 }) {
   const [typed, setTyped] = useState('');
   const [accepted, setAccepted] = useState<string[]>([]);
-  if (!data) return null;
+  if (!data) return <RowsSkeleton widths={['58%', '44%', '64%', '50%']} />;
   const series = data.series;
   const byEpisode = new Map(
     series.flatMap((s) => s.episodes.map((e) => [e.id, { s, e }] as const)),

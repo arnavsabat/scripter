@@ -185,7 +185,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **D-080: a viewer opening a never-opened what-if sees it empty** (only an editor can seed it from its base).
 - ~~D-080: usage counting isn't built~~: built in D-083.
 - **D-069: the leave prompt covers the open script only.** A script left for Home while still offline gets no prompt when Home is closed. A normal window keeps the copy and syncs it later; an incognito window loses it. Options to bring when it matters: prompt on Home too, or keep the script's connection open until it's synced.
-- **D-069: an unreachable API looks like being signed out.** A reload while the API is down shows the sign-in page, and trying to sign in then says "Something went wrong". Better: say the server can't be reached and keep retrying. Options to bring to Arnav.
+- ~~D-069: an unreachable API looks like being signed out~~: fixed in D-085 (the "can't reach" notice).
 - **D-065: the API's production role needs `cognito-idp:AdminGetUser`** on the user pool only. This goes in the deploy phase's CDK stack for the API. Without it, every returning email sign-in fails.
 - **D-062: a host sync server and the Docker cluster mix in one membership.** They share the local DynamoDB, but the containers can't reach the host's `localhost` address. For now: run one or the other, never both. A fix (separate membership tables, or a reachable host address) can wait until it matters.
 - **D-020: web test runs end with a 10-second wait.** Vite's own browser connections outlive the test server's teardown, so Vitest waits out its timeout. The run still exits 0, and our servers leave nothing open.
@@ -321,6 +321,37 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-085 · 2026-10-27 · Loading, empty, outage and crash states built (beta-readiness step 2)
+
+- **Built to D-084's calls:**
+  - **Skeletons** (`components/Skeleton.tsx`, `Loading.tsx`): Home's sidebar rows and episode list; a script's toolbar (back works, and the title shows at once when Home already knew it), scene rows and lines. The lines use the screenplay's own element classes, so each bar starts where its words will (a test checks heading at 1.5 in and dialogue at 2.5 in). Snapshots and Compare get skeleton rows while they load. The colors are existing tokens (`--line2`, `--sel` on the sidebar); no new token.
+  - **The app's start** shows Home's or the script's skeleton only if this browser was signed in last time (a `wr-signed-in` flag in localStorage, a convenience only), so a signed-out visitor never sees Home flash before sign-in.
+  - **Can't reach Writers' Room:** `auth.ts` tells a refused cookie (signed out) from no answer or a 5xx (unreachable). At the start that shows the notice (`pages/Notice.tsx`), which retries with backoff and full jitter (up to 1, 2, 4… s, capped at 30 s), retries at once when the browser comes back online, and has Try again. Once signed in, a failed renewal never signs anyone out: the current token is used while it lasts, and the sync client keeps retrying. Every API call that gets no answer or a 502-504 now says "Can't reach Writers' Room. Check your connection and try again." instead of "Something went wrong".
+  - **Crash boundaries** (`components/Boundary.tsx`): one around the whole app (the "Something went wrong" notice), and one inside each panel (both sidebars, Compare, Members), which shows "This panel hit a problem. Reload" in place of only that panel. Every caught crash is reported (D-083).
+- **Claude's choices on the way (say if any should change):**
+  - Skeletons appear 150 ms in, so fast loads show nothing at all, which answers the flash concern in D-084's option. They pulse gently; reduced motion shows them still and at once.
+  - A crashed **menu** (Review all, Invite co-writer) just closes rather than showing the panel note, since a note would hang in the toolbar. It's still reported.
+  - **Empty notes** in the co-writer menu's "none" style (12 px muted): "No scenes yet. A scene heading starts one." (Scenes tab); "No what-ifs yet. Try an idea with + New what-if." (the second sentence only for editors) and "No snapshots yet." (Drafts tab).
+  - Opening a script offline that this device has never seen: "This script opens when you're back online." on the page, instead of skeleton lines.
+  - A link to a page that doesn't exist: "That page doesn't exist." and Home (it used to show Home silently).
+- **Open issues fixed:**
+  - **D-069's "an unreachable API looks like being signed out"** (above).
+  - **"An import interrupted by a reload leaves an empty script"** (the pages-phase checklist): the imported lines are also kept in the tab's sessionStorage until they're written in, so a reload finishes the import. It's the writer's own file, in the same browser that keeps the script's offline copy; closing the tab drops it.
+- **Tests** (real Chromium, 8): Home and script skeletons, including the bars' margins; the notice at the start, and back in on Try again; an outage after signing in keeping you in, with the new message; a panel crash and Reload; the page crash notice; the empty notes; a link to nowhere. The fake API gained `/__fake/down` (every /api call a 503, as CloudFront says) and `/__fake/slow`.
+- **By hand, booked for Arnav's end-to-end test:** reload during an import; stop `dev:api` while Home is open and while writing.
+- **Status:** built and tested to Arnav's D-084 calls; the choices above are Claude's.
+
+### D-084 · 2026-10-27 · Loading, "can't reach" and crash states (beta-readiness step 2)
+
+Prototype v2 mocks the empty states (Home's "No scripts yet.", "No episodes yet.", Compare's notes, the co-writer list's "none"), but no loading, outage or crash states. Today the app is blank while it starts, while Home first loads and while a script opens; an unreachable API looks like being signed out (D-069's open issue); and a render error blanks the window.
+
+- **Arnav's calls:**
+  1. **Loading: skeleton placeholders** (over Claude's recommendation of a quiet "Opening Pilot…" line after 400 ms). Gray bars shaped like what's coming: Home's sidebar rows and episode list, and a script's scene rows and its lines in true screenplay geometry. Rejected: a muted line after a pause (Claude's recommendation); a thin progress bar (it would need the reserved accent blue).
+  2. **Can't reach the server: a notice in the sign-in page's layout** (Claude's recommendation): the wordmark, "Can't reach Writers' Room", "Your scripts on this device are safe. Trying again…", and Try again in sign-in's Continue style. It retries by itself with backoff and returns to where you were. Only the app's start shows it: once in, an outage keeps the script open. Rejected: a toast on the sign-in page (writers would still see a form they can't use); opening Home from a copy on the device (account data cached in the browser, a privacy question on shared computers).
+  3. **Crashes: per panel, then per page** (Claude's recommendation). A crash in a side panel replaces only that panel with "This panel hit a problem. Reload", so writing never stops; a crash in the editor or the app shows the notice layout with "Something went wrong" / "Your work is saved on this device." / Reload. Either way it's reported (D-083). Rejected: one full-page notice for every crash (a small panel bug would stop the writing).
+- **What changes for writers:** no more blank screens; an outage says so instead of asking them to sign in; a broken panel doesn't take the script down with it.
+- **Status:** Arnav's calls; being built.
 
 ### D-083 · 2026-10-27 · Usage counting and browser crash reports built (beta-readiness step 1)
 

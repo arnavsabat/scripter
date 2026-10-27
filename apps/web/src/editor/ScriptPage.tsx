@@ -4,6 +4,7 @@ import { ELEMENT_MENU, addCueAbove, makeAction, setElementType, typeOf } from '@
 import type { EditorView } from 'prosemirror-view';
 import { useEffect, type RefObject } from 'react';
 import type { Overlay } from '../App';
+import { ScriptSkeleton } from '../components/Skeleton';
 
 interface Props {
   mountRef: RefObject<HTMLDivElement | null>;
@@ -13,6 +14,8 @@ interface Props {
   /** A what-if's margin-dot popover (SPEC 3.9): Send to main, Compare. */
   onSendScene?: (sceneId: string) => void;
   onCompareScene?: (sceneId: string) => void;
+  /** No script on screen yet (D-084): skeleton lines, or, offline, a note saying when it opens. */
+  waiting?: 'loading' | 'offline' | null;
 }
 
 /** ⌘ on a Mac, Ctrl elsewhere (SPEC 3.9). */
@@ -33,6 +36,7 @@ export function ScriptPage({
   setOverlay,
   onSendScene,
   onCompareScene,
+  waiting = null,
 }: Props) {
   // A click anywhere outside a margin overlay closes it.
   useEffect(() => {
@@ -54,6 +58,10 @@ export function ScriptPage({
         <div className="desk">
           <div className="page">
             <div ref={mountRef} />
+            {!view && waiting === 'loading' && <ScriptSkeleton />}
+            {!view && waiting === 'offline' && (
+              <p className="offline-note">This script opens when you’re back online.</p>
+            )}
             {view && overlay?.kind === 'element' && (
               <div
                 className="menu elmenu page-overlay"

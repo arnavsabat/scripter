@@ -7,10 +7,13 @@ import { ScriptScreen } from './App';
 import { auth, useAuth, type Me } from './auth';
 import { ToastProvider, useToast } from './components/Toast';
 import { HomeScreen } from './home/HomeScreen';
-import { useHome } from './home/useHome';
+import { useHome, type HomeData } from './home/useHome';
 import { pendingImports } from './import/pending';
 import { listDrafts, snapshotState, type DraftInfo } from './whatif/drafts';
 import { localCopies } from './localCopies';
+import { HomeLoading, ScriptLoading } from './components/Loading';
+import { PageBoundary } from './components/Boundary';
+import { CantReach } from './pages/Notice';
 import { Privacy, Terms } from './pages/Legal';
 import { SignIn, type InvitePreview } from './pages/SignIn';
 import { navigate, useRoute, type Route } from './router';
@@ -18,9 +21,11 @@ import type { Session } from './session';
 
 export function Root({ syncUrls }: { syncUrls: string | readonly string[] }) {
   return (
-    <ToastProvider>
-      <Pages syncUrls={syncUrls} />
-    </ToastProvider>
+    <PageBoundary>
+      <ToastProvider>
+        <Pages syncUrls={syncUrls} />
+      </ToastProvider>
+    </PageBoundary>
   );
 }
 
@@ -40,7 +45,16 @@ function Pages({ syncUrls }: { syncUrls: string | readonly string[] }) {
 
   if (route.name === 'terms') return <Terms />;
   if (route.name === 'privacy') return <Privacy />;
-  if (state.status === 'loading') return null;
+  // Starting: if this browser was signed in last time, the skeleton of what's coming (D-084).
+  if (state.status === 'loading')
+    return auth.wasSignedIn() ? (
+      route.name === 'episode' ? (
+        <ScriptLoading title={null} />
+      ) : (
+        <HomeLoading />
+      )
+    ) : null;
+  if (state.status === 'unreachable') return <CantReach />;
   if (state.status === 'signedOut')
     return route.name === 'invite' ? <InvitationSignIn token={route.token} /> : <SignIn />;
   return <SignedIn route={route} me={state.me} syncUrls={syncUrls} />;
@@ -91,6 +105,14 @@ function SignedIn({
     return () => clearTimeout(t);
   }, [onEpisode]);
 
+  // A link to a page that doesn't exist: say so and go Home.
+  const toast = useToast();
+  useEffect(() => {
+    if (route.name !== 'notFound') return;
+    toast.show('That page doesn’t exist.');
+    navigate('/', { replace: true });
+  }, [route.name, toast]);
+
   return (
     <div className="layers">
       <div className={`layer${onEpisode ? ' off to-left' : ''}`}>
@@ -101,6 +123,7 @@ function SignedIn({
           <Episode
             key={shown}
             id={shown}
+            knownTitle={titleOf(data, shown)}
             draft={route.name === 'episode' ? route.draft : null}
             me={me}
             syncUrls={syncUrls}
@@ -166,14 +189,25 @@ interface OpenedEpisode {
 }
 
 /** /e/<id>, or /e/<id>/w/<draft>: the script screen on main or a what-if, as this person (D-046, D-080). */
+/** An episode's toolbar title from Home's list, so its skeleton can show it at once. */
+function titleOf(data: HomeData | null, episodeId: string): string | null {
+  for (const s of data?.series ?? []) {
+    const e = s.episodes.find((x) => x.id === episodeId);
+    if (e) return s.isSeries ? `Ep ${e.number} · ${e.name}` : e.name;
+  }
+  return null;
+}
+
 function Episode({
   id,
+  knownTitle,
   draft,
   me,
   syncUrls,
   onChanged,
 }: {
   id: string;
+  knownTitle: string | null;
   draft: string | null;
   me: Me;
   syncUrls: string | readonly string[];
@@ -299,7 +333,7 @@ function Episode({
     setEpisode(now);
   };
 
-  if (!session || !episode || !current) return null;
+  if (!session || !episode || !current) return <ScriptLoading title={knownTitle} />;
   const prefix = episode.series.isSeries ? `Ep ${episode.number} · ` : '';
   return (
     <ScriptScreen

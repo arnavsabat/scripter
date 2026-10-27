@@ -211,6 +211,14 @@ button {
 .list {
   padding: 10px 8px 0;
 }
+/* An empty list's note, in the co-writer menu's "none" style (D-084). */
+.list > .none {
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: var(--muted);
+}
 .row {
   display: flex;
   justify-content: space-between;

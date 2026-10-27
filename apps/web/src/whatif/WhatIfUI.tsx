@@ -10,6 +10,7 @@ import {
 } from '@wr/schema';
 import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../components/Icons';
+import { RowsSkeleton } from '../components/Skeleton';
 import { TextAction } from '../components/TextAction';
 import { when, type DraftInfo, type SnapshotInfo } from './drafts';
 import './whatif.css';
@@ -155,7 +156,10 @@ export function ComparePanel({
   canSend,
   onSend,
   onClose,
+  loading = false,
 }: {
+  /** Main and the base haven't arrived yet (D-084). */
+  loading?: boolean;
   scene: SceneState | null;
   mainScene: ScriptBlock[] | null;
   base: ScriptBlock[] | null;
@@ -170,7 +174,8 @@ export function ComparePanel({
       JSON.stringify(mainScene.map((b) => [b.type, b.text]));
   const baseById = new Map((base ?? []).map((b) => [b.id, b]));
   let body;
-  if (!scene)
+  if (loading) body = <RowsSkeleton widths={['70%', '90%', '55%']} />;
+  else if (!scene)
     body = <p className="empty">Put your cursor in a scene to see main’s version of it.</p>;
   else if (!pending(scene))
     body = (
@@ -262,7 +267,8 @@ export function DraftsTab({
   canEdit: boolean;
   /** The open what-if's live count. */
   liveDiffer: number | null;
-  snapshots: SnapshotInfo[];
+  /** Null while they load (D-084). */
+  snapshots: SnapshotInfo[] | null;
   onNewWhatIf: () => void;
   onSnapshot: () => void;
   onRestore: (s: SnapshotInfo) => void;
@@ -300,6 +306,11 @@ export function DraftsTab({
       </div>
       <div className="lab">WHAT-IFS</div>
       <div className="list" style={{ paddingTop: 0 }}>
+        {whatIfs.length === 0 && (
+          <p className="none">
+            No what-ifs yet.{canEdit ? ' Try an idea with + New what-if.' : ''}
+          </p>
+        )}
         {whatIfs.map((d) =>
           deleting === d.id ? (
             <div key={d.id} className="row big cf cfs">
@@ -353,8 +364,10 @@ export function DraftsTab({
         <span>SNAPSHOTS</span>
         {canEdit && <TextAction label="+ Snapshot" onClick={onSnapshot} />}
       </div>
+      {!snapshots && <RowsSkeleton widths={['60%', '45%']} />}
       <div className="list" style={{ paddingTop: 0 }}>
-        {snapshots.map((s) =>
+        {snapshots?.length === 0 && <p className="none">No snapshots yet.</p>}
+        {(snapshots ?? []).map((s) =>
           confirming === s.id ? (
             <div key={s.id} className="snap cf">
               <span className="cfq">

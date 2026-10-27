@@ -6,6 +6,8 @@ import { sceneName, type Comparison } from '@wr/schema';
 import type { ReactNode } from 'react';
 import type { SceneRow } from '../editor/useScriptEditor';
 import { Legend, SceneMarker } from '../whatif/WhatIfUI';
+import { PanelBoundary } from './Boundary';
+import { RowsSkeleton } from './Skeleton';
 
 export type SidebarTab = 'scenes' | 'drafts';
 
@@ -18,6 +20,8 @@ interface Props {
   /** In a what-if: the comparison with main (null while it loads). */
   comparison?: Comparison | null;
   drafts: ReactNode;
+  /** The script hasn't arrived yet: skeleton rows (D-084). */
+  loading?: boolean;
 }
 
 const TABS: [SidebarTab, string][] = [
@@ -25,7 +29,16 @@ const TABS: [SidebarTab, string][] = [
   ['drafts', 'Drafts'],
 ];
 
-export function Sidebar({ tab, onTab, scenes, currentSceneId, onJump, comparison, drafts }: Props) {
+export function Sidebar({
+  tab,
+  onTab,
+  scenes,
+  currentSceneId,
+  onJump,
+  comparison,
+  drafts,
+  loading = false,
+}: Props) {
   // In a what-if, the comparison's order: the script's scenes, with deleted ones where they were.
   const rows: (SceneRow & { gone?: boolean })[] = comparison
     ? comparison.scenes.flatMap((c) => {
@@ -56,34 +69,43 @@ export function Sidebar({ tab, onTab, scenes, currentSceneId, onJump, comparison
             </button>
           ))}
         </div>
-        {tab === 'scenes' ? (
-          <>
-            <div className="list" role="tabpanel" aria-label="Scenes">
-              {rows.map((s) =>
-                s.gone ? (
-                  <div key={s.sceneId} className="row gone" title="Deleted in this what-if">
-                    {s.name}
-                    <SceneMarker state={comparison?.byId.get(s.sceneId)} />
-                  </div>
-                ) : (
-                  <button
-                    key={s.sceneId}
-                    type="button"
-                    className={`row${s.sceneId === currentSceneId ? ' sel' : ''}`}
-                    aria-current={s.sceneId === currentSceneId ? 'location' : undefined}
-                    onClick={() => onJump(s.sceneId)}
-                  >
-                    {s.name}
-                    {comparison && <SceneMarker state={comparison.byId.get(s.sceneId)} />}
-                  </button>
-                ),
-              )}
+        <PanelBoundary>
+          {tab === 'scenes' && loading ? (
+            <div role="tabpanel" aria-label="Scenes" aria-busy="true">
+              <RowsSkeleton />
             </div>
-            {comparison !== undefined && scenes.length > 0 && <Legend />}
-          </>
-        ) : (
-          drafts
-        )}
+          ) : tab === 'scenes' ? (
+            <>
+              <div className="list" role="tabpanel" aria-label="Scenes">
+                {rows.length === 0 && (
+                  <p className="none">No scenes yet. A scene heading starts one.</p>
+                )}
+                {rows.map((s) =>
+                  s.gone ? (
+                    <div key={s.sceneId} className="row gone" title="Deleted in this what-if">
+                      {s.name}
+                      <SceneMarker state={comparison?.byId.get(s.sceneId)} />
+                    </div>
+                  ) : (
+                    <button
+                      key={s.sceneId}
+                      type="button"
+                      className={`row${s.sceneId === currentSceneId ? ' sel' : ''}`}
+                      aria-current={s.sceneId === currentSceneId ? 'location' : undefined}
+                      onClick={() => onJump(s.sceneId)}
+                    >
+                      {s.name}
+                      {comparison && <SceneMarker state={comparison.byId.get(s.sceneId)} />}
+                    </button>
+                  ),
+                )}
+              </div>
+              {comparison !== undefined && scenes.length > 0 && <Legend />}
+            </>
+          ) : (
+            drafts
+          )}
+        </PanelBoundary>
       </div>
     </aside>
   );
