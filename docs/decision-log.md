@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Uppercase elements are shown in caps but stored as typed.
   - Dev-only persistence is a small hand-written IndexedDB store, with no new library.
 - **Workflow (D-015):** push to GitHub after every commit. apps/web integration tests run in real Chromium (Vitest browser mode with Playwright).
-- **Accounts phase step 8, part 1 built (D-055), choices confirmed (D-056): the CDK app. Deployed: the CDK bootstrap and `WrBudgets` (D-060), then `WrEmail` and `WrAuth` (D-061).**
+- **Accounts phase step 8, part 1 built (D-055), choices confirmed (D-056): the CDK app. Deployed: the CDK bootstrap and `WrBudgets` (D-060), then `WrEmail` and `WrAuth` (D-061), then Google sign-in (D-063).**
   - **Stacks, deployed in order:** `WrBudgets` ($40 a month, emailing at $20 and $40 actual and $40 forecast), then `WrEmail` (SES identities for the sender and the demo's two addresses), then `WrAuth` (the Cognito pool on Essentials with passwordless email codes, case-insensitive email usernames, a public USER_AUTH-only client, the sign-in domain, and Google once configured).
   - **The API** sends invitations through SES when `WR_SENDER_EMAIL` is set.
 - **Accounts phase step 7 built (D-053), choices confirmed (D-054): the Share menu.**
@@ -303,6 +303,23 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-063 · 2026-10-26 · Google sign-in deployed; the first attempt failed on resource order and rolled back
+
+- **Arnav's part (done):**
+  - He made a Google Cloud project with the OAuth consent screen (External, in testing; his two Gmail addresses as test users) and a Web client whose redirect URI is the pool's `/oauth2/idpresponse`.
+  - He stored the client secret in Secrets Manager (`wr/google-oauth`, about $0.40 a month) from his own terminal, so it never passed through Claude.
+  - He put the client ID in the git-ignored `infra/.env.local`.
+- **Checked before deploying:** the secret exists (its metadata only; the value was never read). The template refers to it as `{{resolve:secretsmanager:wr/google-oauth:SecretString:clientSecret::}}`, so the value appears neither in the template nor in the repo.
+- **First deploy failed, and nothing was harmed:** "The provider Google does not exist for User Pool". CloudFormation updated the app client (which names Google) before creating the Google provider, because nothing said the client depends on it. The stack rolled back completely (`UPDATE_ROLLBACK_COMPLETE`), so email sign-in was never affected.
+- **Fix:** `client.node.addDependency(google)` in `infra/src/auth.ts`. A stack test now requires that dependency; it failed without the fix and passes with it.
+- **Second deploy succeeded, and was checked:**
+  - The pool lists Google, and the client supports COGNITO and Google with the callback `http://localhost:5173/api/auth/google/callback`.
+  - The scopes are `openid email profile`; email, email_verified and name are mapped.
+  - The redirect chain works without signing in: `/api/auth/google/start` → Cognito `/oauth2/authorize` → `accounts.google.com`, carrying Arnav's client ID and the `idpresponse` redirect URI.
+- **Still to see, in the demo:** the full round trip with a real Google account, and linking by verified email (D-044) when the Google address already has an email-code account.
+- **What changes for writers:** "Continue with Google" works for the two test addresses. Others need adding as test users until the consent screen is published (a beta-phase step).
+- **Status:** deployed; round trip in the demo.
 
 ### D-062 · 2026-10-26 · The local stack checked on the real pool before the demo; the cluster image fixed
 

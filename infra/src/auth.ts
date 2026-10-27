@@ -56,7 +56,8 @@ export class AuthStack extends Stack {
       removalPolicy: RemovalPolicy.RETAIN,
     });
 
-    if (config.google)
+    const google =
+      config.google &&
       new UserPoolIdentityProviderGoogle(this, 'Google', {
         userPool: pool,
         clientId: config.google.clientId,
@@ -92,6 +93,8 @@ export class AuthStack extends Stack {
         ...(config.google ? [UserPoolClientIdentityProvider.GOOGLE] : []),
       ],
     });
+    // Naming Google on the client doesn't make CloudFormation create the provider first.
+    if (google) client.node.addDependency(google);
 
     const domain = pool.addDomain('SignIn', {
       cognitoDomain: { domainPrefix: config.domainPrefix },

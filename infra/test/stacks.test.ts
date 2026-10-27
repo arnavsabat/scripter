@@ -107,5 +107,12 @@ describe('Cognito (D-030, D-031, D-044)', () => {
     withGoogle.hasResourceProperties('AWS::Cognito::UserPoolClient', {
       SupportedIdentityProviders: Match.arrayWith(['Google']),
     });
+    // The client names Google, so the provider must exist first (the first deploy failed, D-063).
+    const [provider] = Object.keys(
+      withGoogle.findResources('AWS::Cognito::UserPoolIdentityProvider'),
+    );
+    withGoogle.hasResource('AWS::Cognito::UserPoolClient', {
+      DependsOn: Match.arrayWith([provider]),
+    });
   });
 });
