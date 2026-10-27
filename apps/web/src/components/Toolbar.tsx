@@ -275,7 +275,7 @@ function WhatIfName({
           setEditing(true);
         }}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') {
+          if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
             e.stopPropagation();
             setEditing(true);

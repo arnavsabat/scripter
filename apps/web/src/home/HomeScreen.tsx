@@ -484,7 +484,11 @@ function Sidebar({
         tabIndex={0}
         onClick={() => onSelect(s.id)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') onSelect(s.id);
+          // Enter or Space, as a button (SPEC 3.11); not when it's the row's own × button.
+          if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+            e.preventDefault();
+            onSelect(s.id);
+          }
         }}
       >
         <span className="nm">{s.name}</span>
@@ -647,13 +651,20 @@ function SeriesView({
               tabIndex={0}
               onClick={() => navigate(`/e/${e.id}`)}
               onKeyDown={(ev) => {
-                if (ev.key === 'Enter') navigate(`/e/${e.id}`);
+                if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === ev.currentTarget) {
+                  ev.preventDefault();
+                  navigate(`/e/${e.id}`);
+                }
               }}
             >
               <span className="nm">{label}</span>
               <span className="epr">
                 <small>
-                  {meta.live && <span className="live">● </span>}
+                  {meta.live && (
+                    <span className="live" aria-hidden="true">
+                      ●{' '}
+                    </span>
+                  )}
                   {meta.text}
                 </small>
                 {sr && (

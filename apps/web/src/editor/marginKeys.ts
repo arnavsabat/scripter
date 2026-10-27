@@ -1,7 +1,8 @@
 // Keys for the things that live in the script's left margin (SPEC 3.9, 4.3; D-014):
 // Esc opens the element menu when nothing is open, and closes the topmost thing otherwise.
 // While the menu is open, S A C P D H T pick a type, arrows move, Enter picks, Esc closes,
-// and any other key closes the menu and goes on to the script.
+// Tab leaves the page (to the sidebar; Shift+Tab to the toolbar, D-086), and any other key
+// closes the menu and goes on to the script.
 import { ELEMENT_MENU, setElementType, typeOf } from '@wr/schema';
 import type { EditorView } from 'prosemirror-view';
 import type { Overlay } from '../App';
@@ -20,6 +21,22 @@ export function lineTop(view: EditorView, pos: number) {
   const el = view.nodeDOM(pos);
   return el instanceof HTMLElement ? topInPage(el) : 0;
 }
+
+/**
+ * Moves the keyboard out of the script (D-086): to the sidebar's selected tab, or, when the
+ * sidebar is collapsed (page view) or Shift is held, to the toolbar's first control.
+ */
+export function leavePage(view: EditorView, to: 'sidebar' | 'toolbar') {
+  const app = view.dom.closest('.app');
+  const sidebar =
+    to === 'sidebar' && !app?.classList.contains('left-closed')
+      ? app?.querySelector<HTMLElement>('.left [role="tab"][aria-selected="true"]')
+      : null;
+  const target = sidebar ?? app?.querySelector<HTMLElement>('.toolbar button');
+  target?.focus();
+}
+
+const MODIFIERS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock']);
 
 export function handleMarginKey(
   view: EditorView,
@@ -43,6 +60,13 @@ export function handleMarginKey(
       return true;
     }
     if (e.key === 'Enter') return pick(overlay.highlighted);
+    // A modifier on its own (Shift on the way to Shift+S or Shift+Tab) leaves the menu open.
+    if (MODIFIERS.has(e.key)) return false;
+    if (e.key === 'Tab') {
+      setOverlay(null);
+      leavePage(view, e.shiftKey ? 'toolbar' : 'sidebar');
+      return true;
+    }
     const plain = !e.metaKey && !e.ctrlKey && !e.altKey && e.key.length === 1;
     const index = plain ? ELEMENT_MENU.findIndex((i) => i.key === e.key.toUpperCase()) : -1;
     if (index >= 0) return pick(index);

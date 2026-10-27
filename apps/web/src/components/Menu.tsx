@@ -21,6 +21,17 @@ interface Props {
 export function Menu({ items, onClose, style, label }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
+  // On close, the keyboard goes back to whatever opened the menu (SPEC 3.11), unless a choice
+  // moved it somewhere on purpose.
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    const menu = ref.current;
+    return () => {
+      const now = document.activeElement;
+      if (!now || now === document.body || menu?.contains(now)) opener?.focus();
+    };
+  }, []);
+
   useEffect(() => {
     const buttons = ref.current?.querySelectorAll<HTMLButtonElement>('.mi');
     const start = Math.max(

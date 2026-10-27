@@ -82,7 +82,9 @@ export function ReviewMenu({
             s.status === 'conflict' ? (
               <div key={s.id} className="mi rvr">
                 <span className="rvn">
-                  <span className="nd amber">●</span>
+                  <span className="nd amber" role="img" aria-label="Main changed this scene too">
+                    ●
+                  </span>
                   {label(s)}
                 </span>
                 <TextAction label="Compare" onClick={() => onCompare(s.id)} />
@@ -104,7 +106,9 @@ export function ReviewMenu({
                 }
               >
                 <span className="rvn">
-                  <span className="nd blue">●</span>
+                  <span className="nd blue" role="img" aria-label="Differs from main">
+                    ●
+                  </span>
                   {label(s)}
                 </span>
                 <span className="ck">{checked.has(s.id) ? '✓' : ''}</span>
@@ -335,7 +339,10 @@ export function DraftsTab({
               tabIndex={0}
               onClick={() => drafts.open(d.id)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') drafts.open(d.id);
+                if ((e.key === 'Enter' || e.key === ' ') && e.target === e.currentTarget) {
+                  e.preventDefault();
+                  drafts.open(d.id);
+                }
               }}
             >
               <span>
@@ -416,15 +423,29 @@ export function SceneMarker({ state }: { state: SceneState | undefined }) {
   if (!state) return null;
   if (state.status === 'sent') return <small style={{ margin: 0 }}>Sent ✓</small>;
   if (pending(state))
-    return <span className={`nd ${state.status === 'conflict' ? 'amber' : 'blue'}`}>●</span>;
+    return state.status === 'conflict' ? (
+      <span className="nd amber" role="img" aria-label="Main changed this scene too">
+        ●
+      </span>
+    ) : (
+      <span className="nd blue" role="img" aria-label="Differs from main">
+        ●
+      </span>
+    );
   return null;
 }
 
 export function Legend() {
   return (
     <div className="legend">
-      <span className="nd blue">●</span> differs from main &nbsp;{' '}
-      <span className="nd amber">●</span> main changed too
+      <span className="nd blue" aria-hidden="true">
+        ●
+      </span>{' '}
+      differs from main &nbsp;{' '}
+      <span className="nd amber" aria-hidden="true">
+        ●
+      </span>{' '}
+      main changed too
     </div>
   );
 }

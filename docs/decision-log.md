@@ -16,7 +16,7 @@ How to read it:
 The full specification is `docs/SPEC.md`; this is the index. Entry numbers point to the reasoning.
 
 - **Product and scope:** SPEC Part 2. A Highland-style, real-time collaborative screenwriting tool for small rooms, pairs and solo writers, with what-ifs and Send to main. No AI in v1. The systems work (scaled sync service plus load tests) is the centerpiece.
-- **Design system and UI:** SPEC Part 3. The prototype (`docs/prototype/writers-room-prototype.html`) is the visual and interaction source of truth, except for page geometry (D-003). Tokens live in `packages/shared/tokens.css` (D-006).
+- **Design system and UI:** SPEC Part 3, except three tokens nudged for contrast (D-086). The prototype (`docs/prototype/writers-room-prototype.html`) is the visual and interaction source of truth, except for page geometry (D-003). Tokens live in `packages/shared/tokens.css` (D-006).
 - **Editor behavior:** SPEC Part 4. Flat ProseMirror block schema, Enter/Tab state machine (defaults, to be confirmed in the editor phase), permissive schema with visible fixes, Yjs per-user undo.
 - **Architecture:** SPEC Part 5 and D-002. pnpm TypeScript monorepo; React + Vite; custom y-protocols sync server; Fastify; Postgres; DynamoDB for edit log, leases and membership; S3 snapshots; Cognito; CDK; lean AWS.
 - **Page geometry:** true screenplay geometry at 96 px per inch (D-003).
@@ -321,6 +321,30 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-086 · 2026-10-27 · Accessibility pass (beta-readiness step 3): three tokens nudged, a way out of the page, and the audit
+
+- **How it was checked:** a new browser audit (`apps/web/test/a11y.ts`, `a11y.test.tsx`), our own small versions of what automated auditors check, with no new library. On every screen in both themes (sign-in; Home; Members; a script with its Drafts tab, the Share menu and page view; a what-if with its dot, popover, Compare, Review all and Changes; the "can't reach" notice) it measures:
+  - **Text contrast** against the real composited background (4.5:1, 3:1 for large text);
+  - **Status graphics** at 3:1 (WCAG 1.4.11): the ● markers and the margin dots;
+  - **Names:** every control has one.
+  - **Keyboard:** Tab walks Home and the script's toolbar and sidebar, and every stop must draw a focus indicator.
+- **What it found against the prototype's colors,** and **Arnav's call: nudge three tokens** (Claude's recommendation; superseding SPEC 3.1 for these three values only, as D-003 did for page geometry; prototype v2 updated to match, v1 left as the record):
+  - `--muted` light #5f5f64 → **#5b5b60**: small muted text on a selected row was 4.42:1, now 4.70:1.
+  - `--muted` dark #a1a1a8 → **#a5a5ac**: 4.40:1 → 4.62:1 (`--icon` is unchanged).
+  - `--amber` light #c98a1b → **#a06e10**, a slightly deeper ochre: the "main changed too" marker was 2.4:1 on the sidebar (below even 3:1), now 3.7:1 on the sidebar, 3.1:1 on a selected row and 4.4:1 on the page. Dark amber already passed.
+  - Rejected: keeping the tokens and adding outlines and heavier text on selected rows (shapes the prototype doesn't have); keeping the prototype as a logged deviation (the amber marker would stay hard to see, and amber vs. blue would rely on color alone).
+- **Leaving the page by keyboard, Arnav's call:** Tab and Shift+Tab change element types (SPEC 4.2), so a keyboard-only writer could never leave the script. Arnav asked for something more intuitive than Claude's first recommendation (F6 cycling areas), then chose **the element menu showing the way**: Esc's menu (SPEC 4.3) gains a muted footer, "Leave the page · Tab". Tab from the open menu moves focus to the sidebar's tab (or to the toolbar in page view, where the sidebar is hidden), and Shift+Tab moves it to the toolbar. Rejected: F6 / Shift+F6 (invisible, a convention few writers know); Ctrl+M toggling Tab, as VS Code does (writers who hit it by accident lose Tab without knowing why); plain Esc then Tab (overloading the menu with no hint); walking off the top with ↑ (rarely discovered); menu hint plus F6 (two ways, one invisible).
+- **Fixed with no decision needed:**
+  - **The hidden layer was reachable.** Home stayed in the tab order (and in screen readers) behind an open script, and vice versa. Hidden layers are now `inert`.
+  - **Holding Shift closed the element menu,** so Shift+S typed an S instead of picking Scene Heading. Modifier keys alone now leave it open.
+  - **Menus give focus back** to the button that opened them.
+  - **Tabs:** ← and → move between Scenes and Drafts (the ARIA tab pattern, with one tab stop).
+  - **Clickable rows** (Home's scripts and episodes, what-ifs) take Space as well as Enter.
+  - **Labels:** the ● scene markers say "Differs from main" or "Main changed this scene too"; the legend's dots are hidden from screen readers, since the words beside them say it; Home's green ● is decorative next to "editing now".
+- **Reduced motion:** the global rule in `base.css` covers every animation and transition. The one script-driven loop (`pageView.ts`) only holds the text still during the collapse, and smooth scrolling already checks the setting.
+- **Tests:** 7 in Chromium (both themes' audit; Tab and focus on Home and the script; the element menu's way out; tabs' arrows; focus returning from a menu; Shift+S).
+- **Status:** Arnav's calls (tokens, the way out); the fixes are Claude's, with no product change.
 
 ### D-085 · 2026-10-27 · Loading, empty, outage and crash states built (beta-readiness step 2)
 

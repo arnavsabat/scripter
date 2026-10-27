@@ -3,13 +3,14 @@ import { describe, expect, it } from 'vitest';
 
 const css = readFileSync(new URL('../tokens.css', import.meta.url), 'utf8');
 
-// SPEC 3.1, copied as written. tokens.css must match these exactly (ignoring hex case and number formatting).
+// SPEC 3.1, copied as written, except muted (both themes) and light amber, nudged for SPEC 3.11's
+// contrast (D-086). tokens.css must match these exactly (ignoring hex case and number formatting).
 const LIGHT = {
   bg: '#FFFFFF',
   side: '#E9E9EC',
   sel: '#D6D7DC',
   text: '#1F1F22',
-  muted: '#5F5F64',
+  muted: '#5B5B60',
   icon: '#6B6B70',
   line: '#DEDEE2',
   line2: '#ECECEF',
@@ -23,7 +24,7 @@ const LIGHT = {
   'ins-fg': '#1E5A2E',
   'del-bg': '#F8E3E1',
   'del-fg': '#9A2B23',
-  amber: '#C98A1B',
+  amber: '#A06E10',
   'amber-ring': '#F6E7CC',
   'blue-ring': '#DCE6F5',
   panel: '#FAFAFB',
@@ -39,7 +40,7 @@ const DARK = {
   side: '#26262A',
   sel: '#3A3A3F',
   text: '#ECECEE',
-  muted: '#A1A1A8',
+  muted: '#A5A5AC',
   icon: '#A1A1A8',
   line: '#38383C',
   line2: '#2F2F33',

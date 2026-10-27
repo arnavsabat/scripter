@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-085) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-086) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -33,7 +33,7 @@ PARTS 2-5, CONDENSED (full text: docs/SPEC.md)
 
 ## Part 3. Design system (match the prototype)
 
-- **Tokens:** every color is a CSS variable in `packages/shared/tokens.css` (light on `:root`; dark under `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])` and `:root[data-theme="dark"]`). Never hard-code a color. `packages/shared/test/tokens.test.ts` guards the values.
+- **Tokens:** every color is a CSS variable in `packages/shared/tokens.css` (`--muted` and light `--amber` nudged from SPEC 3.1 for contrast, D-086) (light on `:root`; dark under `@media (prefers-color-scheme: dark) :root:not([data-theme="light"])` and `:root[data-theme="dark"]`). Never hard-code a color. `packages/shared/test/tokens.test.ts` guards the values.
 - **Type:** UI uses the system stack (`--font-ui`); the script uses Courier Prime 400/700 (`--font-script`).
 - **Sizing tiers:** the title is 15 px semibold (the only one at that size). Sidebar and home text controls are 13 px muted, turning text-color and bold when active. The draft switcher is 13 px in the icon color. Metadata is 12 px muted. Section labels are 11 px, weight 600, caps, .06em tracking. Scene and episode names are 15 px weight 500. Toolbar icons are 18 px line icons (stroke 1.6, round) in 32x28 slots with 6 px radius. Accent blue is only for the active tab underline, toggle on-states, Send to main and primary actions.
 - **Text actions bold; buttons never do.** One-shot text actions bold for about 0.7 s. Openers (Compare) stay bold while open. Tabs stay bold while selected. Bold width is reserved in advance (the inline-grid `::after` trick). Buttons use hover and pressed backgrounds; an icon's on-state is accent-bg with an accent icon. Home's "+ New episode", "Members" and "+ New script" also get the rows' hover background (D-026, D-035); in the toolbar that hover box is 28 px tall, like the icon slots (D-036). The Members invite row's role picker and "Invite" are field-styled, not blue (D-027). The sign-in page follows Arnav's template (D-028, D-029): no toolbar, its own sizes (a 400 px column, a 28 px heading, 44-46 px controls), the Courier Prime wordmark, "Continue" on `--toast`/`--toast-fg`, and a legal line linking to `/terms` and `/privacy`.
@@ -43,7 +43,7 @@ PARTS 2-5, CONDENSED (full text: docs/SPEC.md)
 - **Page geometry (D-003):** two blank lines before scene headings (D-014); 96 px/in; US Letter 816x1056; Courier Prime 16 px/16 px; margins L 1.5 in, R/T/B 1 in. Heading, action and shot at 1.5 in (6 in wide); character at 3.7 in; parenthetical at 3.1 in (2.4 in wide); dialogue at 2.5 in (3.5 in wide); transitions right-aligned to 7.5 in. Headings, shots, characters and transitions are uppercase. One blank line between elements. Page numbers "12." at top right, 0.5 in from the top; none on page 1.
 - **What-if UI, with nothing over the text:** 10 px margin dots 36 px left of the heading (accent = differs; amber = main changed too); a margin popover (Send to main ⌘↵, Compare ⌘⇧↵). Send = an ordinary edit into main, with a restore point first (shared across sends within a few minutes), a heading pulse, "Sent ✓", and a toast with Undo (reverting only the touched scenes). Amber scenes open Compare first. Compare = a 340 px right panel showing main's version, which follows the cursor, with "Send mine to main". The Changes toggle controls ins/del highlights. Review all = a dropdown checklist with "Send N scenes". Menus and toasts follow the shared styles. Esc closes the topmost thing first.
 - **Home:** RECENT / SCRIPTS / SERIES / INVITATIONS / RECENTLY DELETED sidebar; a 760 px centered episode list. The toolbar has + New series and + New script. The showrunner deletes with a hover × and an inline confirm (typing the name for a series); items wait 30 days under RECENTLY DELETED with Restore. A series stays a series (D-033, D-037). Opening an episode is a crossfade handoff (220 ms), not a page load. The theme toggle follows the system until overridden (`data-theme` plus localStorage).
-- **A11y:** aria-labels, visible focus, keyboard-navigable menus, 4.5:1 contrast, `prefers-reduced-motion` disables all motion.
+- **A11y:** aria-labels, visible focus, keyboard-navigable menus, 4.5:1 contrast, `prefers-reduced-motion` disables all motion. Hidden layers are `inert`. `apps/web/test/a11y.test.tsx` audits contrast, names and focus on every screen in both themes; keep it passing (D-086).
 
 ## Part 4. Editor
 
@@ -57,7 +57,7 @@ PARTS 2-5, CONDENSED (full text: docs/SPEC.md)
   - Tab: empty Action → Character; Dialogue → Parenthetical; empty Character → Transition; Parenthetical → Dialogue; empty Transition → Scene Heading. Tab anywhere else does nothing.
   - Shift+Tab steps back. A new parenthetical starts as "( )".
   - Each structural action is one transaction and one undo step (D-014).
-- **Element menu:** Esc (when nothing else is open) opens a vertical menu in the left margin beside the cursor's line. S A C P D H T switch the type; Esc closes it.
+- **Element menu:** Esc (when nothing else is open) opens a vertical menu in the left margin beside the cursor's line. S A C P D H T switch the type; Esc closes it. Its footer reads "Leave the page · Tab": Tab moves focus to the sidebar (Shift+Tab: the toolbar), the keyboard's way out of the page (D-086).
 - **Uppercase** (headings, characters, shots, transitions) is display-only; the text is stored as typed.
 - **Formatting warnings:** a muted-red hollow triangle in the margin for orphan dialogue or parentheticals, with "Add character cue" / "Make this action". Text is never dropped.
 - **Scene identity:** deleting a heading (or changing its type) combines the scene with the previous one and shows "Scenes N and N+1 combined · Undo".

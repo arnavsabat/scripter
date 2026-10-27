@@ -14,7 +14,8 @@
   --side: #e9e9ec;
   --sel: #d6d7dc;
   --text: #1f1f22;
-  --muted: #5f5f64;
+  /* muted and light amber nudged for SPEC 3.11 contrast (D-086): were #5f5f64 and #c98a1b. */
+  --muted: #5b5b60;
   --icon: #6b6b70;
   --line: #dedee2;
   --line2: #ececef;
@@ -29,7 +30,7 @@
   --ins-fg: #1e5a2e;
   --del-bg: #f8e3e1;
   --del-fg: #9a2b23;
-  --amber: #c98a1b;
+  --amber: #a06e10;
   --amber-ring: #f6e7cc;
   --blue-ring: #dce6f5;
   --panel: #fafafb;
@@ -60,7 +61,7 @@
     --side: #26262a;
     --sel: #3a3a3f;
     --text: #ececee;
-    --muted: #a1a1a8;
+    --muted: #a5a5ac; /* was #a1a1a8 (D-086) */
     --icon: #a1a1a8;
     --line: #38383c;
     --line2: #2f2f33;
@@ -93,7 +94,7 @@
   --side: #26262a;
   --sel: #3a3a3f;
   --text: #ececee;
-  --muted: #a1a1a8;
+  --muted: #a5a5ac; /* was #a1a1a8 (D-086) */
   --icon: #a1a1a8;
   --line: #38383c;
   --line2: #2f2f33;

@@ -67,6 +67,7 @@ export function ScriptPage({
                 className="menu elmenu page-overlay"
                 role="menu"
                 aria-label="Element type"
+                aria-describedby="elmenu-leave"
                 style={{ top: overlay.top }}
               >
                 {ELEMENT_MENU.map((item, i) => (
@@ -89,6 +90,12 @@ export function ScriptPage({
                     </span>
                   </button>
                 ))}
+                {/* The way out of the page for the keyboard (D-086): Tab inside the script
+                    changes element types, so Tab from this menu moves on to the sidebar. */}
+                <div className="sep" role="separator" />
+                <div className="mi foot" id="elmenu-leave" role="none">
+                  Leave the page<span>Tab</span>
+                </div>
               </div>
             )}
             {view && overlay?.kind === 'warning' && (

@@ -133,6 +133,15 @@
 .elmenu .mi {
   gap: 6px;
 }
+.elmenu .mi.foot {
+  height: 26px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: default;
+}
+.elmenu .mi.foot:hover {
+  background: none;
+}
 .elmenu .ck {
   display: inline-block;
   width: 12px;

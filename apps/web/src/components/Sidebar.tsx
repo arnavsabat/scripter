@@ -54,12 +54,28 @@ export function Sidebar({
   return (
     <aside className="left" aria-label="Script navigator">
       <div className="in slide">
-        <div className="tabs" role="tablist">
+        <div
+          className="tabs"
+          role="tablist"
+          aria-label="Sidebar"
+          onKeyDown={(e) => {
+            // ← → move between the tabs, as a tab list does (SPEC 3.11).
+            if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+            e.preventDefault();
+            const i = TABS.findIndex(([id]) => id === tab);
+            const next =
+              TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length]![0];
+            onTab(next);
+            e.currentTarget.querySelector<HTMLElement>(`[data-tab="${next}"]`)?.focus();
+          }}
+        >
           {TABS.map(([id, label]) => (
             <button
               key={id}
               type="button"
               role="tab"
+              data-tab={id}
+              tabIndex={tab === id ? 0 : -1}
               aria-selected={tab === id}
               className={`ta tab${tab === id ? ' on' : ''}`}
               data-t={label}

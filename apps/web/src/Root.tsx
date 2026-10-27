@@ -115,7 +115,8 @@ function SignedIn({
 
   return (
     <div className="layers">
-      <div className={`layer${onEpisode ? ' off to-left' : ''}`}>
+      {/* A hidden layer is inert: the keyboard and screen readers skip it (SPEC 3.11). */}
+      <div className={`layer${onEpisode ? ' off to-left' : ''}`} inert={onEpisode}>
         <HomeScreen me={me} data={data} reload={reload} select={select} />
       </div>
       {shown && (
@@ -151,7 +152,11 @@ function Layer({ visible, children }: { visible: boolean; children: ReactNode })
     const frame = requestAnimationFrame(() => setReady(true));
     return () => cancelAnimationFrame(frame);
   }, []);
-  return <div className={`layer${visible && ready ? '' : ' off to-right'}`}>{children}</div>;
+  return (
+    <div className={`layer${visible && ready ? '' : ' off to-right'}`} inert={!visible}>
+      {children}
+    </div>
+  );
 }
 
 /** /i/<token>, signed in: join, then show the series on Home. */
