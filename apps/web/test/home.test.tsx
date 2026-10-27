@@ -44,10 +44,15 @@ const tag = (el: Element) => {
   el.setAttribute('data-test-target', t);
   return `[data-test-target="${t}"]`;
 };
+/** Clicks the element with this text, waiting for it to render first (Home loads its data async). */
 const clickText = async (sel: string, label: string) => {
-  const el = $$(sel).find((e) => text(e) === label);
-  if (!el) throw new Error(`no ${sel} "${label}"`);
-  await click(tag(el));
+  const find = () => $$(sel).find((e) => text(e) === label);
+  try {
+    await until(find, 3000);
+  } catch {
+    throw new Error(`no ${sel} "${label}"`);
+  }
+  await click(tag(find()!));
 };
 
 /** Signed in as Arnav (with the prototype's sample room), on a fresh page. */
