@@ -285,3 +285,8 @@
     inset 0 9px 10px -10px rgba(0, 0, 0, 0.22),
     inset 0 -4px 5px -5px rgba(0, 0, 0, 0.12);
 }
+
+/* Final Draft's automatic (CONT'D) after a cue (D-079): part of the line, not of the text. */
+.autocont {
+  user-select: none;
+}

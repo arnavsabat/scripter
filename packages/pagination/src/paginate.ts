@@ -76,6 +76,8 @@ export interface Pagination {
   blocks: readonly Block[];
   pages: Page[];
   breaks: PageBreak[];
+  /** Character cues shown with an automatic " (CONT'D)" (block indexes, D-079). */
+  continuedCues: number[];
 }
 
 // ---- Line counts, memoized by element type and text ----
@@ -108,6 +110,37 @@ function sentenceStarts(text: string, from: number): number[] {
   const re = /[.?!…]["'”’)\]]*( +)(?=\S)/g;
   re.lastIndex = from;
   for (let m = re.exec(text); m; m = re.exec(text)) out.push(m.index + m[0].length);
+  return out;
+}
+
+// ---- Automatic character continueds (D-079, Final Draft's default) ----
+
+const CONTD = /\(CONT['’]D\)/i;
+/** The name a cue is for, without extensions: "John (V.O.)" is JOHN. */
+const speaker = (cue: string) =>
+  cue
+    .replace(/\([^)]*\)/g, '')
+    .trim()
+    .toUpperCase();
+
+/**
+ * Cues that get " (CONT'D)": the same character speaking again in the same scene with only
+ * action in between. Another speaker, a shot, a transition or a new scene resets it; a cue that
+ * already says (CONT'D) is left as typed. Display only: the stored text never changes.
+ */
+export function autoContinueds(blocks: readonly Block[]): number[] {
+  const out: number[] = [];
+  let last: string | null = null;
+  let actionSince = false;
+  blocks.forEach((b, i) => {
+    if (b.type === 'character') {
+      const name = speaker(b.text);
+      if (name && name === last && actionSince && !CONTD.test(b.text)) out.push(i);
+      last = name || null;
+      actionSince = false;
+    } else if (b.type === 'action') actionSince = true;
+    else if (b.type !== 'parenthetical' && b.type !== 'dialogue') last = null;
+  });
   return out;
 }
 
@@ -172,8 +205,16 @@ class Layout {
   private readonly s: Structure;
   /** The furthest block read while laying out the current page. */
   private reach = 0;
-  constructor(private readonly blocks: readonly Block[]) {
-    this.s = structure(blocks);
+  /** The blocks as shown: cues with an automatic (CONT'D) carry it in their text. */
+  private readonly blocks: readonly Block[];
+  constructor(
+    private readonly stored: readonly Block[],
+    continued: readonly number[],
+  ) {
+    const shown = [...stored];
+    for (const i of continued) shown[i] = { ...stored[i]!, text: `${stored[i]!.text} (CONT'D)` };
+    this.blocks = shown;
+    this.s = structure(shown);
   }
 
   /** The lines of block `i` from character `from` on. */
@@ -371,7 +412,7 @@ class Layout {
     for (let i = start.index; i <= last && i < this.blocks.length; i++) {
       const b = this.blocks[i]!;
       const from = i === start.index ? start.offset : 0;
-      const to = i === end ? endOffset : b.text.length;
+      const to = i === end ? endOffset : this.stored[i]!.text.length;
       const lines = (
         i === end ? linesOf(b.type, b.text.slice(from, endOffset)) : this.tail(i, from)
       ).map((l) => l.text);
@@ -409,7 +450,9 @@ const sameBlock = (a: Block | undefined, b: Block | undefined) =>
  * (and didn't look past it) are reused, and layout restarts from there (SPEC 5.8).
  */
 export function paginate(blocks: readonly Block[], prev?: Pagination): Pagination {
-  const layout = new Layout(blocks);
+  // A cue's (CONT'D) depends only on the blocks before it, so pages before an edit keep theirs.
+  const continuedCues = autoContinueds(blocks);
+  const layout = new Layout(blocks, continuedCues);
   const pages: Page[] = [];
   const breaks: PageBreak[] = [];
   let start: Start | null = { index: 0, offset: 0, continuedTop: false, contd: null };
@@ -449,5 +492,5 @@ export function paginate(blocks: readonly Block[], prev?: Pagination): Paginatio
     }
     start = next;
   }
-  return { blocks, pages, breaks };
+  return { blocks, pages, breaks, continuedCues };
 }

@@ -1,6 +1,7 @@
 // The pure pagination function: document blocks in, page breaks out (SPEC 5.8).
 export { COLUMNS, LINES_PER_PAGE, UPPERCASE, spaceBefore } from './geometry';
 export {
+  autoContinueds,
   linesOf,
   paginate,
   type Block,

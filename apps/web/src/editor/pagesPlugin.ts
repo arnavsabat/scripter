@@ -92,6 +92,12 @@ function breakWidget(b: PageBreak, used: number, margin: number) {
   return w;
 }
 
+function contdWidget() {
+  const w = el('span', 'autocont', " (CONT'D)");
+  w.contentEditable = 'false';
+  return w;
+}
+
 function build(state: EditorState, prev?: Pagination): PagesState {
   const { blocks, positions } = blocksOf(state.doc);
   const pagination = paginate(blocks, prev);
@@ -110,6 +116,18 @@ function build(state: EditorState, prev?: Pagination): PagesState {
       ignoreSelection: true,
     });
   });
+  // Automatic (CONT'D) after a cue (D-079): shown in both views, since it can change how many
+  // lines the cue takes; after the cursor, so typing at the end of the name edits the name.
+  for (const i of pagination.continuedCues) {
+    const node = state.doc.child(i);
+    decorations.push(
+      Decoration.widget(positions[i]! + 1 + node.content.size, contdWidget, {
+        key: 'contd',
+        side: 1,
+        ignoreSelection: true,
+      }),
+    );
+  }
   return { pagination, positions, decorations: DecorationSet.create(state.doc, decorations) };
 }
 

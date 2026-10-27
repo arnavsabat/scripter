@@ -148,7 +148,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **D-077: long toasts wrap** (up to 600 px, 6-15 s on screen), so an import's summary can be read; short toasts are unchanged.
+- ~~D-077: long toasts wrap~~: kept (D-079).
 
 - ~~D-071: pagination splits mid-line at sentence ends~~: decided in D-073 (industry standard).
 
@@ -246,6 +246,8 @@ Phase 3:
 
 ## Future versions
 
+- **Competitive gaps Arnav added (D-079):** inline bold, italic and underline; dual dialogue; an editable title page (see D-076); scene numbers and revisions.
+
 - **Editable title page (D-076):** draft date, contact block, "based on", and credit wording, exported with the script. v1 generates one from the names we have.
 
 From SPEC Part 2 (seams in v1, not built): the AI continuity checker and its eval harness; the Beats tab and beat board with card drag-and-drop; the Outline tab; dragging scenes to reorder them; comments and notes tabs; revision color tags on snapshots; export to Final Draft or Fountain; cross-episode proposals; scene-level locks; the series-level product (bible, cross-episode continuity); the timeline checker; setup/payoff and prop/costume tracking; pitch voting; the script jam and public launch.
@@ -313,6 +315,19 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-079 · 2026-10-27 · Real-pages phase approved: automatic (CONT'D), toasts wrap, four gaps for later
+
+- **Arnav's calls:**
+  1. **Long toasts wrap** (D-077): kept.
+  2. **(CONT'D) after action: switched to Final Draft's default** (supersedes that part of D-071).
+     - A character's cue shows " (CONT'D)" when the same character spoke last in the scene with only action between. Another speaker, a shot, a transition or a new scene resets it, and a (CONT'D) already typed is never doubled. Extensions are kept: "JOHN (O.S.) (CONT'D)".
+     - It's display only, like capitals (D-014), so the stored text never changes.
+     - It's counted by pagination and drawn in both views, as a non-editable suffix after the cue that the cursor stays in front of, and in the PDF.
+     - Tests: 5 unit cases, and the screen-vs-PDF browser test now includes continued cues.
+  3. **Future versions added:** inline bold, italic and underline; dual dialogue; an editable title page; scene numbers and revisions.
+  4. **Next phase:** what-ifs, snapshots, the three-way scene comparison, margin dots, Send to main, Compare, Changes and Review all. Claude builds as much as it can without Arnav's input and logs the testing left for him.
+- **Status:** Arnav's calls; built and tested.
 
 ### D-078 · 2026-10-27 · Typing on a 110-page script: measured smooth in both views
 

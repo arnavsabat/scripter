@@ -312,3 +312,87 @@ describe('properties over 30 generated scripts', () => {
     expect(inc).toBeLessThan(full);
   });
 });
+
+describe('automatic character continueds (D-079, Final Draft default)', () => {
+  const cues = (p: Pagination) =>
+    p.pages.flatMap((pg) =>
+      pg.items.flatMap((i) =>
+        i.kind === 'text' && i.type === 'character' ? [i.lines.join(' ')] : [],
+      ),
+    );
+
+  it('the same character again after only action gets (CONT’D)', () => {
+    const p = paginate([heading(), cue('Maya'), dialogue(1), action(1), cue('Maya'), dialogue(1)]);
+    expect(cues(p)).toEqual(['MAYA', "MAYA (CONT'D)"]);
+    expect(p.continuedCues).toEqual([4]);
+  });
+
+  it('keeps extensions, and matches the name without them', () => {
+    const p = paginate([
+      heading(),
+      cue('John (V.O.)'),
+      dialogue(1),
+      action(1),
+      cue('John'),
+      dialogue(1),
+      action(1),
+      cue('John (O.S.)'),
+      dialogue(1),
+    ]);
+    expect(cues(p)).toEqual(['JOHN (V.O.)', "JOHN (CONT'D)", "JOHN (O.S.) (CONT'D)"]);
+  });
+
+  it('not after another speaker, a new scene, a shot or a transition, nor with nothing between', () => {
+    const p = paginate([
+      heading(),
+      cue('Maya'),
+      dialogue(1),
+      cue('John'),
+      dialogue(1),
+      action(1),
+      cue('Maya'),
+      dialogue(1),
+      heading(),
+      cue('Maya'),
+      dialogue(1),
+      blk('shot', 'ANGLE ON MAYA'),
+      cue('Maya'),
+      dialogue(1),
+      blk('transition', 'CUT TO:'),
+      cue('Maya'),
+      dialogue(1),
+      cue('Maya'),
+      dialogue(1),
+    ]);
+    expect(p.continuedCues).toEqual([]);
+  });
+
+  it('never doubles one already typed, and a page split keeps a single (CONT’D)', () => {
+    const p = paginate([
+      heading(),
+      cue('Maya'),
+      dialogue(1),
+      action(1),
+      cue("Maya (cont'd)"),
+      dialogue(1),
+    ]);
+    expect(cues(p)).toEqual(['MAYA', "MAYA (CONT'D)"]);
+    expect(p.continuedCues).toEqual([]);
+    const split = paginate([
+      heading(),
+      cue('Maya'),
+      dialogue(1),
+      action(40),
+      cue('Maya'),
+      dialogue(10),
+    ]);
+    const top = split.pages[1]!.items.find((i) => i.kind === 'contd') as { lines: string[] };
+    expect(top.lines).toEqual(["MAYA (CONT'D)"]);
+  });
+
+  it('stored offsets are untouched: a continued cue still ends at its typed length', () => {
+    const p = paginate([heading(), cue('Maya'), dialogue(1), action(1), cue('Maya'), dialogue(1)]);
+    const t = p.pages[0]!.items.find((i) => i.kind === 'text' && i.index === 4) as { to: number };
+    expect(t.to).toBe(4);
+  });
+});

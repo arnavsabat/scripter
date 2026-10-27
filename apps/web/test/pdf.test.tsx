@@ -34,6 +34,9 @@ function script(): { type: ElementType; text: string }[] {
       type: 'action',
       text: 'He sits. She pours. Neither of them says a word for a long time, and the rain keeps coming.',
     });
+    // Maya again after only action: an automatic (CONT'D) (D-079).
+    if (s % 2)
+      out.push({ type: 'character', text: 'Maya' }, { type: 'dialogue', text: 'Say something.' });
     if (s % 4 === 3) out.push({ type: 'transition', text: 'cut to:' });
   }
   return out;
