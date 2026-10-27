@@ -298,7 +298,7 @@ describe('a 110-page what-if while two co-writers type in main (D-087)', () => {
       )!;
       drafts.setAttribute('data-perf', 'drafts');
       await commands.clickAt('[data-perf="drafts"]', 4, 4);
-      await until(() => host.querySelector('.layer:not(.off) .left .act .ta'));
+      await until(() => !!host.querySelector('.layer:not(.off) .left .act .ta'));
       host.querySelector('.layer:not(.off) .left .act .ta')!.setAttribute('data-perf', 'fork');
       await commands.clickAt('[data-perf="fork"]', 4, 4);
       await until(() => /\/w\//.test(location.pathname), 10_000);
@@ -306,14 +306,14 @@ describe('a 110-page what-if while two co-writers type in main (D-087)', () => {
       // Make one scene differ, so the dots and Changes have something to show.
       await clickEndOf(1, host.querySelector('.layer:not(.off)')!);
       await userEvent.keyboard(' A gull circles.');
-      await until(() => host.querySelector('.layer:not(.off) .dot'), 10_000);
+      await until(() => !!host.querySelector('.layer:not(.off) .dot'), 10_000);
       // Sam and Noor type in main: every keystroke of theirs reruns the comparison here.
       const middle = Math.floor(blocks.length / 2);
       await fetch(`${CONTROL}/writers?doc=${draftId}&at=4,${middle}`);
       await sleep(1500);
       const results: Record<string, Record<string, number>> = {};
       // The comparison is live: Sam's typing in the what-if's changed scene turns its dot amber.
-      await until(() => host.querySelector('.layer:not(.off) .dot.amber'), 10_000);
+      await until(() => !!host.querySelector('.layer:not(.off) .dot.amber'), 10_000);
       const reading = await frames(() => sleep(4000));
       results['what-if, reading'] = {
         framesOver33ms: reading.gaps.filter((g) => g > 33).length,

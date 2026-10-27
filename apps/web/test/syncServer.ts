@@ -55,7 +55,9 @@ async function startWriter(
     const line = fragment.get(Math.min(block, fragment.length - 1)) as Y.XmlElement;
     const text = line.get(0) as Y.XmlText;
     text.insert(text.length, words[i++ % words.length]!);
-    const at = Y.relativePositionToJSON(Y.createRelativePositionFromTypeIndex(text, text.length));
+    const at: unknown = Y.relativePositionToJSON(
+      Y.createRelativePositionFromTypeIndex(text, text.length),
+    );
     awareness.setLocalStateField('cursor', { anchor: at, head: at });
     // ~5 keys a second, with a pause now and then, as people type.
     setTimeout(tick, i % 25 === 0 ? 900 : 120 + Math.random() * 120);
