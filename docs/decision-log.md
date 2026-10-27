@@ -308,6 +308,15 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-070 · 2026-10-26 · Accounts phase approved; remaining by-hand checks booked for later
+
+- **Arnav's call:** the "real users and rooms" phase is approved, and the remaining by-hand checks are booked for a later demo:
+  1. The browser against the 3-container cluster (demo step 10). Failover is reproduced on the containers (D-066) but hasn't been watched in the browser.
+  2. Deleting an episode with two real accounts (step 11). It ran only as tests (D-067).
+- **Confirmed by hand in this phase:** email sign-up and sign-in, including a returning writer (D-065); Google sign-in linking to the existing account (D-068); inviting, assigning, co-writing and the role changes (steps 3-9, with the fixes in D-066).
+- **Next phase:** "real pages" (pagination, page view, viewport anchoring, PDF export, .fdx and Fountain import, performance).
+- **Status:** Arnav's call.
+
 ### D-069 · 2026-10-26 · A line typed offline in an incognito window was lost; leaving with unsynced edits now asks first
 
 - **What happened (Arnav, demo):** MATT's line after "John finishes his drink" was missing.
