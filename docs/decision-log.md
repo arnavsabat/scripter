@@ -305,6 +305,18 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-068 · 2026-10-26 · Google sign-in failed: the client secret had been pasted twice
+
+- **Issue (demo step 2b):** Google answered "401 invalid_client: The provided client secret is invalid".
+  - The stored secret was 70 characters, two copies of the real 35-character secret back to back. `read -s` shows nothing while pasting, so pasting twice is easy.
+  - Claude checked this without displaying the value (length, prefix, whether the halves were equal).
+- **Fix:**
+  - Arnav stored the single secret with `put-secret-value`. Claude's own attempt to write the secret store was blocked by its command safety check.
+  - Claude then updated Cognito's Google provider from Secrets Manager inside a script that never printed it. This was needed because CloudFormation copies the secret into Cognito at deploy time, and redeploying an unchanged template doesn't re-read it.
+  - Verified: Cognito's copy matches the stored secret, and the client ID, scopes and attribute mapping are unchanged.
+- **For next time:** after `read -s`, run `echo ${#VAR}` to check the length before using it.
+- **Status:** fixed; 2b to retry.
+
 ### D-067 · 2026-10-26 · Demo step 11 run as tests, at Arnav's request
 
 - **What:** Arnav asked Claude to do step 11 (deleting an episode) instead of clicking through it. Claude can't drive his Cognito-signed-in windows, so it ran the end-to-end tests that cover the same path. All passed:
