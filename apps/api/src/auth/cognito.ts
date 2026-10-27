@@ -1,6 +1,11 @@
 // Cognito's sign-in API, called from our server with plain JSON requests (D-031). Our app client
 // is public (no secret), so these calls need no AWS signing. Google goes through Cognito's
 // /oauth2 endpoints with PKCE, straight to Google, so Cognito's own pages never show.
+// One call is an admin call, signed with the server's AWS credentials: an account's status (D-065).
+import {
+  AdminGetUserCommand,
+  CognitoIdentityProviderClient,
+} from '@aws-sdk/client-cognito-identity-provider';
 
 export interface CognitoConfig {
   clientId: string;
@@ -8,6 +13,10 @@ export interface CognitoConfig {
   apiUrl: string;
   /** The pool's domain, e.g. https://<prefix>.auth.<region>.amazoncognito.com (for Google). */
   oauthUrl: string;
+  region: string;
+  userPoolId: string;
+  /** Tests only: the fake ignores signatures. Otherwise the SDK's usual chain (AWS_PROFILE, the task role). */
+  credentials?: { accessKeyId: string; secretAccessKey: string };
 }
 
 export interface Tokens {
@@ -45,6 +54,11 @@ const text = (v: unknown, fallback: string) => (typeof v === 'string' && v ? v :
 
 export function cognitoClient(cfg: CognitoConfig) {
   const ClientId = cfg.clientId;
+  const admin = new CognitoIdentityProviderClient({
+    region: cfg.region,
+    endpoint: cfg.apiUrl,
+    ...(cfg.credentials ? { credentials: cfg.credentials } : {}),
+  });
 
   async function call<T>(operation: string, body: object): Promise<T> {
     const res = await fetch(cfg.apiUrl, {
@@ -83,6 +97,21 @@ export function cognitoClient(cfg: CognitoConfig) {
         UserAttributes: [{ Name: 'email', Value: email }],
       });
       return r.Session;
+    },
+    /**
+     * Whether an existing address finished signing up. The public calls can't say: the pool hides
+     * whether accounts exist, and re-sends sign-up codes even to confirmed accounts (D-065).
+     */
+    async isConfirmed(email: string): Promise<boolean> {
+      try {
+        const r = await admin.send(
+          new AdminGetUserCommand({ UserPoolId: cfg.userPoolId, Username: email }),
+        );
+        return r.UserStatus !== 'UNCONFIRMED';
+      } catch (err) {
+        const e = err as { name?: string; message?: string };
+        throw new CognitoError(e.name ?? 'UnknownError', e.message ?? 'AdminGetUser failed');
+      }
     },
     async resendSignUpCode(email: string): Promise<void> {
       await call('ResendConfirmationCode', { ClientId, Username: email });

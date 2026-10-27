@@ -61,12 +61,24 @@ export async function fakeCognito(issuer: TestIssuer) {
       codes.push({ email, code });
       return { status: 200, body: { UserConfirmed: false, UserSub: users.get(email)!.sub } };
     },
+    // Like the real pool (D-065): it sends a sign-up code even to a confirmed account, and hides
+    // whether the account exists at all.
     ResendConfirmationCode(b) {
       const u = users.get(String(b.Username));
-      if (!u || u.confirmed) return fail('InvalidParameterException');
-      u.code = sixDigits();
-      codes.push({ email: String(b.Username), code: u.code });
-      return { status: 200, body: {} };
+      if (u) {
+        u.code = sixDigits();
+        codes.push({ email: String(b.Username), code: u.code });
+      }
+      return { status: 200, body: { CodeDeliveryDetails: { DeliveryMedium: 'EMAIL' } } };
+    },
+    // The admin call (signed with AWS credentials) that tells the two apart.
+    AdminGetUser(b) {
+      const u = users.get(String(b.Username));
+      if (!u) return fail('UserNotFoundException');
+      return {
+        status: 200,
+        body: { Username: u.sub, UserStatus: u.confirmed ? 'CONFIRMED' : 'UNCONFIRMED' },
+      };
     },
     ConfirmSignUp(b) {
       const email = String(b.Username);

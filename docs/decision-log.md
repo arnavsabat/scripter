@@ -173,6 +173,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 - ~~D-020: storage-backed tests not yet run~~: resolved in D-021. All 6 pass against DynamoDB Local and SeaweedFS, three runs in a row, including the SIGKILL crash of a real server process.
 - ~~D-020: no client heartbeat~~: decided in D-022 (ping every 5 s, give up after 10 s).
+- **D-065: the API's production role needs `cognito-idp:AdminGetUser`** on the user pool only. This goes in the deploy phase's CDK stack for the API. Without it, every returning email sign-in fails.
 - **D-062: a host sync server and the Docker cluster mix in one membership.** They share the local DynamoDB, but the containers can't reach the host's `localhost` address. For now: run one or the other, never both. A fix (separate membership tables, or a reachable host address) can wait until it matters.
 - **D-020: web test runs end with a 10-second wait.** Vite's own browser connections outlive the test server's teardown, so Vitest waits out its timeout. The run still exits 0, and our servers leave nothing open.
 
@@ -282,7 +283,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Known risks
 
-- Partly resolved (D-061): the email-code flow's assumptions were checked on the real pool. Sign-up with no password and `UsernameExistsException` hold. An unconfirmed account's sign-in request gets a fake challenge, now handled by re-sending the sign-up code first. Still open: that `ResendConfirmationCode` is refused for a confirmed account (checked in the demo).
+- Resolved (D-061, D-065): the email-code flow's assumptions were checked on the real pool. Sign-up with no password and `UsernameExistsException` hold. An unconfirmed account's sign-in request gets a fake challenge, and `ResendConfirmationCode` succeeds even for a confirmed account. So the API asks `AdminGetUser` for the account's status.
 - New (D-031): the sync servers depend on Postgres to authorize *new* connections. If it's unavailable, writers already connected keep editing, but reconnecting writers (after a failover, say) are refused until it returns. Mitigations to consider later: caching recent decisions for a short time, and a Postgres replica.
 - Mid-line paragraph splits under concurrent editing (Yjs binding). Measured in the spike (D-012, test 2): nothing is lost and the structure never corrupts, but text typed concurrently in the second half of a line lands on the first half, and an in-progress word can tear. The risk is accepted pending P2.
 - Cursor stability when nodes are deleted by other users. Tested in the spike: the cursor moves to the start of the next line. Low risk now.
@@ -303,6 +304,26 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-065 · 2026-10-26 · Telling a half-finished sign-up from a confirmed account: ask Cognito (supersedes D-061's fix)
+
+- **Issue (Arnav, demo step 2):** signing back in to a confirmed account failed with "That code has expired".
+  - D-061's fix assumed Cognito refuses to re-send a sign-up code to a confirmed account. Tested on the real pool, it doesn't: it sends a fresh sign-up code (6 digits).
+  - So every returning writer got a sign-up code. Cognito then refused that code ("already confirmed"), and the API showed that as "expired".
+  - Every confirmed account was locked out of email codes; Google still worked.
+- **Options considered:**
+  1. **Ask Cognito (chosen):** the admin call `AdminGetUser` reports UNCONFIRMED or CONFIRMED. It's exact. The cost is that the API needs AWS permission to read users in our pool.
+  2. **Check our own database:** a `users` row means they finished. No new permission, but a crash between confirming and writing the row would leave someone stuck on the sign-up path, which needs an extra recovery path.
+  3. **Always send a sign-in code:** the simplest, but someone who abandoned signing up gets a code that never arrives and can't finish.
+- **Rejected, from writers' point of view:** (2) is right almost always but has a rare stuck case. (3) is a dead end for the person who walked away mid-sign-up.
+- **Built:**
+  - `isConfirmed(email)` in `apps/api/src/auth/cognito.ts`, using `@aws-sdk/client-cognito-identity-provider` 3.1156.0 (the same SDK family and version as the SES client). The admin call has to be signed, which plain `fetch` can't do; flagged to Arnav as a new library.
+  - `begin()` tries a sign-up first. If the address exists: an unconfirmed account gets a fresh sign-up code, and anything else gets a sign-in code.
+  - The fake Cognito now re-sends sign-up codes to confirmed accounts, as the real pool does, and answers `AdminGetUser`. The "known email gets a sign-in code" test failed on the old logic (6 digits, not 8) and passes now.
+- **Checked on the real pool:** both of Arnav's accounts report confirmed, and an unknown address gives `UserNotFoundException`. Locally the call uses the `writers-room` profile.
+- **Follow-up for the deploy phase:** the API's Fargate task role needs `cognito-idp:AdminGetUser` on this pool only (now an open issue).
+- **What changes for writers:** returning writers get a working sign-in code again. Someone who abandoned signing up still gets a fresh sign-up code.
+- **Status:** Arnav's call (option 1); built, tested, checked on the real pool.
 
 ### D-064 · 2026-10-26 · `pnpm services:up` waits for Postgres to be ready
 

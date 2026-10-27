@@ -32,6 +32,8 @@ const app = await buildApp({
       clientId: env.COGNITO_CLIENT_ID!,
       apiUrl: `https://cognito-idp.${env.COGNITO_REGION}.amazonaws.com/`,
       oauthUrl: env.COGNITO_DOMAIN!,
+      region: env.COGNITO_REGION!,
+      userPoolId: env.COGNITO_USER_POOL_ID!,
     }),
     verifyId: idTokenVerifier(pool),
   },
