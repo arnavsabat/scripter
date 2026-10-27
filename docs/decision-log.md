@@ -165,7 +165,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
     5. Use the smallest Postgres and task sizes, single availability zone.
   - Dropping the load balancer would mean running on EC2 instead of Fargate, a spec change, so it isn't proposed.
   - Exact numbers come from the AWS pricing calculator in the deploy phase.
-- **Performance budget (from D-012):** a regression test failing if the p95 local keystroke or remote update exceeds 16 ms on a 110-page script. It's added with the editor package's performance test.
+- ~~Performance budget (from D-012)~~: built in D-087, at a stricter 8 ms p95 per key or remote update, with three writers, in both views and in a what-if.
 - **Small choices made while building the editor shell (D-014, items 9-11):**
   - Structural actions get their own undo step.
   - Scene names in the navigator are derived from headings, as in the prototype ("INT. KITCHEN - NIGHT" shows as "Kitchen – Night").
@@ -195,7 +195,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - Duplicate-ID repair after merges must become deterministic.
   - The word diff must group changes into phrases.
   - Watch the beta for test 2's split degradation.
-  - One long task of about 100-160 ms per run during solo typing needs a look.
+  - ~~One long task of about 100-160 ms per run during solo typing needs a look.~~ Not seen in D-087's runs.
 
 - ~~D-007: no container runtime~~: resolved. OrbStack is installed, and the compose services run (D-021).
 
@@ -321,6 +321,14 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-087 · 2026-10-27 · Performance pass (beta-readiness step 4): three writers on 110 pages, both views
+
+- **How it was measured:** the existing 110-page typing test, plus two new ones (`apps/web/test/perf.test.tsx`). Two co-writers type about five keys a second (with pauses) and show their cursors while Maya reads and types, in the open view and page view. Then the same in a what-if while the co-writers type in main, so the live three-way comparison reruns on their every keystroke. The co-writers run in the test sync server's Node process (`test/syncServer.ts`, `/writers`), not in the browser tab, so their own work isn't counted against the frames being measured. Each run records the editor's work per update, the browser's keydown-to-paint time (Event Timing), every frame's length, and long tasks.
+- **Result:** nothing drops frames, so there was nothing to fix. Remote updates cost 2.4 ms p50 and 3.5 ms p95 in the open view (1.4 and 2.1 in page view); keys while others type cost under 2 ms p95; there were 0 frames over 33 ms and 0 long tasks in every scenario, including the what-if. The comparison on its own is 4.2 ms at 110 pages and runs at most once a frame. Full table in `docs/metrics.md`.
+- **Guards added** (D-012's proposed performance budget, now real): p95 work under 8 ms per update or key, the slowest key under 50 ms, and at most 2 frames over 33 ms per measured window (a little slack for a busy machine).
+- **D-012's spike follow-up** ("one long task of about 100-160 ms per run during solo typing"): not seen in any of these runs. The one remaining first-key cost is the browser's own first layout of a 110-page editable document (about 50 ms, D-078), before anyone types.
+- **Status:** measured, no changes needed; the guards are Claude's (no product effect).
 
 ### D-086 · 2026-10-27 · Accessibility pass (beta-readiness step 3): three tokens nudged, a way out of the page, and the audit
 

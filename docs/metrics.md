@@ -151,7 +151,25 @@ Filled in as each is measured. Each number names the date, the machine and the c
 
 ### Editor and pagination
 
-*To be filled by the performance pass (beta-readiness phase, step 4).*
+Measured 2026-10-27 on an Apple M2 MacBook (8 GB), Chromium through Playwright 1.64 (Vitest browser mode), at commit `064771c` plus the D-087 test. The script is 110 pages (about 2,600 lines). "Work" is the editor's own time per update (the ProseMirror state update, including re-pagination and redrawing page breaks); "slowest key" is the browser's Event Timing measure, keydown to the next paint, which is what a writer feels (it reports in 8 ms steps from 16 ms). A frame drop is a frame longer than 33 ms (two frames at 60 Hz). Guarded by `apps/web/test/perf.test.tsx`.
+
+| Scenario | Work p50 | Work p95 | Slowest key | Frames over 33 ms | Long tasks |
+|---|---|---|---|---|---|
+| Typing alone, open view, near the top | 1.0 ms | 1.9 ms | 16 ms | – | – |
+| Typing alone, page view, near the top | 1.0 ms | 1.3 ms | 24 ms | – | – |
+| Reading while 2 co-writers type, open view (42 remote updates in 4 s) | 2.4 ms | 3.5 ms | – | 0 of 240 | 0 |
+| Reading while 2 co-writers type, page view | 1.4 ms | 2.1 ms | – | 0 of 240 | 0 |
+| Typing with 2 co-writers typing, open view, near the top | 1.3 ms | 1.7 ms | 16 ms | 0 | 0 |
+| Typing with 2 co-writers typing, page view, near the end | 1.5 ms | 1.8 ms | 16 ms | 0 | 0 |
+| In a what-if while 2 co-writers type in main (live three-way comparison), reading | – | – | – | 0 of 240 | 0 |
+| In a what-if while 2 co-writers type in main, typing | – | 1.0 ms | 24 ms | 0 | 0 |
+
+Pieces on their own (Node 24, same machine):
+
+- **Pagination:** a 118-page script paginates in about 2 ms; an edit near the end re-paginates in about 0.04 ms (D-078).
+- **The three-way scene comparison** (`compareScenes`) over 110 pages: 4.2 ms p50, 4.7 ms p95. It reruns at most once a frame however many co-writers type, so a what-if never spends more than about a third of a frame on it.
+
+What this means: with three writers in one 110-page episode, no update costs more than about 4 ms of a 16.7 ms frame, in either view, so nothing drops frames. The headroom is about 4x for a single key, and the binding's per-key cost grows with document length (Known risks, D-012).
 
 ### Sync service under load
 
