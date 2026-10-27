@@ -305,6 +305,15 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-067 · 2026-10-26 · Demo step 11 run as tests, at Arnav's request
+
+- **What:** Arnav asked Claude to do step 11 (deleting an episode) instead of clicking through it. Claude can't drive his Cognito-signed-in windows, so it ran the end-to-end tests that cover the same path. All passed:
+  - **Real API, real Postgres, real sync server with Postgres access:** deleting the episode moves everyone in it out with 4410.
+  - **API:** a deleted episode disappears for everyone, waits in the showrunner's Recently deleted, and returns to its place on Restore. A deleted series disappears from every member's Home until restored. Deleting a plain script's episode deletes the script.
+  - **Browser, against the fake API:** × → inline confirm → Recently deleted → Restore; and the co-writer's window goes back to Home with "This episode was deleted by the showrunner."
+- **Not seen by hand:** the same flow with two real accounts in two real windows. Also still open from the demo: the Google round trip (step 2b) and step 10 against the cluster from the browser.
+- **Status:** done as tests; by-hand items noted.
+
 ### D-066 · 2026-10-26 · Demo steps 8-10: a stale "access changed" state, the database restart crash, and a step-10 setup mix-up
 
 Found in Arnav's demo run. All three are bugs or tooling fixes, with no design change.
