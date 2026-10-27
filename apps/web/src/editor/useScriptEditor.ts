@@ -144,7 +144,10 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
           if (!created && c.caughtUp) {
             // A brand-new episode: the server has confirmed it's empty, so start with one action
             // line. Never from a view-only session: that would be an edit.
-            if (session.canEdit !== false && fragment.length === 0) seedNewScript(ydoc);
+            if (session.canEdit !== false && fragment.length === 0) {
+              seedNewScript(ydoc, session.seed);
+              session.onSeeded?.();
+            }
             open();
           }
         }),

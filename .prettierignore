@@ -6,3 +6,6 @@ cdk.out/
 # docs/ holds the verbatim spec, the decision log and the prototype (visual source of truth); never reformat them.
 docs/
 CLAUDE.md
+
+# Generated import fixtures (apps/web/test/fixtures/make_fixtures.py)
+apps/web/test/fixtures/

@@ -8,6 +8,7 @@ import { auth, useAuth, type Me } from './auth';
 import { ToastProvider, useToast } from './components/Toast';
 import { HomeScreen } from './home/HomeScreen';
 import { useHome } from './home/useHome';
+import { pendingImports } from './import/pending';
 import { localCopies } from './localCopies';
 import { Privacy, Terms } from './pages/Legal';
 import { SignIn, type InvitePreview } from './pages/SignIn';
@@ -199,6 +200,13 @@ function Episode({
         identity: { userId: me.id, name: me.name, color: colorFor(me.id) },
         token: auth.token,
         canEdit: episode.canEdit,
+        // Just imported from a file on Home (D-077): written in once the server confirms empty.
+        ...(pendingImports.get(episode.id)
+          ? {
+              seed: pendingImports.get(episode.id)!,
+              onSeeded: () => pendingImports.clear(episode.id),
+            }
+          : {}),
       },
     [episode, me, syncUrls],
   );

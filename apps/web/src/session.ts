@@ -1,5 +1,6 @@
 // What the script screen needs to connect: the sync servers, the draft's document, who we are
 // (for presence), and a fresh access token on every connect (D-046).
+import type { BlockSpec } from '@wr/schema';
 import type { Identity } from '@wr/shared';
 
 export interface Session {
@@ -12,6 +13,9 @@ export interface Session {
   token: string | (() => Promise<string>);
   /** False for viewers and unassigned writers: the page is read-only ("View only", D-033). */
   canEdit?: boolean;
+  /** An imported script to write into the new, empty document (D-077), then `onSeeded`. */
+  seed?: readonly BlockSpec[];
+  onSeeded?: () => void;
 }
 
 /** Two-letter initials for an avatar: "Maya" → "MA", "Sam Jones" → "SJ". */

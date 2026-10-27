@@ -148,6 +148,8 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **D-077: long toasts wrap** (up to 600 px, 6-15 s on screen), so an import's summary can be read; short toasts are unchanged.
+
 - ~~D-071: pagination splits mid-line at sentence ends~~: decided in D-073 (industry standard).
 
 - **AWS cost levers for the deploy phase (proposed 2026-10-24, decided then):** these keep SPEC 5.5's infrastructure unchanged.
@@ -311,6 +313,36 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-077 · 2026-10-27 · Import from Final Draft and Fountain
+
+- **Built** (`apps/web/src/import/importScript.ts`), following D-071's decisions:
+  - **Final Draft:** read with the browser's XML parser.
+    - Scene Heading, Action, Character, Parenthetical, Dialogue, Transition and Shot map one to one. General, Cast List, New Act and End of Act, and Lyrics are kept as Action.
+    - Script notes (including ones nested inside paragraphs), scene numbers and revision marks aren't imported. Bold, italic and underline are removed. Dual dialogue becomes one speech after the other.
+    - The title page's first line names the script; the rest of it is reported.
+  - **Fountain:** our own parser, following the fountain.io syntax.
+    - The title page (values may continue on indented lines); natural and forced headings (`.`), cues (`@`, lowercase extensions allowed), parentheticals, dialogue, transitions (`TO:` or `>`) and forced action (`!`).
+    - Centered (`>…<`) and lyrics (`~`) are kept as Action. Sections, synopses, notes, boneyard, forced page breaks and scene numbers aren't imported.
+    - Emphasis is removed (nested markers included; escaped `\*` kept as a star). CRLF and a byte-order mark are handled.
+    - Fountain has no Shot element, so shots arrive as action, as in other tools.
+    - Inner line breaks become spaces, because our blocks are one line of text; the report says how many paragraphs that touched.
+- **Flow:**
+  - Home's toolbar gets **Import** beside "+ New script", the same text-action style (D-071). It opens a file picker for .fdx, .fountain, .spmd and .txt.
+  - The file is parsed in the browser. A plain script is created, named from the title page (or the file name), and opened.
+  - The editor writes the blocks into the empty document at the moment a new script would get its first line (`import/pending.ts`, `seedNewScript`). That path runs once the server confirms the document is empty (D-074).
+  - The toast reports plainly, for example: "Imported “Night Shift” · 16 pages. Kept as action: 2 act breaks, 1 general paragraph, 1 lyric. Not imported: 4 scene numbers, 1 note, 3 other title page entries. 1 dual-dialogue pair now runs one speech after the other. Bold, italic and underline were removed."
+  - Files that aren't scripts get a plain message.
+- **Claude's proposal, awaiting Arnav:** toasts used to be a single line. Long ones (only an import summary so far) now wrap at up to 600 px and stay up longer (6 to 15 s, by length). Short toasts look exactly as before.
+- **Tests:**
+  - "Night Shift", an original screenplay of 36 scenes and about 16 pages, generated as both Fountain and Final Draft with each format's extras (`apps/web/test/fixtures/make_fixtures.py`).
+  - Both parsers give the expected blocks, the title and an exact report, and they agree block for block except Fountain's Shot.
+  - It paginates with every rule holding. There are Fountain edge cases and messages for bad files.
+  - End to end: Home › Import opens the script with every block and the toast, and page view shows the right number of pages.
+- **Known limits:**
+  - An import that's interrupted before the script opens (a reload) leaves an empty script.
+  - Usage counting ("script imported", SPEC 5.9) isn't built yet.
+- **Status:** built and tested; the toast change awaits Arnav.
 
 ### D-076 · 2026-10-27 · PDF export: drawn from the pagination output, with an auto title page
 

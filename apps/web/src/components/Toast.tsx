@@ -36,7 +36,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     });
     setVisible(true);
     clearTimeout(timer.current);
-    timer.current = setTimeout(() => setVisible(false), 6000);
+    // Long enough to read: 6 s, more for a long message (up to 15 s).
+    timer.current = setTimeout(
+      () => setVisible(false),
+      Math.min(15_000, Math.max(6000, message.length * 60)),
+    );
   }, []);
   const api = useMemo<ToastApi>(() => ({ show }), [show]);
 

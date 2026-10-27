@@ -1,0 +1,909 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<FinalDraft DocumentType="Script" Template="No" Version="5">
+  <Content>
+    <Paragraph Type="New Act">
+      <Text>ACT ONE</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading" Number="1">
+      <Text>EXT. DINER - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text Style="Bold">Headlights</Text>
+      <Text> sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Headlights sweep the room. For a second they're both lit up like suspects. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading" Number="7">
+      <Text>INT. PARKING LOT - LATER</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>You said you'd be here at ten. Who else knows?</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <ScriptNote ID="1"><Paragraph><Text>Make the diner feel colder.</Text></Paragraph></ScriptNote>
+      <Text>She pushes a folded envelope across the table. He doesn't touch it.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading" Number="12">
+      <Text>INT. MAYA'S CAR - CONTINUOUS</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>I said I'd try. That's not the same thing. You said you'd be here at ten. Who else knows?</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading" Number="17">
+      <Text>EXT. POLICE STATION - LOBBY - DAWN</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(quietly)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. PIER - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(quietly)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother. I said I'd try. That's not the same thing.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She pushes a folded envelope across the table. He doesn't touch it. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(re: the envelope)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>It is tonight. I said I'd try. That's not the same thing.</Text>
+    </Paragraph>
+    <Paragraph Type="Transition">
+      <Text>CUT TO:</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. MOTEL ROOM - LATER</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Who else knows?</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. ROOFTOP - CONTINUOUS</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>It is tonight. Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore. You said you'd be here at ten. Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. GAS STATION - DAWN</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(quietly)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number. Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight. Nobody. Not yet. But that won't last, and you know it won't.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Shot">
+      <Text>ANGLE ON THE ENVELOPE</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. DINER - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(quietly)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Then we don't have long. Finish your coffee. Nobody. Not yet. But that won't last, and you know it won't. Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She pushes a folded envelope across the table. He doesn't touch it.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore. Then we don't have long. Finish your coffee.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore. Tell that to the people looking for him. Then we don't have long. Finish your coffee.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. PARKING LOT - LATER</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Who else knows? Tell that to the people looking for him.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Nobody. Not yet. But that won't last, and you know it won't.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother. Then we don't have long. Finish your coffee.</Text>
+    </Paragraph>
+    <Paragraph Type="Transition">
+      <Text>CUT TO:</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. MAYA'S CAR - CONTINUOUS</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(quietly)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Then we don't have long. Finish your coffee. I said I'd try. That's not the same thing.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. POLICE STATION - LOBBY - DAWN</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Rain hammers the windows. A neon sign buzzes, dies, buzzes again.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>You said you'd be here at ten.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen.</Text>
+    </Paragraph>
+    <Paragraph Type="General">
+      <Text>THE END OF THE BEGINNING</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. PIER - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore. Who else knows?</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(re: the envelope)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>You said you'd be here at ten.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Tell that to the people looking for him. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. MOTEL ROOM - LATER</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She checks her phone. Three missed calls. All the same number.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>You said you'd be here at ten. It is tonight. He's not my brother anymore.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She checks her phone. Three missed calls. All the same number. Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Who else knows?</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="Lyrics">
+      <Text>Drive all night, drive all night</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. ROOFTOP - CONTINUOUS</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Outside, a car door slams. Then another. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore. Who else knows?</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Headlights sweep the room. For a second they're both lit up like suspects.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Transition">
+      <Text>CUT TO:</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. GAS STATION - DAWN</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She pushes a folded envelope across the table. He doesn't touch it. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Who else knows? I said I'd try. That's not the same thing.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She checks her phone. Three missed calls. All the same number. Headlights sweep the room. For a second they're both lit up like suspects.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>The waitress drifts past, refills nothing, and keeps going.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. DINER - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Rain hammers the windows. A neon sign buzzes, dies, buzzes again. The waitress drifts past, refills nothing, and keeps going.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Then we don't have long. Finish your coffee. He's not my brother anymore.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>I said I'd try. That's not the same thing.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. PARKING LOT - LATER</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Nobody. Not yet. But that won't last, and you know it won't.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="New Act">
+      <Text>ACT TWO</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. MAYA'S CAR - CONTINUOUS</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Headlights sweep the room. For a second they're both lit up like suspects. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. POLICE STATION - LOBBY - DAWN</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She pushes a folded envelope across the table. He doesn't touch it.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Then we don't have long. Finish your coffee. You said you'd be here at ten.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother. Who else knows? Tell that to the people looking for him.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Headlights sweep the room. For a second they're both lit up like suspects. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another.</Text>
+    </Paragraph>
+    <Paragraph Type="Transition">
+      <Text>CUT TO:</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. PIER - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. The waitress drifts past, refills nothing, and keeps going.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(beat)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>It is tonight. You said you'd be here at ten.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She checks her phone. Three missed calls. All the same number. She pushes a folded envelope across the table. He doesn't touch it.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Nobody. Not yet. But that won't last, and you know it won't.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>The waitress drifts past, refills nothing, and keeps going. Outside, a car door slams. Then another.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <DualDialogue>
+      <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+      <Paragraph Type="Dialogue">
+      <Text>We go now.</Text>
+    </Paragraph>
+      <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+      <Paragraph Type="Dialogue">
+      <Text>We wait.</Text>
+    </Paragraph>
+      </DualDialogue>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. MOTEL ROOM - LATER</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She pushes a folded envelope across the table. He doesn't touch it.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Rain hammers the windows. A neon sign buzzes, dies, buzzes again.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Headlights sweep the room. For a second they're both lit up like suspects.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. ROOFTOP - CONTINUOUS</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight. Nobody. Not yet. But that won't last, and you know it won't.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. GAS STATION - DAWN</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Who else knows? I said I'd try. That's not the same thing. You said you'd be here at ten.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore. Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. DINER - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(beat)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Tell that to the people looking for him.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(quietly)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing.</Text>
+    </Paragraph>
+    <Paragraph Type="Transition">
+      <Text>CUT TO:</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. PARKING LOT - LATER</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother. Tell that to the people looking for him.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Who else knows? Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(quietly)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother. Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. MAYA'S CAR - CONTINUOUS</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(quietly)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>The waitress drifts past, refills nothing, and keeps going.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. POLICE STATION - LOBBY - DAWN</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>You said you'd be here at ten.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>It is tonight. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Then we don't have long. Finish your coffee.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>The waitress drifts past, refills nothing, and keeps going.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. PIER - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him. Then we don't have long. Finish your coffee.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. MOTEL ROOM - LATER</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat. The waitress drifts past, refills nothing, and keeps going. Headlights sweep the room. For a second they're both lit up like suspects.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(quietly)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Nobody. Not yet. But that won't last, and you know it won't. It is tonight. Who else knows?</Text>
+    </Paragraph>
+    <Paragraph Type="Transition">
+      <Text>CUT TO:</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. ROOFTOP - CONTINUOUS</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up. The waitress drifts past, refills nothing, and keeps going.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. He's not my brother anymore. Who else knows?</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>It is tonight. Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. GAS STATION - DAWN</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She pushes a folded envelope across the table. He doesn't touch it. Outside, a car door slams. Then another.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She pushes a folded envelope across the table. He doesn't touch it.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Who else knows?</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Then we don't have long. Finish your coffee. Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Maya slides into the booth across from him. She doesn't take off her coat.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. DINER - NIGHT</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>The waitress drifts past, refills nothing, and keeps going.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Outside, a car door slams. Then another. A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>DETECTIVE REYES</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>He's not my brother anymore. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>EXT. PARKING LOT - LATER</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Sit down. Eat something. We have to talk about the money, and about your brother.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Rain hammers the windows. A neon sign buzzes, dies, buzzes again. John stares at the coffee like it owes him money.</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. MAYA'S CAR - CONTINUOUS</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier.</Text>
+    </Paragraph>
+    <Paragraph Type="Transition">
+      <Text>CUT TO:</Text>
+    </Paragraph>
+    <Paragraph Type="Scene Heading">
+      <Text>INT. POLICE STATION - LOBBY - DAWN</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>A siren somewhere far off. Neither of them looks up.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text>Maya slides into the booth across from him. She doesn't take off her coat. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(not looking up)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Tell that to the people looking for him.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>JOHN (V.O.)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen.</Text>
+    </Paragraph>
+    <Paragraph Type="Character">
+      <Text>MAYA</Text>
+    </Paragraph>
+    <Paragraph Type="Parenthetical">
+      <Text>(beat)</Text>
+    </Paragraph>
+    <Paragraph Type="Dialogue">
+      <Text>Tell that to the people looking for him. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen.</Text>
+    </Paragraph>
+    <Paragraph Type="Action">
+      <Text></Text>
+    </Paragraph>
+  </Content>
+  <TitlePage>
+    <Content>
+      <Paragraph Alignment="Center">
+        <Text>Night Shift</Text>
+      </Paragraph>
+      <Paragraph Alignment="Center">
+        <Text></Text>
+      </Paragraph>
+      <Paragraph Alignment="Center">
+        <Text>Written by</Text>
+      </Paragraph>
+      <Paragraph Alignment="Center">
+        <Text>Sam Rivera</Text>
+      </Paragraph>
+      <Paragraph Alignment="Center">
+        <Text>sam@example.com</Text>
+      </Paragraph>
+    </Content>
+  </TitlePage>
+</FinalDraft>

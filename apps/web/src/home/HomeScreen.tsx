@@ -1,6 +1,7 @@
 // The home page (SPEC 3.10, prototype v2): RECENT, SCRIPTS, SERIES, INVITATIONS and RECENTLY
 // DELETED in the sidebar; the selected series' episodes in the 760 px column; Members on the
 // right. Showrunners delete with a hover × and an inline confirm (D-037, D-051).
+import { paginate } from '@wr/pagination';
 import { colorFor } from '@wr/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ApiFailure, api } from '../api';
@@ -9,6 +10,8 @@ import { Icon } from '../components/Icons';
 import { RenameTitle } from '../components/RenameTitle';
 import { TextAction } from '../components/TextAction';
 import { useToast } from '../components/Toast';
+import { ImportError, parseScript, type ImportResult } from '../import/importScript';
+import { pendingImports } from '../import/pending';
 import { localCopies } from '../localCopies';
 import { navigate } from '../router';
 import { initials } from '../session';
@@ -83,6 +86,26 @@ export function HomeScreen({ me, data, reload, select }: Props) {
       const r = await api<{ episodeId: string }>('POST', '/api/series', { kind: 'script' });
       navigate(`/e/${r.episodeId}?new=1`);
     });
+  // Import (D-071, D-077): read the file here, create a plain script named after it, open it, and
+  // let the editor write the blocks in. The toast says what came in and what didn't.
+  const importFile = (file: File) =>
+    void run(async () => {
+      let result: ImportResult;
+      try {
+        result = parseScript(file.name, await file.text());
+      } catch (err) {
+        if (err instanceof ImportError) return toast.show(err.message);
+        throw err;
+      }
+      const r = await api<{ episodeId: string }>('POST', '/api/series', {
+        kind: 'script',
+        name: result.title,
+      });
+      pendingImports.set(r.episodeId, result.blocks);
+      navigate(`/e/${r.episodeId}`);
+      const pages = paginate(result.blocks.map((b, i) => ({ id: String(i), ...b }))).pages.length;
+      toast.show(result.report.message(result.title, pages));
+    });
   const newSeries = () =>
     void run(async () => {
       const r = await api<{ seriesId: string }>('POST', '/api/series', { kind: 'series' });
@@ -133,7 +156,7 @@ export function HomeScreen({ me, data, reload, select }: Props) {
 
   return (
     <div className={`app is-home${members ? ' right-open' : ''}`}>
-      <HomeToolbar me={me} onNewScript={newScript} onNewSeries={newSeries} />
+      <HomeToolbar me={me} onNewScript={newScript} onNewSeries={newSeries} onImport={importFile} />
       <div className="body">
         <aside className="left" aria-label="Your scripts">
           <div className="in slide">
@@ -207,11 +230,14 @@ function HomeToolbar({
   me,
   onNewScript,
   onNewSeries,
+  onImport,
 }: {
   me: Me;
   onNewScript: () => void;
   onNewSeries: () => void;
+  onImport: (file: File) => void;
 }) {
+  const picker = useRef<HTMLInputElement>(null);
   const theme = useTheme();
   const toast = useToast();
   const [menu, setMenu] = useState(false);
@@ -239,6 +265,19 @@ function HomeToolbar({
       <div className="grp slide" style={{ gap: 14 }}>
         <TextAction label="+ New series" className="hv tbh" onClick={onNewSeries} />
         <TextAction label="+ New script" className="hv tbh" onClick={onNewScript} />
+        <TextAction label="Import" className="hv tbh" onClick={() => picker.current?.click()} />
+        <input
+          ref={picker}
+          type="file"
+          accept=".fdx,.fountain,.spmd,.txt"
+          hidden
+          aria-label="Import a Final Draft or Fountain script"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            if (file) onImport(file);
+          }}
+        />
         <button type="button" className="ib" title={label} aria-label={label} onClick={toggleTheme}>
           <Icon name={theme === 'dark' ? 'sun' : 'moon'} />
         </button>

@@ -11,6 +11,7 @@ import {
   schema,
   shiftTab,
   tab,
+  type BlockSpec,
   type Combine,
 } from '@wr/schema';
 import { baseKeymap } from 'prosemirror-commands';
@@ -39,11 +40,17 @@ export const FRAGMENT = 'script';
 export const isRemote = (tr: Transaction) =>
   !!(tr.getMeta(ySyncPluginKey) as { isChangeOrigin?: boolean } | undefined)?.isChangeOrigin;
 
-/** A brand-new script starts as one empty action line. */
-export function seedNewScript(ydoc: Y.Doc) {
-  const doc = schema.nodes.doc.create(null, [
-    blockType.create(blockAttrs('action', newId(), null)),
-  ]);
+/** A brand-new script starts as one empty action line, or as the script it was imported from. */
+export function seedNewScript(ydoc: Y.Doc, blocks: readonly BlockSpec[] = [{ type: 'action' }]) {
+  const doc = schema.nodes.doc.create(
+    null,
+    blocks.map((b) =>
+      blockType.create(
+        blockAttrs(b.type, newId(), b.type === 'scene_heading' ? newId('s') : null),
+        b.text ? schema.text(b.text) : null,
+      ),
+    ),
+  );
   prosemirrorToYXmlFragment(doc, ydoc.getXmlFragment(FRAGMENT));
 }
 

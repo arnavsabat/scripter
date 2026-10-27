@@ -317,7 +317,11 @@ small {
   background: var(--toast);
   color: var(--toast-fg);
   font-size: 13px;
-  white-space: nowrap;
+  /* One line for the usual short message; a long one (an import's summary, D-077) wraps. */
+  width: max-content;
+  max-width: min(600px, calc(100vw - 32px));
+  box-sizing: border-box;
+  line-height: 1.45;
   z-index: 50;
   transition:
     opacity 0.2s ease,
