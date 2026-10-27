@@ -314,6 +314,19 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-078 · 2026-10-27 · Typing on a 110-page script: measured smooth in both views
+
+- **How it's measured** (`apps/web/test/perf.test.tsx`, real key presses in Chromium on Arnav's M2):
+  - A 110-page generated script, typed into near the top (the worst case for re-pagination) and near the end, in the continuous view and in page view.
+  - The editor's own work per key is timed around ProseMirror's state update, which includes re-pagination and redrawing the page-break widgets.
+  - Input-to-paint per key comes from the browser's Event Timing API.
+- **Results** (three runs):
+  - Editor work per key: about 1.0–1.6 ms median, 1.2–1.9 ms p95, under 4.5 ms at worst, the same in both views.
+  - Every measured key reached the screen within one frame (16 ms, the API's resolution).
+- **One finding:** the session's very first key costs the browser a one-time 40–70 ms. That's its first layout and input setup over a 110-page editable document, outside our code (our work stayed under 4 ms), and spellcheck makes no difference. The test types one warm-up key, then holds every key under 50 ms and our work under 8 ms p95.
+- **Why it's this cheap:** wrapped lines are memoized per block, pages before the change are reused (D-072), and page-break widgets keep their DOM through stable keys (D-074).
+- **Status:** built and tested.
+
 ### D-077 · 2026-10-27 · Import from Final Draft and Fountain
 
 - **Built** (`apps/web/src/import/importScript.ts`), following D-071's decisions:
