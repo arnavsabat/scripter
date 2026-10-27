@@ -20,6 +20,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **Editor behavior:** SPEC Part 4. Flat ProseMirror block schema, Enter/Tab state machine (defaults, to be confirmed in the editor phase), permissive schema with visible fixes, Yjs per-user undo.
 - **Architecture:** SPEC Part 5 and D-002. pnpm TypeScript monorepo; React + Vite; custom y-protocols sync server; Fastify; Postgres; DynamoDB for edit log, leases and membership; S3 snapshots; Cognito; CDK; lean AWS.
 - **Page geometry:** true screenplay geometry at 96 px per inch (D-003).
+- **Beta-readiness phase (D-082):** RDS `db.t4g.micro` Postgres with 7-day backups; a domain bought now; CloudWatch logs, alarms and browser crash reports; load tests proven locally, then run once on a temporary AWS cluster against the rooms + capacity targets; usage events recorded where they happen, with a user and an episode ID; the beta metrics as SQL in `docs/metrics.md`; esbuild bundles for the production servers.
 - **Unsynced edits:** closing or reloading a script that has edits the server hasn't acknowledged brings up the browser's leave prompt (D-069).
 - **Local S3-compatible store:** SeaweedFS (D-004).
 - **Plan:** SPEC Part 6. Spike first (2-3 days, gates the stack); Phase 1 with a hard checkpoint at the end of week 6 and a fixed cut order; Phase 2; closed beta; Phase 3; beta hardening. v1 is roughly 8.5-10.5 weeks after the spike.
@@ -211,13 +212,13 @@ Spike and Phase 1:
 7. ~~Snapshot compaction trigger~~: decided in D-018.
 8. ~~Client-side durability for offline work~~: decided in D-018 (kept on the device with y-indexeddb).
 9. ~~Formatting warning style~~: decided in D-014.
-10. How TypeScript runs on Node: dev uses `tsx` (D-018). Production bundling is decided with the first deploy.
-11. Load-test targets and method: concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
+10. ~~How TypeScript runs on Node~~: dev uses `tsx` (D-018); production is an esbuild bundle (D-082).
+11. ~~Load-test targets and method~~ (decided in D-082): concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
 12. Autocomplete behavior and look (SPEC 4.4; first on the cut list after the sync cuts).
 13. ~~AWS region~~: `us-east-2` (D-058; the free plan's organization policy forbids D-030's `ca-central-1`).
 14. How to gate the first AWS deploy before Cognito exists (SPEC 5.6). Also at deploy (D-025): where the cluster secret lives on AWS, and how the sync server is built for production.
-15. Which kind of "small Postgres" to run on AWS: RDS, Aurora Serverless v2, or Postgres on the Fargate task (SPEC 5.5).
-16. Monitoring and logging tool (the imported log deferred this to the build).
+15. ~~Which kind of "small Postgres"~~: RDS `db.t4g.micro` with 7-day backups (D-082).
+16. ~~Monitoring and logging tool~~: CloudWatch only, with alarms and browser crash reports (D-082).
 
 Phase 2:
 
@@ -238,7 +239,7 @@ Phase 2:
 22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
 23. Fountain and .fdx import edge cases: title pages, notes, boneyard, dual dialogue, and unsupported element types.
 24. PDF library: pdf-lib is the spec's example, so confirm it. Courier Prime will need to be bundled locally for PDF embedding, alongside the Google Fonts link.
-25. Product name (still a working title).
+25. Product name (still a working title). Folded into choosing the domain, bought now (D-082).
 
 Phase 3:
 
@@ -320,6 +321,31 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-082 · 2026-10-27 · Beta-readiness phase: the deploy, monitoring, load-test and usage decisions
+
+The phase prompt ("make it beta-ready, measured and polished") asks to run the pages phase's beta-readiness checklist end to end. Two of its blockers had never been started: the app itself isn't deployed (only Cognito, SES and the budgets are), and the load-test harness (`tools/loadtest`) is an empty stub. Both are in this phase. `docs/metrics.md` and a runbook, named in the prompt, didn't exist yet; Claude writes both here.
+
+- **Arnav's calls** (Claude's recommendation each time, except the dashboard):
+  1. **Postgres on AWS: RDS** `db.t4g.micro`, single-AZ, with 7-day automatic backups, about $13-15 a month (open decision 15). The backups settle the checklist's backup item. Rejected: Aurora Serverless v2 (the first request after an idle pause takes about 15 s, so a writer opening Home waits); Postgres inside the container (no managed backups, and the data goes when the task is replaced).
+  2. **A domain, bought now** (supersedes D-038's "deferred until just before the beta"). Arnav picks the name and buys it. Claude wires it to CloudFront with HTTPS, SES (a domain identity, then Arnav's production-access request) and Cognito. Rejected: no domain (every tester would first have to click an AWS verification email before any code reached them); settling the product name first (it doesn't block the build, so it's folded into choosing the domain).
+  3. **Monitoring: CloudWatch only** (open decision 16): server logs in CloudWatch, a few alarms emailed to Arnav (a server down, API 5xx errors, edit-log append failures), and a tiny endpoint for browser crash reports that carries the error, the stack and the app version, never script text. Rejected: adding Sentry (a new third party seeing writers' sessions, which needs scrubbing); logs with no alarms (outages would be learned from testers).
+  4. **Load tests: local first, then AWS** (open decision 11, method). The harness is proven on the laptop's 3-node cluster; the quotable numbers come from one run on a temporary 3-node AWS cluster with the load generator in the same region, torn down afterwards. Rejected: local only (DynamoDB Local's one-at-a-time writes distort the numbers, D-023); AWS only (every harness bug would cost a cloud run).
+  5. **Load-test targets: rooms + capacity** (open decision 11, targets). "Latency" is one writer's keystroke reaching another writer's screen.
+     - (a) 1,000 writers in 200 scripts (5 each, typing in realistic bursts) on 3 servers, with p95 latency under 150 ms.
+     - (b) One 15-writer room.
+     - (c) A server killed mid-run, with zero lost edits checked by comparing every tagged keystroke against the final scripts, plus the pause writers saw.
+     - (d) A ramp on one server to find where p95 crosses 150 ms.
+     - Rejected: beta scale only (about 50 writers is a weak resume number); 10,000 writers (a bigger generator and cluster, so more cost, far beyond any beta need).
+  6. **Usage events: recorded on the server where they happen, with a user and an episode ID** (SPEC 5.9).
+     - The sync server records "session started" and "session with 2+ concurrent writers"; the API records "what-if created".
+     - The browser reports only browser-side events: a scene sent, a script imported, a PDF exported.
+     - Each row is an event name, a user, an episode ID and a time, never content, so active scripts and rooms can be counted as well as people.
+     - Rejected: no episode ID (no count of active scripts or rooms); everything from the browser (ad blockers and closed tabs drop events).
+  7. **The beta metrics are a SQL file** (Arnav's choice over Claude's recommended `pnpm metrics` command): saved queries in `docs/metrics.md` to paste into psql. Rejected: a `pnpm metrics` command (more convenient, more code); an internal `/admin` page (new UI and a new admin permission to secure).
+  8. **Production servers are bundled with esbuild** (open decision 10): each server builds into one JavaScript file, so images are smaller and a replacement server starts faster after a failover. Dev keeps `tsx`. Rejected: `tsx` at runtime (slower starts, which add to failover time); `tsc` (the workspace packages export `.ts` sources, so it needs more config than a bundle).
+- **What changes for writers:** nothing visible yet. These decide how the beta is hosted, watched and measured.
+- **Status:** Arnav's calls.
 
 ### D-081 · 2026-10-27 · What-if decisions confirmed; renaming and deleting what-ifs built
 
