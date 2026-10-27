@@ -136,6 +136,31 @@ describe('server crash and offline work', () => {
     expect(await stored(ep)).toContain('Written offline.');
   });
 
+  it('leaving with edits the server hasn’t received asks first (D-069)', async () => {
+    const ep = newEpisode();
+    const maya = await mount('Maya', ep, 'left');
+    await focusEnd(maya, 0);
+    await type('Before the outage. ');
+    await until(() => !maya.host.querySelector('.cue'));
+    /** Whether closing the tab now would get the browser's "Leave site?" prompt. */
+    const leaving = () => {
+      const e = new Event('beforeunload', { cancelable: true });
+      window.dispatchEvent(e);
+      return e.defaultPrevented;
+    };
+    await until(() => !leaving(), 5000); // once the server has acknowledged everything
+
+    await server('kill');
+    await until(() => maya.host.querySelector('.cue')?.textContent === 'Reconnecting…', 5000);
+    expect(leaving()).toBe(false); // nothing new typed yet
+    await type('Written offline.');
+    expect(leaving()).toBe(true);
+
+    await server('restart');
+    await until(() => !maya.host.querySelector('.cue'), 15_000);
+    await until(() => !leaving(), 5000);
+  });
+
   it('both writers edit while the server is down; it all merges on reconnect', async () => {
     const ep = newEpisode();
     const maya = await mount('Maya', ep, 'left');

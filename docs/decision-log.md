@@ -20,6 +20,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **Editor behavior:** SPEC Part 4. Flat ProseMirror block schema, Enter/Tab state machine (defaults, to be confirmed in the editor phase), permissive schema with visible fixes, Yjs per-user undo.
 - **Architecture:** SPEC Part 5 and D-002. pnpm TypeScript monorepo; React + Vite; custom y-protocols sync server; Fastify; Postgres; DynamoDB for edit log, leases and membership; S3 snapshots; Cognito; CDK; lean AWS.
 - **Page geometry:** true screenplay geometry at 96 px per inch (D-003).
+- **Unsynced edits:** closing or reloading a script that has edits the server hasn't acknowledged brings up the browser's leave prompt (D-069).
 - **Local S3-compatible store:** SeaweedFS (D-004).
 - **Plan:** SPEC Part 6. Spike first (2-3 days, gates the stack); Phase 1 with a hard checkpoint at the end of week 6 and a fixed cut order; Phase 2; closed beta; Phase 3; beta hardening. v1 is roughly 8.5-10.5 weeks after the spike.
 - **Where the log lives:** in the repo, alongside SPEC.md and CLAUDE.md (D-001).
@@ -173,6 +174,8 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 - ~~D-020: storage-backed tests not yet run~~: resolved in D-021. All 6 pass against DynamoDB Local and SeaweedFS, three runs in a row, including the SIGKILL crash of a real server process.
 - ~~D-020: no client heartbeat~~: decided in D-022 (ping every 5 s, give up after 10 s).
+- **D-069: the leave prompt covers the open script only.** A script left for Home while still offline gets no prompt when Home is closed. A normal window keeps the copy and syncs it later; an incognito window loses it. Options to bring when it matters: prompt on Home too, or keep the script's connection open until it's synced.
+- **D-069: an unreachable API looks like being signed out.** A reload while the API is down shows the sign-in page, and trying to sign in then says "Something went wrong". Better: say the server can't be reached and keep retrying. Options to bring to Arnav.
 - **D-065: the API's production role needs `cognito-idp:AdminGetUser`** on the user pool only. This goes in the deploy phase's CDK stack for the API. Without it, every returning email sign-in fails.
 - **D-062: a host sync server and the Docker cluster mix in one membership.** They share the local DynamoDB, but the containers can't reach the host's `localhost` address. For now: run one or the other, never both. A fix (separate membership tables, or a reachable host address) can wait until it matters.
 - **D-020: web test runs end with a 10-second wait.** Vite's own browser connections outlive the test server's teardown, so Vitest waits out its timeout. The run still exits 0, and our servers leave nothing open.
@@ -304,6 +307,26 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-069 · 2026-10-26 · A line typed offline in an incognito window was lost; leaving with unsynced edits now asks first
+
+- **What happened (Arnav, demo):** MATT's line after "John finishes his drink" was missing.
+  - The stored script (snapshot plus edit log) has every other line, and there's no deleted-block marker where it was. So it never reached a server.
+  - Sam typed it in the incognito window during step 10, when there was no reachable server (D-066 (3)). It was saved only in that window's local copy (IndexedDB). Closing the incognito window made Chrome delete that storage, and the line with it.
+- **What it means for "zero lost edits":** the promise is about every edit a server has received and acknowledged, and the server side held. This one never got that far. From the writer's point of view, though, work disappeared without warning.
+- **Options considered:**
+  1. **The browser's leave prompt (chosen):** only while edits are unsynced, the browser's own "Leave site? Changes you made may not be saved" dialog, as Google Docs does.
+  2. **Leave as is:** a normal window keeps its copy and syncs later; only incognito or cleared site data loses it.
+  3. **The prompt plus a clearer toolbar cue** ("Not saved yet"): a toolbar design change, to be mocked up first.
+- **Rejected, from writers' point of view:** (2) can still lose offline work silently, as here. (3) is more visible but changes the toolbar design; not needed for the safety net itself.
+- **Built:**
+  - While the open script has edits the server hasn't acknowledged (the same flag the safe sign-out uses, D-050), the page asks the browser to confirm before closing or reloading (`beforeunload` in `apps/web/src/editor/useScriptEditor.ts`). Once everything is synced, there's no prompt.
+  - Browser test: no prompt when synced; none while offline with nothing new; a prompt after typing offline; none again after reconnecting. It fails without the change.
+- **Limits:**
+  - The dialog's wording is the browser's and can't be changed.
+  - It covers the open script only. A script left for Home while still offline has no prompt when Home is then closed. A normal window keeps that copy; an incognito one doesn't. Logged as an open issue.
+- **Also seen, logged as an open issue:** when the API itself is down, a reload shows the sign-in page, as though the writer were signed out (Sam's window after step 10, then "Something went wrong").
+- **Status:** Arnav's call (option 1); built and tested.
 
 ### D-068 · 2026-10-26 · Google sign-in failed: the client secret had been pasted twice
 

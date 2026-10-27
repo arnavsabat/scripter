@@ -114,6 +114,13 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
       };
       ydoc.on('update', noteLocalEdit);
       cleanups.push(() => ydoc.off('update', noteLocalEdit));
+      // Leaving while some of them aren't on the server yet: the browser's own "Leave site?"
+      // prompt, since an incognito window or cleared site data takes the copy with it (D-069).
+      const askBeforeLeaving = (e: BeforeUnloadEvent) => {
+        if (localCopies.unsynced().includes(session.docId)) e.preventDefault();
+      };
+      window.addEventListener('beforeunload', askBeforeLeaving);
+      cleanups.push(() => window.removeEventListener('beforeunload', askBeforeLeaving));
       cleanups.push(
         c.onChange(() => {
           setCue(c.cue);
