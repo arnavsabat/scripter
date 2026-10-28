@@ -323,6 +323,23 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-093 · 2026-10-27 · The load-test cluster for AWS (`WrLoad`), built and synthesized
+
+- **What it is** (`infra/src/load.ts`): SPEC 5.5's "multi-node cluster, spun up only for load tests and demos, then torn down".
+  - **Three sync servers** running the load-test entry, on demand (not Spot, so a run isn't interrupted), at the beta's task size.
+  - **An internal load balancer** like the beta's.
+  - **A load generator task** (8 vCPU, 16 GB) in the same VPC, started by hand for each scenario.
+  - **Its own DynamoDB tables (`wr-lt-*`) and bucket,** deleted with the stack. It never touches the beta: no Cognito, no Postgres, none of the beta's tables (a test checks).
+- **The key pair** is made when the app is synthesized, so each deploy of the stack gets a fresh one. The private half sits in the generator's task definition; it grants nothing but writing into this throwaway cluster.
+- **The crash switch:** `POST /__crash` on port 4001, with the cluster's secret, ends a load-test server at once: no handoff, no lease release. That's a crash, as the failover scenario needs; ECS stopping a task would be graceful. The generator's `--crash-member` picks a live server from the membership table. It exists only in the load-test server; the production image doesn't contain it (checked by listing the image).
+- **Proven locally from the bundles** (`infra/docker/loadtest.Dockerfile`, `tools/loadtest/scripts/bundle.mjs`): three bundled servers, the bundled generator with keys from the environment, and one server crashed through its switch 12 s in. Keystrokes at the moment of the crash waited up to 6.6 s, nothing was lost, and every edit was acknowledged.
+- **The generator** prints its results as one JSON line (`LOADTEST_RESULT …`) to read back from CloudWatch, and writes the file when it can.
+- **Cost, roughly, for the four scenarios:**
+  - **The cluster:** the three servers, the generator and the load balancer come to well under $1 an hour.
+  - **DynamoDB writes:** each keystroke is a transactional append plus its lease check, so 1,000 writers is about 10,000 write units a second, around $20-25 an hour at on-demand prices. The full suite (about 12 minutes of typing) should land around $5-10.
+  - **Estimates only:** these come from AWS's published prices, not a bill.
+- **Status:** built, synthesized and tested; deployed only for a load test, after Arnav's go-ahead (D-089).
+
 ### D-092 · 2026-10-27 · The load-test harness built and proven locally (beta-readiness checklist)
 
 - **What it is** (`tools/loadtest`; `pnpm loadtest <scenario>`): D-082's four targets as scenarios:

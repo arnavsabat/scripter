@@ -2,6 +2,7 @@
 //   WrBudgets (the $20 / $40 alarms) → WrEmail (SES verification links) → WrAuth (Cognito).
 // Then the beta itself (D-091; docs/runbook.md): WrData (Postgres, DynamoDB, S3, the network),
 // WrCert (only with a domain, in us-east-1), and WrApp (CloudFront, the load balancer, the task).
+// WrLoad, the temporary load-test cluster (D-093), is deployed only for a load test, then destroyed.
 import { App } from 'aws-cdk-lib';
 import { AuthStack } from './auth';
 import { BetaStack } from './beta';
@@ -10,6 +11,7 @@ import { CertStack } from './cert';
 import { loadConfig } from './config';
 import { DataStack } from './data';
 import { EmailStack } from './email';
+import { LoadStack } from './load';
 
 const config = loadConfig();
 const app = new App();
@@ -36,3 +38,4 @@ new BetaStack(app, 'WrApp', {
   auth,
   ...(cert ? { certificate: cert.certificate } : {}),
 });
+new LoadStack(app, 'WrLoad', { env, data });

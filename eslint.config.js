@@ -23,6 +23,7 @@ export default defineConfig(
             'apps/api/vitest.config.ts',
             'infra/vitest.config.ts',
             'apps/sync/scripts/bundle.mjs',
+            'tools/loadtest/scripts/bundle.mjs',
             'spike/vitest.config.ts',
           ],
         },

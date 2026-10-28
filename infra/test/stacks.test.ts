@@ -8,6 +8,7 @@ import { BetaStack } from '../src/beta';
 import { BudgetsStack } from '../src/budgets';
 import { CertStack } from '../src/cert';
 import { DataStack } from '../src/data';
+import { LoadStack } from '../src/load';
 import { loadConfig } from '../src/config';
 import { EmailStack } from '../src/email';
 
@@ -250,5 +251,39 @@ describe('the beta (D-082, D-091)', () => {
       DistributionConfig: Match.objectLike({ Aliases: ['example.com'] }),
     });
     t.resourceCountIs('AWS::Route53::RecordSet', 1);
+  });
+});
+
+describe('the load-test cluster (D-093)', () => {
+  const app = new App();
+  const env2 = { account: '111111111111', region: 'us-east-2' };
+  const data = new DataStack(app, 'D', { env: env2 });
+  const t = Template.fromStack(
+    new LoadStack(app, 'L', {
+      env: env2,
+      data,
+      image: ContainerImage.fromRegistry('public.ecr.aws/docker/library/node:24-alpine'),
+    }),
+  );
+
+  it('three load-test servers on demand, and a generator, with throwaway tables', () => {
+    t.hasResourceProperties('AWS::ECS::Service', { DesiredCount: 3, LaunchType: 'FARGATE' });
+    t.hasResourceProperties('AWS::ECS::TaskDefinition', {
+      Cpu: '8192',
+      ContainerDefinitions: [Match.objectLike({ Name: 'generator' })],
+    });
+    t.hasResourceProperties('AWS::ECS::TaskDefinition', {
+      ContainerDefinitions: [Match.objectLike({ Name: 'sync', Command: ['node', 'lt-server.js'] })],
+    });
+    for (const res of Object.values(t.findResources('AWS::DynamoDB::GlobalTable')))
+      expect((res as { DeletionPolicy?: string }).DeletionPolicy).toBe('Delete');
+    t.hasResourceProperties('AWS::DynamoDB::GlobalTable', { TableName: 'wr-lt-edit-log' });
+  });
+
+  it('never touches the beta: no Cognito, no Postgres, none of its tables', () => {
+    const json = JSON.stringify(t.toJSON());
+    expect(json).not.toContain('cognito');
+    expect(json).not.toContain('PGHOST');
+    expect(json).not.toMatch(/"wr-edit-log"/);
   });
 });

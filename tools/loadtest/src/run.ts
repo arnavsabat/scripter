@@ -6,9 +6,11 @@
 //   ramp      one server, more and more writers, until p95 crosses 150 ms
 //
 // Local:  pnpm loadtest <scenario> --local 3        (spawns servers on DynamoDB Local + SeaweedFS)
-// AWS:    pnpm loadtest <scenario> --servers wss://… --key <keys.json> --kill-cmd "…"
+// AWS:    the generator task in WrLoad (docs/runbook.md): --servers ws://<load balancer> --crash-member
+//         (keys from WR_LOADTEST_KEYS; one live server crashed through its crash switch, D-093)
 // Any setting can be overridden: --rooms --size --seconds --workers --kill-at --steps --label.
-// Results print as a table and are written to tools/loadtest/results/<label>.json.
+// Results print as a table and are written to tools/loadtest/results/<label>.json; --json also
+// prints them as one line of JSON (on AWS, read it back from the task's CloudWatch logs).
 import { createPortableTestIssuer } from '@wr/auth/testing';
 import { execSync, spawn, type ChildProcess } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -145,7 +147,9 @@ async function measure(
       typing: REALISTIC,
       drainMs: 60_000,
     };
-    return new Worker(new URL('./worker.ts', import.meta.url), { workerData: job });
+    // Next to this file: worker.ts under tsx, worker.js in the bundled image.
+    const file = import.meta.url.endsWith('.ts') ? './worker.ts' : './worker.js';
+    return new Worker(new URL(file, import.meta.url), { workerData: job });
   });
   const ready = threads.map(
     (t) =>
@@ -211,18 +215,34 @@ async function measure(
 }
 
 // ---- Main ----------------------------------------------------------------------------------
+// The keys: this run's own (local), a file, or WR_LOADTEST_KEYS (the AWS generator task).
 const keyFile = flag('key');
-const issuer = keyFile ? null : await createPortableTestIssuer();
-const keys: Job['keys'] = keyFile
-  ? (JSON.parse(readFileSync(keyFile, 'utf8')) as Job['keys'])
+const keyJson = keyFile ? readFileSync(keyFile, 'utf8') : process.env.WR_LOADTEST_KEYS;
+const issuer = keyJson ? null : await createPortableTestIssuer();
+const keys: Job['keys'] = keyJson
+  ? (JSON.parse(keyJson) as Job['keys'])
   : { privateJwk: issuer!.privateJwk, publicJwk: issuer!.publicJwk };
 const remote = flag('servers')?.split(',').filter(Boolean);
 const servers = remote ?? (await startLocal(settings.nodes, keys.publicJwk));
 const killCmd = flag('kill-cmd');
+/** A crash, not a goodbye: SIGKILL locally; on AWS, a live member's crash switch. */
 const killSecond = () => {
-  if (killCmd) execSync(killCmd, { stdio: 'inherit' });
-  else local[Math.min(1, local.length - 1)]!.proc.kill('SIGKILL'); // a crash, not a goodbye
+  if (argv.includes('--crash-member')) void crashMember();
+  else if (killCmd) execSync(killCmd, { stdio: 'inherit' });
+  else local[Math.min(1, local.length - 1)]!.proc.kill('SIGKILL');
 };
+async function crashMember() {
+  const { awsConfigFromEnv, awsStorage } = await import('@wr/sync/aws');
+  const members = await (await awsStorage(awsConfigFromEnv(process.env))).members.list();
+  const victim = members.sort((a, b) => a.id.localeCompare(b.id))[0];
+  if (!victim) return console.error('crash: no live members');
+  const host = new URL(victim.url.replace(/^ws/, 'http')).hostname;
+  console.log(`crashing ${victim.id} (${host})`);
+  await fetch(`http://${host}:${process.env.WR_LOADTEST_CRASH_PORT ?? 4001}/__crash`, {
+    method: 'POST',
+    headers: { 'x-loadtest-secret': process.env.WR_CLUSTER_SECRET ?? '' },
+  }).catch(() => {}); // the connection dies with the process
+}
 
 const machine = {
   date: new Date().toISOString(),
@@ -284,8 +304,14 @@ try {
 } finally {
   stopLocal();
 }
-const dir = fileURLToPath(new URL('../results/', import.meta.url));
-mkdirSync(dir, { recursive: true });
-writeFileSync(`${dir}${label}.json`, `${JSON.stringify(results, null, 2)}\n`);
-console.log(`results: tools/loadtest/results/${label}.json`);
+if (argv.includes('--json')) console.log(`LOADTEST_RESULT ${JSON.stringify(results)}`);
+// The results file, when the folder is writable (in the AWS image, the JSON line is the record).
+try {
+  const dir = fileURLToPath(new URL('../results/', import.meta.url));
+  mkdirSync(dir, { recursive: true });
+  writeFileSync(`${dir}${label}.json`, `${JSON.stringify(results, null, 2)}\n`);
+  console.log(`results: tools/loadtest/results/${label}.json`);
+} catch (err) {
+  console.error(`results not written: ${String(err)}`);
+}
 process.exit(0);

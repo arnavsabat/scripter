@@ -17,7 +17,9 @@
     "deploy:data": "cdk deploy WrData",
     "deploy:cert": "cdk deploy WrCert",
     "deploy:app": "VITE_WR_VERSION=$(git rev-parse --short HEAD) pnpm --filter @wr/web build && cdk deploy WrApp --exclusively",
-    "diff": "cdk diff"
+    "diff": "cdk diff",
+    "deploy:load": "cdk deploy WrLoad",
+    "destroy:load": "cdk destroy WrLoad"
   },
   "dependencies": {
     "aws-cdk-lib": "2.274.0",

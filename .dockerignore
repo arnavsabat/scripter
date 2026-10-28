@@ -11,7 +11,7 @@
 .env.*
 docs
 apps/web
-tools
+tools/loadtest/results
 packages/schema
 packages/pagination
 infra/src

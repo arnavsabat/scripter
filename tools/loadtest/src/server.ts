@@ -43,6 +43,26 @@ const server = await startSyncServer({
   ...(internal ? { internalUrl: internal } : {}),
   logger,
 });
+// The load-test cluster's crash switch (D-093): POST /__crash on its own port, with the cluster
+// secret, ends the process at once (no handoff, no lease release): a crash, as the failover
+// scenario needs, where ECS's own stop would be graceful. Off unless WR_LOADTEST_CRASH_PORT is set.
+if (env.WR_LOADTEST_CRASH_PORT) {
+  const { createServer } = await import('node:http');
+  createServer((req, res) => {
+    if (
+      req.method === 'POST' &&
+      req.url === '/__crash' &&
+      req.headers['x-loadtest-secret'] === env.WR_CLUSTER_SECRET
+    ) {
+      logger.error('crashing on request (load test)');
+      res.end('bye');
+      process.exit(137);
+    }
+    res.statusCode = 404;
+    res.end();
+  }).listen(Number(env.WR_LOADTEST_CRASH_PORT));
+}
+
 process.once('SIGTERM', () => {
   logger.info('shutting down gracefully', { signal: 'SIGTERM' });
   void server.close().then(() => process.stdout.write('', () => process.exit(0)));
