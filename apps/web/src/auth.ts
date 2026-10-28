@@ -117,9 +117,15 @@ export const auth = {
   start: () => {
     if (state.status === 'loading') void refresh().catch(() => {});
   },
-  /** The "can't reach" notice's Try again. */
-  retryNow: () => {
+  /**
+   * The "can't reach" notice's Try again: always a fresh attempt, never the answer to one sent
+   * while the server was still away, and the backoff starts over.
+   */
+  retryNow: async () => {
     clearTimeout(retryTimer);
+    attempt = 0;
+    await refreshing?.catch(() => {});
+    if (state.status === 'signedIn') return true;
     return refresh().then(
       () => true,
       () => false,

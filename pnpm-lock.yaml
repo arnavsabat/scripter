@@ -417,7 +417,33 @@ importers:
         specifier: 13.6.33
         version: 13.6.33
 
-  tools/loadtest: {}
+  tools/loadtest:
+    dependencies:
+      '@wr/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@wr/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
+      '@wr/sync':
+        specifier: workspace:*
+        version: link:../../apps/sync
+      jose:
+        specifier: 6.2.13
+        version: 6.2.13
+      y-protocols:
+        specifier: 1.0.7
+        version: 1.0.7(yjs@13.6.33)
+      yjs:
+        specifier: 13.6.33
+        version: 13.6.33
+    devDependencies:
+      '@types/node':
+        specifier: 24.19.2
+        version: 24.19.2
+      tsx:
+        specifier: 4.23.15
+        version: 4.23.15
 
 packages:
 

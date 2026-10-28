@@ -214,7 +214,7 @@ Spike and Phase 1:
 8. ~~Client-side durability for offline work~~: decided in D-018 (kept on the device with y-indexeddb).
 9. ~~Formatting warning style~~: decided in D-014.
 10. ~~How TypeScript runs on Node~~: dev uses `tsx` (D-018); production is an esbuild bundle (D-082).
-11. ~~Load-test targets and method~~ (decided in D-082): concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
+11. ~~Load-test targets and method~~ (decided in D-082; the harness, D-092): concurrent editors per script and per server, the p95 latency goal, how failover is injected, and how "zero lost edits" is verified (SPEC 5.4).
 12. Autocomplete behavior and look (SPEC 4.4; first on the cut list after the sync cuts).
 13. ~~AWS region~~: `us-east-2` (D-058; the free plan's organization policy forbids D-030's `ca-central-1`).
 14. How to gate the first AWS deploy before Cognito exists (SPEC 5.6). Also at deploy (D-025): where the cluster secret lives on AWS, and how the sync server is built for production.
@@ -322,6 +322,32 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-092 · 2026-10-27 · The load-test harness built and proven locally (beta-readiness checklist)
+
+- **What it is** (`tools/loadtest`; `pnpm loadtest <scenario>`): D-082's four targets as scenarios:
+  - `rooms`: 1,000 writers in 200 scripts of 5, for 3 minutes, on 3 servers;
+  - `room15`: one 15-writer room;
+  - `failover`: a server killed mid-run;
+  - `ramp`: one server, more writers each step, until p95 crosses 150 ms.
+- **The simulated writers:**
+  - Each is a real `SyncClient` with its own Y.Doc and presence, connecting exactly as a browser does.
+  - It types its own line at about five keys a second in bursts, with pauses, and moves its cursor on every key, as the editor's presence does.
+  - Rooms are spread over worker threads, so the generator isn't the bottleneck. Each room's writers share a thread, so a keystroke's send and arrival are timed on one clock.
+- **What it measures:**
+  - Latency: keystroke to another writer's screen, through the durable append. It's kept in a 1 ms histogram (exact percentiles, fixed memory), plus a per-second timeline to show a failover pause.
+  - Zero lost edits: at the end, a fresh client reads every script back, and each line must equal exactly what its writer typed. Also counted: writers whose edits weren't all acknowledged, and writers that never connected.
+- **How it signs writers in:** like the chaos suite, a load-test-only server entry (`tools/loadtest/src/server.ts`) trusts the run's key, passed in `WR_LOADTEST_PUBLIC_JWK`. It also lets everyone edit (in-memory access): the real Postgres check runs once per connection, never per keystroke. The production image never contains it. Storage is real: DynamoDB and S3, or locally their emulators. `@wr/auth/testing` gained a portable test issuer (its private key can move to worker threads).
+- **Proven locally** (full table in `docs/metrics.md`): 0 lost edits and 0 unacknowledged writers in every run.
+  - **The 15-writer room:** p95 31 ms.
+  - **40 writers on 3 servers:** p95 136 ms.
+  - **The failover:** a server SIGKILLed 25 s in. Keystrokes at the moment of the kill waited up to 6.6 s (the lease expiring, then a reconnect), and latency was back to normal about 7 s later.
+- **The local ceiling, measured:** DynamoDB Local processes transactional writes one at a time and saturates at about 100-150 appends a second (40-60 writers), while the sync server sits near 20% CPU. That's D-023's risk, now with a number; the quotable numbers come from AWS (D-082).
+- **Also fixed on the way (D-085's notice):** Try again could reuse a retry already in flight, sent while the server was still away; when that failed, the next automatic retry could be up to 30 s off. Try again now always makes a fresh attempt and restarts the backoff. A full test run under load exposed it.
+- **Fixed on the way:** a script whose lease is held by another live server (the servers' view of the ring still settling) logged "room load failed" as an error, which would have set off the edit-log alarm (D-091) on every deploy. It's now its own error type, logged at info level; the writers are told to try again, as before.
+- **Noted, not done (an architecture choice, for Arnav if the AWS numbers call for it):** the home server appends each script's updates strictly one at a time, so one script can take at most one update per DynamoDB round trip. "Group commit" would merge the updates queued behind a slow append into one log entry. That keeps the append-before-ack rule and multiplies how much one script can take.
+- **Tests:** the histogram's percentiles and merging; a small room against an in-process server (typing, latency samples, and an exact read-back).
+- **Status:** built and proven locally; the AWS run comes after the deploy (the load-test cluster, `WrLoad`, is next).
 
 ### D-091 · 2026-10-27 · The beta's deploy stacks built and synthesized (not deployed, per D-089)
 

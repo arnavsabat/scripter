@@ -3,11 +3,24 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Load-test harness for the sync service.",
+  "description": "Load-test harness for the sync service (D-082, D-092).",
   "exports": {
     ".": "./src/index.ts"
   },
   "scripts": {
+    "loadtest": "node --env-file-if-exists=../../.env --import tsx src/run.ts",
     "typecheck": "tsc --noEmit -p ."
+  },
+  "dependencies": {
+    "@wr/auth": "workspace:*",
+    "@wr/shared": "workspace:*",
+    "@wr/sync": "workspace:*",
+    "jose": "6.2.13",
+    "y-protocols": "1.0.7",
+    "yjs": "13.6.33"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.2",
+    "tsx": "4.23.15"
   }
 }

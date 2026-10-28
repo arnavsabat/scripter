@@ -12,6 +12,17 @@ import * as awarenessProtocol from 'y-protocols/awareness';
 import * as Y from 'yjs';
 import { FencedError, type Fence, type Storage } from './storage/types';
 
+/**
+ * Another live server holds this document's lease (it keeps renewing it): writers routed here
+ * while the servers' view of the ring settles. Not a failure; they're told to try again (D-092).
+ */
+export class LeaseBusyError extends Error {
+  constructor(docId: string, holder: string) {
+    super(`lease for ${docId} still held by ${holder}`);
+    this.name = 'LeaseBusyError';
+  }
+}
+
 export interface Peer {
   /** Display name, for logs only. */
   readonly name: string;
@@ -101,8 +112,7 @@ export class Room {
         this.lastRenewedAt = Date.now();
         break;
       }
-      if (Date.now() > deadline)
-        throw new Error(`lease for ${this.docId} still held by ${got.holder}`);
+      if (Date.now() > deadline) throw new LeaseBusyError(this.docId, got.holder);
       // Wake just after it expires (with a little slack), or poll if the expiry looks far off.
       await sleep(Math.min(Math.max(got.expiresAt - Date.now() + 50, 50), 500));
     }

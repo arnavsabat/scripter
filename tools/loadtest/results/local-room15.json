@@ -1,0 +1,403 @@
+{
+  "settings": {
+    "rooms": 1,
+    "size": 15,
+    "seconds": 60,
+    "nodes": 3
+  },
+  "machine": {
+    "date": "2026-10-28T02:40:40.711Z",
+    "commit": "50e0a45",
+    "generator": {
+      "cpus": 8,
+      "model": "Apple M2",
+      "memoryGB": 8,
+      "node": "v24.12.0",
+      "workers": 2
+    },
+    "target": "local: 3 server processes on DynamoDB Local + SeaweedFS"
+  },
+  "runs": [
+    {
+      "writers": 15,
+      "rooms": 1,
+      "latency": {
+        "samples": 29498,
+        "p50": 9,
+        "p95": 31,
+        "p99": 77,
+        "max": 253,
+        "mean": 13.7,
+        "over150": 126,
+        "over1s": 0
+      },
+      "keystrokes": 2107,
+      "lostCharacters": 0,
+      "unackedWriters": 0,
+      "failedWriters": 0,
+      "connectSeconds": 0.1,
+      "timeline": {
+        "0": {
+          "samples": 294,
+          "over150": 0,
+          "over1s": 0,
+          "max": 45
+        },
+        "1": {
+          "samples": 882,
+          "over150": 0,
+          "over1s": 0,
+          "max": 34
+        },
+        "2": {
+          "samples": 560,
+          "over150": 0,
+          "over1s": 0,
+          "max": 47
+        },
+        "3": {
+          "samples": 280,
+          "over150": 0,
+          "over1s": 0,
+          "max": 29
+        },
+        "4": {
+          "samples": 350,
+          "over150": 0,
+          "over1s": 0,
+          "max": 19
+        },
+        "5": {
+          "samples": 560,
+          "over150": 0,
+          "over1s": 0,
+          "max": 36
+        },
+        "6": {
+          "samples": 546,
+          "over150": 0,
+          "over1s": 0,
+          "max": 44
+        },
+        "7": {
+          "samples": 490,
+          "over150": 0,
+          "over1s": 0,
+          "max": 29
+        },
+        "8": {
+          "samples": 420,
+          "over150": 0,
+          "over1s": 0,
+          "max": 25
+        },
+        "9": {
+          "samples": 322,
+          "over150": 0,
+          "over1s": 0,
+          "max": 24
+        },
+        "10": {
+          "samples": 378,
+          "over150": 0,
+          "over1s": 0,
+          "max": 57
+        },
+        "11": {
+          "samples": 588,
+          "over150": 0,
+          "over1s": 0,
+          "max": 35
+        },
+        "12": {
+          "samples": 574,
+          "over150": 0,
+          "over1s": 0,
+          "max": 27
+        },
+        "13": {
+          "samples": 364,
+          "over150": 0,
+          "over1s": 0,
+          "max": 28
+        },
+        "14": {
+          "samples": 294,
+          "over150": 0,
+          "over1s": 0,
+          "max": 29
+        },
+        "15": {
+          "samples": 336,
+          "over150": 0,
+          "over1s": 0,
+          "max": 27
+        },
+        "16": {
+          "samples": 602,
+          "over150": 0,
+          "over1s": 0,
+          "max": 36
+        },
+        "17": {
+          "samples": 630,
+          "over150": 0,
+          "over1s": 0,
+          "max": 35
+        },
+        "18": {
+          "samples": 476,
+          "over150": 0,
+          "over1s": 0,
+          "max": 33
+        },
+        "19": {
+          "samples": 406,
+          "over150": 0,
+          "over1s": 0,
+          "max": 26
+        },
+        "20": {
+          "samples": 714,
+          "over150": 0,
+          "over1s": 0,
+          "max": 23
+        },
+        "21": {
+          "samples": 518,
+          "over150": 0,
+          "over1s": 0,
+          "max": 46
+        },
+        "22": {
+          "samples": 448,
+          "over150": 0,
+          "over1s": 0,
+          "max": 48
+        },
+        "23": {
+          "samples": 420,
+          "over150": 0,
+          "over1s": 0,
+          "max": 55
+        },
+        "24": {
+          "samples": 560,
+          "over150": 0,
+          "over1s": 0,
+          "max": 42
+        },
+        "25": {
+          "samples": 560,
+          "over150": 0,
+          "over1s": 0,
+          "max": 51
+        },
+        "26": {
+          "samples": 630,
+          "over150": 0,
+          "over1s": 0,
+          "max": 35
+        },
+        "27": {
+          "samples": 490,
+          "over150": 0,
+          "over1s": 0,
+          "max": 37
+        },
+        "28": {
+          "samples": 252,
+          "over150": 0,
+          "over1s": 0,
+          "max": 27
+        },
+        "29": {
+          "samples": 448,
+          "over150": 0,
+          "over1s": 0,
+          "max": 42
+        },
+        "30": {
+          "samples": 574,
+          "over150": 0,
+          "over1s": 0,
+          "max": 34
+        },
+        "31": {
+          "samples": 490,
+          "over150": 0,
+          "over1s": 0,
+          "max": 19
+        },
+        "32": {
+          "samples": 462,
+          "over150": 0,
+          "over1s": 0,
+          "max": 30
+        },
+        "33": {
+          "samples": 476,
+          "over150": 0,
+          "over1s": 0,
+          "max": 110
+        },
+        "34": {
+          "samples": 588,
+          "over150": 0,
+          "over1s": 0,
+          "max": 30
+        },
+        "35": {
+          "samples": 686,
+          "over150": 0,
+          "over1s": 0,
+          "max": 38
+        },
+        "36": {
+          "samples": 588,
+          "over150": 0,
+          "over1s": 0,
+          "max": 38
+        },
+        "37": {
+          "samples": 364,
+          "over150": 0,
+          "over1s": 0,
+          "max": 21
+        },
+        "38": {
+          "samples": 196,
+          "over150": 0,
+          "over1s": 0,
+          "max": 17
+        },
+        "39": {
+          "samples": 546,
+          "over150": 0,
+          "over1s": 0,
+          "max": 28
+        },
+        "40": {
+          "samples": 630,
+          "over150": 0,
+          "over1s": 0,
+          "max": 96
+        },
+        "41": {
+          "samples": 602,
+          "over150": 0,
+          "over1s": 0,
+          "max": 26
+        },
+        "42": {
+          "samples": 518,
+          "over150": 0,
+          "over1s": 0,
+          "max": 33
+        },
+        "43": {
+          "samples": 434,
+          "over150": 84,
+          "over1s": 0,
+          "max": 253
+        },
+        "44": {
+          "samples": 322,
+          "over150": 0,
+          "over1s": 0,
+          "max": 27
+        },
+        "45": {
+          "samples": 490,
+          "over150": 0,
+          "over1s": 0,
+          "max": 47
+        },
+        "46": {
+          "samples": 448,
+          "over150": 0,
+          "over1s": 0,
+          "max": 22
+        },
+        "47": {
+          "samples": 490,
+          "over150": 0,
+          "over1s": 0,
+          "max": 42
+        },
+        "48": {
+          "samples": 644,
+          "over150": 0,
+          "over1s": 0,
+          "max": 54
+        },
+        "49": {
+          "samples": 392,
+          "over150": 0,
+          "over1s": 0,
+          "max": 35
+        },
+        "50": {
+          "samples": 420,
+          "over150": 0,
+          "over1s": 0,
+          "max": 32
+        },
+        "51": {
+          "samples": 574,
+          "over150": 0,
+          "over1s": 0,
+          "max": 29
+        },
+        "52": {
+          "samples": 616,
+          "over150": 0,
+          "over1s": 0,
+          "max": 54
+        },
+        "53": {
+          "samples": 546,
+          "over150": 42,
+          "over1s": 0,
+          "max": 217
+        },
+        "54": {
+          "samples": 462,
+          "over150": 0,
+          "over1s": 0,
+          "max": 30
+        },
+        "55": {
+          "samples": 588,
+          "over150": 0,
+          "over1s": 0,
+          "max": 25
+        },
+        "56": {
+          "samples": 518,
+          "over150": 0,
+          "over1s": 0,
+          "max": 53
+        },
+        "57": {
+          "samples": 378,
+          "over150": 0,
+          "over1s": 0,
+          "max": 26
+        },
+        "58": {
+          "samples": 518,
+          "over150": 0,
+          "over1s": 0,
+          "max": 30
+        },
+        "59": {
+          "samples": 546,
+          "over150": 0,
+          "over1s": 0,
+          "max": 28
+        }
+      }
+    }
+  ]
+}

@@ -1,7 +1,15 @@
 // TEST ONLY (D-030). A throwaway signing key, generated per test run, that issues tokens shaped
 // like Cognito access tokens. Servers trust it only when a test builds them with it: no environment
 // variable or setting can make a running server accept it.
-import { createLocalJWKSet, exportJWK, generateKeyPair, SignJWT, type JWK } from 'jose';
+import {
+  createLocalJWKSet,
+  exportJWK,
+  generateKeyPair,
+  importJWK,
+  SignJWT,
+  type CryptoKey,
+  type JWK,
+} from 'jose';
 import type { TrustedIssuer } from './index';
 
 export interface TestIssuer {
@@ -22,8 +30,33 @@ export interface TestIssuer {
 
 export async function createTestIssuer(clientId = 'test-client'): Promise<TestIssuer> {
   const { publicKey, privateKey } = await generateKeyPair('RS256');
+  return issuerFor(privateKey, await exportJWK(publicKey), clientId);
+}
+
+/**
+ * A test issuer whose private half can travel to other processes and threads: the load-test
+ * harness signs a token per simulated writer in each of its workers (D-092).
+ */
+export async function createPortableTestIssuer(
+  clientId = 'test-client',
+): Promise<TestIssuer & { privateJwk: JWK }> {
+  const { publicKey, privateKey } = await generateKeyPair('RS256', { extractable: true });
+  const issuer = issuerFor(privateKey, await exportJWK(publicKey), clientId);
+  return { ...issuer, privateJwk: await exportJWK(privateKey) };
+}
+
+/** The same issuer, rebuilt from its keys in another process or thread. */
+export async function testIssuerFromJwks(
+  privateJwk: JWK,
+  publicJwk: JWK,
+  clientId = 'test-client',
+): Promise<TestIssuer> {
+  return issuerFor((await importJWK(privateJwk, 'RS256')) as CryptoKey, publicJwk, clientId);
+}
+
+function issuerFor(privateKey: CryptoKey, publicJwk: JWK, clientId: string): TestIssuer {
   const kid = 'test-key';
-  const jwk = { ...(await exportJWK(publicKey)), kid, alg: 'RS256', use: 'sig' };
+  const jwk = { ...publicJwk, kid, alg: 'RS256', use: 'sig' };
   const issuer = 'https://issuer.test.writers-room.invalid';
   return {
     trusted: { issuer, clientId, keys: createLocalJWKSet({ keys: [jwk] }) },

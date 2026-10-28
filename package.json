@@ -21,7 +21,8 @@
     "services:up": "docker compose up -d --wait",
     "services:down": "docker compose down",
     "cluster:up": "docker compose --profile cluster up -d --build",
-    "cluster:down": "docker compose --profile cluster down"
+    "cluster:down": "docker compose --profile cluster down",
+    "loadtest": "pnpm --filter @wr/loadtest loadtest"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

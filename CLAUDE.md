@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-091) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-092) · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Writers' Room" (working title), a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -94,6 +94,7 @@ REPO WORKING NOTES
   - Never acknowledge or broadcast an update before the log append resolves.
   - Resend is the Yjs handshake, not a queue.
   - Edit-log items are chunked under 400 KB.
+- **Load tests (D-092):** `pnpm loadtest <rooms|room15|failover|ramp> --local 3` (needs the services) or `--servers …` for AWS; results in `tools/loadtest/results/`, summarized in `docs/metrics.md`. The load-test server entry (`tools/loadtest/src/server.ts`) trusts the run's key and must never go into the production image. DynamoDB Local saturates around 100-150 appends a second, so local runs prove behavior, not capacity.
 - **Cluster (D-022, D-023):** the design reference is `docs/sync-cluster.md`.
   - Membership heartbeats every 2 s (a server is dead after 6 s); 256 SHA-1 virtual nodes; a WebSocket pipe per forwarded writer (identity HMAC-signed); leases renewed every 2 s and expiring after 6 s.
   - **Every** log append and snapshot-pointer move is a DynamoDB transaction fenced on the lease epoch. Truncate only after the pointer moves.

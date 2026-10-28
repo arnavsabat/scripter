@@ -173,4 +173,19 @@ What this means: with three writers in one 110-page episode, no update costs mor
 
 ### Sync service under load
 
-*To be filled by the load tests (beta-readiness phase, step 6): the rooms + capacity targets in D-082.*
+Measured with the load-test harness (`tools/loadtest`, D-092). "Latency" is one writer's keystroke reaching another writer's screen, through the durable append to the edit log that comes before any broadcast (SPEC 5.4). Every run ends by reading each script back with a fresh client: "lost" counts characters missing or wrong against what was typed, and "unacked" counts writers whose edits weren't all acknowledged. Writers type about five keys a second in bursts, with pauses, and send a presence update with every key. Raw results, with a per-second timeline, are in `tools/loadtest/results/`.
+
+**On AWS** (D-082's quotable numbers): *to be run once the beta stacks are deployed (`docs/runbook.md`, "Load tests on AWS").* Targets: 1,000 writers in 200 scripts on 3 servers at p95 under 150 ms; one 15-writer room; a server killed mid-run with zero lost edits; and a ramp on one server to where p95 crosses 150 ms.
+
+**Locally** (2026-10-27, Apple M2 MacBook, 8 GB; the servers as real processes on DynamoDB Local and SeaweedFS in OrbStack; commit `50e0a45` plus D-092). These prove the harness and the failure behavior; they are not capacity numbers. DynamoDB Local processes transactional writes one at a time, and on this laptop it saturates at about 100-150 appends a second, while the sync server process sits near 20% CPU (D-023's warning, now measured).
+
+| Scenario | Writers | p50 | p95 | p99 | Max | Keystrokes | Lost | Unacked |
+|---|---|---|---|---|---|---|---|---|
+| One 15-writer room, 60 s, 3 servers | 15 | 9 ms | 31 ms | 77 ms | 253 ms | 2,107 | 0 | 0 |
+| 8 rooms of 5, 90 s, 3 servers | 40 | 6 ms | 136 ms | 753 ms | 1,110 ms | 8,364 | 0 | 0 |
+| Ramp, one server, 20 s a step (stops at the first step over 150 ms) | 10 / 20 / 40 | 10 / 8 / 8 ms | 25 / 27 / 614 ms | 42 / 46 / 801 ms | 93 / 75 / 943 ms | 3,424 | 0 | 0 |
+| Failover: 6 rooms of 5, one of 3 servers SIGKILLed 25 s in | 30 | 7 ms | 564 ms | 5,383 ms | 6,645 ms | 4,102 | 0 | 0 |
+
+Near that ceiling the numbers are noisy: an earlier ramp held p95 at 22 ms with 40 writers and broke at 60 (p95 18.5 s); this one broke at 40. Either way the limit is the emulator's single-threaded writes, which real DynamoDB doesn't have.
+
+The failover, second by second: up to 82 ms in the seconds before the kill; keystrokes sent at the moment of the kill waited up to 6.6 s (the dead server's 6 s lease expiring, then a reconnect, D-022); back under 100 ms 7 seconds later. Nothing was lost, and every edit was acknowledged. This matches the chaos suite's 6-8 s for a crash (D-023).

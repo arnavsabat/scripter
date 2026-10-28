@@ -33,7 +33,7 @@ import type { AccessResult, AccessSource, Mode } from './access';
 import { authenticate } from './auth';
 import { Cluster } from './cluster';
 import { FORWARD_HEADER, signForward, verifyForward } from './forwardAuth';
-import { isEmptyUpdate, Room, type Logger, type Peer } from './room';
+import { isEmptyUpdate, LeaseBusyError, Room, type Logger, type Peer } from './room';
 import type { Storage } from './storage/types';
 
 export interface SyncServerOptions {
@@ -156,7 +156,10 @@ export async function startSyncServer(options: SyncServerOptions): Promise<SyncS
       room = created;
       rooms.set(docId, room);
       room.ready.catch((err: unknown) => {
-        logger.error('room load failed', { docId, err: String(err) });
+        // Held by another live server: routing settling, not a storage failure (D-092).
+        if (err instanceof LeaseBusyError)
+          logger.info('room held elsewhere; writers will try again', { docId, err: String(err) });
+        else logger.error('room load failed', { docId, err: String(err) });
         if (rooms.get(docId) === created) rooms.delete(docId);
         for (const peer of created.peers) peer.close(CLOSE.TRY_AGAIN, 'try again');
       });
