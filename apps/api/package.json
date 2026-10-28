@@ -27,6 +27,7 @@
   "devDependencies": {
     "@types/pg": "8.23.1",
     "@wr/sync": "workspace:*",
+    "esbuild": "0.28.2",
     "tsx": "4.23.15",
     "yjs": "13.6.33"
   }

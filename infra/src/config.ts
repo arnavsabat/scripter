@@ -18,6 +18,8 @@ export interface InfraConfig {
   appUrls: string[];
   /** The Google OAuth client, once created (step 8, part 2). */
   google?: { clientId: string; secretName: string };
+  /** The beta's domain (D-082), once bought: its Route 53 hosted zone. Unset: CloudFront's address. */
+  domain?: { name: string; hostedZoneId: string };
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): InfraConfig {
@@ -40,6 +42,9 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): InfraConfig {
     testRecipients: list(need('WR_TEST_RECIPIENTS')),
     domainPrefix: need('WR_COGNITO_DOMAIN_PREFIX'),
     appUrls: list(env.WR_APP_URLS ?? 'http://localhost:5173'),
+    ...(env.WR_DOMAIN
+      ? { domain: { name: env.WR_DOMAIN, hostedZoneId: need('WR_HOSTED_ZONE_ID') } }
+      : {}),
     ...(env.WR_GOOGLE_CLIENT_ID
       ? {
           google: {

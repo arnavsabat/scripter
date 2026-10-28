@@ -1,13 +1,14 @@
-// `pnpm --filter @wr/api migrate`: applies pending migrations to DATABASE_URL.
+// `pnpm --filter @wr/api migrate`: applies pending migrations to DATABASE_URL (or the PG*
+// variables, as on AWS).
 import pg from 'pg';
 import { migrate } from './migrate';
 
 const url = process.env.DATABASE_URL;
-if (!url) {
+if (!url && !process.env.PGHOST) {
   console.error('DATABASE_URL is not set (copy .env.example to .env for local development)');
   process.exit(1);
 }
-const client = new pg.Client({ connectionString: url });
+const client = new pg.Client(url ? { connectionString: url } : {});
 await client.connect();
 try {
   const applied = await migrate(client);

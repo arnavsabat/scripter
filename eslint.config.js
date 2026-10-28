@@ -22,6 +22,7 @@ export default defineConfig(
             'apps/sync/vitest.config.ts',
             'apps/api/vitest.config.ts',
             'infra/vitest.config.ts',
+            'apps/sync/scripts/bundle.mjs',
             'spike/vitest.config.ts',
           ],
         },
@@ -30,7 +31,7 @@ export default defineConfig(
     },
   },
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],
     languageOptions: { globals: globals.node },
   },

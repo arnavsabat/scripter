@@ -13,7 +13,11 @@
     "deploy:budgets": "cdk deploy WrBudgets",
     "deploy:email": "cdk deploy WrEmail",
     "deploy:auth": "cdk deploy WrAuth --exclusively",
-    "bootstrap": "cdk bootstrap"
+    "bootstrap": "cdk bootstrap",
+    "deploy:data": "cdk deploy WrData",
+    "deploy:cert": "cdk deploy WrCert",
+    "deploy:app": "VITE_WR_VERSION=$(git rev-parse --short HEAD) pnpm --filter @wr/web build && cdk deploy WrApp --exclusively",
+    "diff": "cdk diff"
   },
   "dependencies": {
     "aws-cdk-lib": "2.274.0",

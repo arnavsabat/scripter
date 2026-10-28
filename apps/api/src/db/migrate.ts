@@ -6,7 +6,9 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { ClientBase } from 'pg';
 
-export const MIGRATIONS_DIR = fileURLToPath(new URL('../../migrations', import.meta.url));
+/** Next to the source in development; the production image sets WR_MIGRATIONS_DIR (D-091). */
+export const MIGRATIONS_DIR =
+  process.env.WR_MIGRATIONS_DIR ?? fileURLToPath(new URL('../../migrations', import.meta.url));
 
 /** Any constant works; it only has to be the same for every runner. */
 const LOCK_KEY = 7_143_001;

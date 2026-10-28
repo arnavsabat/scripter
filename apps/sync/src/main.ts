@@ -33,7 +33,7 @@ async function storageFromEnv(): Promise<Storage> {
 }
 
 const missing = [
-  'DATABASE_URL',
+  ...(env.DATABASE_URL || env.PGHOST ? [] : ['DATABASE_URL']), // the PG* variables on AWS (D-091)
   'WR_CLUSTER_SECRET',
   'COGNITO_REGION',
   'COGNITO_USER_POOL_ID',
@@ -44,7 +44,27 @@ if (missing.length) {
   process.exit(1);
 }
 
-const access = pgAccess(env.DATABASE_URL!, logger);
+/**
+ * Where other servers reach this one (D-022). On ECS, WR_INTERNAL_URL=auto: the task's own
+ * private address, from the task metadata endpoint, so servers can forward to each other (two
+ * run at once during a deploy, and the load-test cluster runs three).
+ */
+async function internalUrl(): Promise<string | undefined> {
+  if (env.WR_INTERNAL_URL !== 'auto') return env.WR_INTERNAL_URL;
+  const meta = env.ECS_CONTAINER_METADATA_URI_V4;
+  if (!meta) throw new Error('WR_INTERNAL_URL=auto needs the ECS task metadata endpoint');
+  const task = (await (await fetch(`${meta}/task`)).json()) as {
+    Containers?: { Networks?: { IPv4Addresses?: string[] }[] }[];
+  };
+  const ip = task.Containers?.flatMap((c) => c.Networks ?? []).flatMap(
+    (n) => n.IPv4Addresses ?? [],
+  )[0];
+  if (!ip) throw new Error('no private address in the ECS task metadata');
+  return `ws://${ip}:${env.PORT ?? 4000}`;
+}
+
+const internal = await internalUrl();
+const access = pgAccess(env.DATABASE_URL, logger);
 const server = await startSyncServer({
   port: Number(env.PORT ?? 4000),
   storage: await storageFromEnv(),
@@ -54,7 +74,7 @@ const server = await startSyncServer({
   access,
   clusterSecret: env.WR_CLUSTER_SECRET!,
   ...(env.WR_SERVER_ID ? { serverId: env.WR_SERVER_ID } : {}),
-  ...(env.WR_INTERNAL_URL ? { internalUrl: env.WR_INTERNAL_URL } : {}),
+  ...(internal ? { internalUrl: internal } : {}),
   logger,
 });
 

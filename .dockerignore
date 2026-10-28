@@ -1,8 +1,19 @@
+# The server images (apps/sync/Dockerfile, infra/docker/server.Dockerfile) need only the servers,
+# their workspace packages and the lockfile. Everything else stays out of the build context, and
+# out of what CDK stages for the image (D-091).
 **/node_modules
-.git
-.vitest
+**/cdk.out
 **/dist
 **/coverage
+.git
+.vitest
+.env
+.env.*
 docs
 apps/web
-.env
+tools
+packages/schema
+packages/pagination
+infra/src
+infra/test
+infra/.env.local

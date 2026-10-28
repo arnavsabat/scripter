@@ -187,7 +187,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - ~~D-080: usage counting isn't built~~: built in D-083.
 - **D-069: the leave prompt covers the open script only.** A script left for Home while still offline gets no prompt when Home is closed. A normal window keeps the copy and syncs it later; an incognito window loses it. Options to bring when it matters: prompt on Home too, or keep the script's connection open until it's synced.
 - ~~D-069: an unreachable API looks like being signed out~~: fixed in D-085 (the "can't reach" notice).
-- **D-065: the API's production role needs `cognito-idp:AdminGetUser`** on the user pool only. This goes in the deploy phase's CDK stack for the API. Without it, every returning email sign-in fails.
+- ~~D-065: the API's production role needs `cognito-idp:AdminGetUser`~~: in `WrApp`'s task role (D-091).
 - **D-062: a host sync server and the Docker cluster mix in one membership.** They share the local DynamoDB, but the containers can't reach the host's `localhost` address. For now: run one or the other, never both. A fix (separate membership tables, or a reachable host address) can wait until it matters.
 - **D-020: web test runs end with a 10-second wait.** Vite's own browser connections outlive the test server's teardown, so Vitest waits out its timeout. The run still exits 0, and our servers leave nothing open.
 
@@ -322,6 +322,55 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-091 · 2026-10-27 · The beta's deploy stacks built and synthesized (not deployed, per D-089)
+
+- **What was built** (`infra/src/data.ts`, `beta.ts`, `cert.ts`; tests in `infra/test/stacks.test.ts`; nothing deployed):
+  - **`WrData`, everything kept.**
+    - The network: two availability zones, public and isolated subnets, no NAT gateway, and free gateway endpoints for DynamoDB and S3.
+    - Postgres: RDS `db.t4g.micro` running Postgres 18, single-AZ, encrypted, 7-day backups, deletion protection, and a final snapshot if the stack is removed.
+    - The sync service's three DynamoDB tables, on demand, with point-in-time recovery on the edit log and coordination table.
+    - The snapshot bucket.
+    - The cluster secret.
+    - The security groups, all here so their rules never reach across stacks.
+    - Everything is retained if the stack is torn down.
+  - **`WrApp`, the app.**
+    - **CloudFront in front:**
+      - the web app from a private S3 bucket (Origin Access Control), with a CloudFront Function serving `index.html` for app routes, so the API's own 404s survive;
+      - `/api/*` and `/doc/*` (the sync WebSocket) to an **internal** load balancer through a CloudFront VPC origin, so the load balancer has no public address.
+    - **One ARM Fargate Spot task** (0.5 vCPU, 1 GB) with two containers from one image: the API (it applies migrations at startup) and the sync server.
+      - Deploys start the new task before stopping the old one, so two sync servers run briefly; that's what the leases and graceful handoff are for.
+      - ECS Exec is on.
+    - **The daily purge** (D-090) at 09:00 UTC.
+    - **Eight alarms emailed to Arnav** (D-082):
+      - the API or the sync servers unhealthy for 3 minutes;
+      - 5 or more 5xx errors in 5 minutes;
+      - any edit-log or snapshot failure;
+      - 20 or more browser crash reports in an hour;
+      - a failed purge;
+      - Postgres low on storage, or busy.
+    - **Logs** are kept 30 days.
+  - **`WrCert`,** in us-east-1, only once there's a domain. With `WR_DOMAIN` and `WR_HOSTED_ZONE_ID` set, CloudFront gets the domain and an alias record, and `WrEmail` adds a DKIM-verified domain identity and a DMARC record.
+  - **The checklist items folded in:**
+    - the server role's `cognito-idp:AdminGetUser` (D-065);
+    - Cognito's deletion protection, on `WrAuth`;
+    - backups (RDS for 7 days, plus DynamoDB point-in-time recovery).
+- **Code changes for AWS:**
+  - The servers take Postgres from the standard `PG*` variables, with `PGSSLMODE=verify-full` and Amazon RDS's certificate authorities in `NODE_EXTRA_CA_CERTS`.
+  - `WR_MIGRATE_ON_START=1` runs migrations under the existing advisory lock.
+  - `WR_MIGRATIONS_DIR` points the bundled runner at its migrations.
+  - `WR_INTERNAL_URL=auto` makes a sync server read its own private address from the ECS task metadata. Without it, two tasks during a deploy (or the load-test cluster) couldn't forward to each other: each would have pointed the other at 127.0.0.1.
+  - In a production build, the web app finds the sync service on its own address.
+- **The image** (`infra/docker/server.Dockerfile`): four esbuild bundles (api, sync, purge, migrate; `apps/sync/scripts/bundle.mjs`), about 250 MB on Node 24 Alpine, arm64. It was run locally against the compose services: both health checks answered, migrations reported up to date, a dry-run purge ran, and 114 RDS certificates were present. `.dockerignore` now keeps the context to the servers (the first synth recursed into `cdk.out`).
+- **Claude's choices (say if any should change):**
+  - 0.5 vCPU and 1 GB for the task (two Node processes);
+  - the 120 s idle timeout on the load balancer;
+  - the alarm thresholds;
+  - 09:00 UTC for the purge;
+  - PriceClass 100 (North America and Europe edge locations, the cheapest);
+  - DMARC `p=quarantine`.
+- **To verify at the first deploy** (in the runbook): that CloudFront's VPC origin carries the sync WebSocket, as it does for ordinary origins; which Postgres 18 minor RDS offers in us-east-2 then.
+- **Status:** built, synthesized and tested; the deploy waits for Arnav (D-089).
 
 ### D-090 · 2026-10-27 · The 30-day purge built (beta-readiness checklist)
 

@@ -9,8 +9,10 @@ import type { Logger } from './room';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
-export function pgAccess(databaseUrl: string, logger: Logger): AccessSource {
-  const db = new pg.Pool({ connectionString: databaseUrl, max: 5 });
+/** `databaseUrl` unset: the PG* variables (on AWS, D-091). */
+export function pgAccess(databaseUrl: string | undefined, logger: Logger): AccessSource {
+  const conn = databaseUrl ? { connectionString: databaseUrl } : {};
+  const db = new pg.Pool({ ...conn, max: 5 });
   // A dropped idle connection is replaced on the next query; unhandled, it would stop the server.
   db.on('error', (err) => logger.error('access database connection lost', { err: String(err) }));
   let listener: pg.Client | null = null;
@@ -69,7 +71,7 @@ export function pgAccess(databaseUrl: string, logger: Logger): AccessSource {
       let attempt = 0;
       const connect = async () => {
         if (closed) return;
-        const client = new pg.Client({ connectionString: databaseUrl });
+        const client = new pg.Client(conn);
         client.on('notification', (n) => {
           try {
             const change = JSON.parse(n.payload ?? '') as AccessChange;

@@ -12,7 +12,9 @@ reportCrashes();
 const root = document.getElementById('root');
 if (!root) throw new Error('Missing #root element');
 
-// VITE_SYNC_URLS: comma-separated sync servers (the local 3-node cluster); default: one on :4000.
+// VITE_SYNC_URLS: comma-separated sync servers (the local 3-node cluster). By default: in a
+// production build, this same address (CloudFront sends /doc/* to the sync service, D-091);
+// in development, one server on :4000.
 const urls = (import.meta.env.VITE_SYNC_URLS as string | undefined)
   ?.split(',')
   .map((u) => u.trim())
@@ -20,6 +22,14 @@ const urls = (import.meta.env.VITE_SYNC_URLS as string | undefined)
 
 createRoot(root).render(
   <StrictMode>
-    <Root syncUrls={urls?.length ? urls : `ws://${location.hostname}:4000`} />
+    <Root
+      syncUrls={
+        urls?.length
+          ? urls
+          : import.meta.env.PROD
+            ? `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}`
+            : `ws://${location.hostname}:4000`
+      }
+    />
   </StrictMode>,
 );

@@ -12,6 +12,8 @@ import {
 import {
   AccountRecovery,
   FeaturePlan,
+  type UserPoolClient,
+  type UserPoolDomain,
   OAuthScope,
   ProviderAttribute,
   UserPool,
@@ -24,6 +26,11 @@ import type { Construct } from 'constructs';
 import type { InfraConfig } from './config';
 
 export class AuthStack extends Stack {
+  /** For the app stack: the servers verify tokens from this pool and client (D-091). */
+  readonly pool: UserPool;
+  readonly client: UserPoolClient;
+  readonly domain: UserPoolDomain;
+
   constructor(scope: Construct, id: string, props: StackProps & { config: InfraConfig }) {
     super(scope, id, props);
     const { config } = props;
@@ -52,8 +59,10 @@ export class AuthStack extends Stack {
         emailBody:
           'Enter {####} to sign in. It expires in a few minutes. If you didn’t ask for it, ignore this email.',
       },
-      // Accounts and their scripts' owners: never deleted by tearing down a stack.
+      // Accounts and their scripts' owners: never deleted by tearing down a stack, nor by a
+      // mistaken delete in the console (the checklist's deletion protection, D-091).
       removalPolicy: RemovalPolicy.RETAIN,
+      deletionProtection: true,
     });
 
     const google =
@@ -100,6 +109,9 @@ export class AuthStack extends Stack {
       cognitoDomain: { domainPrefix: config.domainPrefix },
     });
 
+    this.pool = pool;
+    this.client = client;
+    this.domain = domain;
     new CfnOutput(this, 'UserPoolId', { value: pool.userPoolId });
     new CfnOutput(this, 'ClientId', { value: client.userPoolClientId });
     new CfnOutput(this, 'Domain', { value: domain.baseUrl() });
