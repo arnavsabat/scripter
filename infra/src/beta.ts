@@ -113,7 +113,7 @@ export class BetaStack extends Stack {
       COGNITO_CLIENT_ID: auth.client.userPoolClientId,
       PGHOST: data.db.instanceEndpoint.hostname,
       PGPORT: String(data.db.instanceEndpoint.port),
-      PGDATABASE: 'writers_room',
+      PGDATABASE: 'scripter',
       PGSSLMODE: 'verify-full',
       WR_STORAGE: 'aws',
       S3_SNAPSHOT_BUCKET: data.snapshots.bucketName,
@@ -350,7 +350,7 @@ export class BetaStack extends Stack {
     // Anything that threatens a durable edit: an append, a snapshot or a load that failed.
     const durability = new MetricFilter(this, 'DurabilityErrors', {
       logGroup: logs,
-      metricNamespace: 'WritersRoom',
+      metricNamespace: 'Scripter',
       metricName: 'DurabilityErrors',
       filterPattern: FilterPattern.literal(
         '{ $.level = "error" && ($.msg = "append failed*" || $.msg = "snapshot failed" || $.msg = "room load failed" || $.msg = "truncate failed") }',
@@ -365,7 +365,7 @@ export class BetaStack extends Stack {
     // Browser crash reports (D-083): a burst means a broken release.
     const crashes = new MetricFilter(this, 'BrowserCrashes', {
       logGroup: logs,
-      metricNamespace: 'WritersRoom',
+      metricNamespace: 'Scripter',
       metricName: 'BrowserCrashes',
       filterPattern: FilterPattern.literal('{ $.msg = "browser error" }'),
       metricValue: '1',
@@ -373,7 +373,7 @@ export class BetaStack extends Stack {
     alarm('CrashBurst', crashes.metric({ period: Duration.hours(1), statistic: 'Sum' }), 20);
     const purgeFailed = new MetricFilter(this, 'PurgeFailures', {
       logGroup: logs,
-      metricNamespace: 'WritersRoom',
+      metricNamespace: 'Scripter',
       metricName: 'PurgeFailures',
       filterPattern: FilterPattern.literal('{ $.msg = "purge failed" }'),
       metricValue: '1',

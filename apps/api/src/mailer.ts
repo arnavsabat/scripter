@@ -26,7 +26,7 @@ export function invitationEmail(i: Invitation): Email {
     to: i.to,
     subject: `${i.inviterName} invited you to ${i.seriesName}`,
     text: [
-      `${i.inviterName} invited you to ${verb} in Writers’ Room.`,
+      `${i.inviterName} invited you to ${verb} in Scripter.`,
       '',
       `Join ${i.seriesName}: ${i.link}`,
       '',
@@ -42,7 +42,7 @@ export function sesMailer(from: string, region: string): Mailer {
     async send(email) {
       await ses.send(
         new SendEmailCommand({
-          FromEmailAddress: `Writers’ Room <${from}>`,
+          FromEmailAddress: `Scripter <${from}>`,
           Destination: { ToAddresses: [email.to] },
           Content: {
             Simple: {

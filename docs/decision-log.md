@@ -1,6 +1,6 @@
-# Writers' Room: Decision Log
+# Scripter: Decision Log
 
-The running record of every decision, technical pivot, issue, blocker and deviation on Writers' Room (working title). It has lived in the repo since October 20, 2026; the history before that was exported from planning chats and is kept word for word at the bottom of this file.
+The running record of every decision, technical pivot, issue, blocker and deviation on Scripter (called Writers' Room, its working title, until D-096; earlier entries keep that name). It has lived in the repo since October 20, 2026; the history before that was exported from planning chats and is kept word for word at the bottom of this file.
 
 How to read it:
 
@@ -30,13 +30,14 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - **The deploy stacks:** `WrData`, `WrApp`, `WrCert` (D-091).
   - **Load tests:** the harness (D-092) and the load-test cluster `WrLoad` (D-093).
   - **The Privacy Policy** brought up to date, and 7-day recovery (D-094).
+- **Name, domain and hosting (D-096):** the product is Scripter, at `scripter.ca`, with DNS in Route 53. The beta's servers run on demand (`beta:up` / `beta:down`), as two Fargate Spot tasks while up; CloudFront and the web app stay up throughout.
 - **Browsers (D-089):** Chrome, Edge and Safari supported; Firefox works, with a one-time note that a few lines may wrap differently on screen.
 - **Beta-readiness phase (D-082):** RDS `db.t4g.micro` Postgres with 7-day backups; a domain bought now; CloudWatch logs, alarms and browser crash reports; load tests proven locally, then run once on a temporary AWS cluster against the rooms + capacity targets; usage events recorded where they happen, with a user and an episode ID; the beta metrics as SQL in `docs/metrics.md`; esbuild bundles for the production servers.
 - **Unsynced edits:** closing or reloading a script that has edits the server hasn't acknowledged brings up the browser's leave prompt (D-069).
 - **Local S3-compatible store:** SeaweedFS (D-004).
 - **Plan:** SPEC Part 6. Spike first (2-3 days, gates the stack); Phase 1 with a hard checkpoint at the end of week 6 and a fixed cut order; Phase 2; closed beta; Phase 3; beta hardening. v1 is roughly 8.5-10.5 weeks after the spike.
 - **Where the log lives:** in the repo, alongside SPEC.md and CLAUDE.md (D-001).
-- **Hosting the code:** a public GitHub repo, `arnavsabat/writers-room`, as `origin`; `main` is pushed (D-008).
+- **Hosting the code:** a public GitHub repo, `arnavsabat/writers-room` (to be renamed `arnavsabat/scripter`, D-096), as `origin`; `main` is pushed (D-008).
 - **Tooling:** the D-006 defaults are confirmed, including TypeScript 6.0.3 instead of 7.0 (D-009).
 - **Revision colors:** all out of v1. That means no page colors, no margin asterisks after sends, and no snapshot color tags. The prototype's "BLUE" snapshot tag is not built (D-009).
 - **Spike binding:** the stable line, `yjs` 13.6.33 with `y-prosemirror` 1.3.7 (D-010).
@@ -161,11 +162,11 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 ## Proposed (awaiting Arnav)
 
 - **Waiting on Arnav to finish the beta-readiness phase** (D-089 onwards):
-  1. **The domain name** (D-089: "I'll pick another"). Everything is built against a placeholder.
-  2. **The go-ahead to deploy** (D-089: build now, deploy later), and whether the budget stays at $40 against about $45-55 a month on demand.
-  3. **Two tasks instead of one** (Claude's recommendation, from writing the risks). With one Spot task, an interruption leaves no second sync server, so everyone waits the minute or two a replacement takes to start, instead of the 6-8 s failover the cluster gives. Their edits wait on their devices meanwhile. A second Spot task is about $8 a month (the task plus a public IPv4 address).
-  4. **Your own end-to-end test,** including the booked by-hand checks, the AWS load-test run, and reviewing the Privacy Policy wording (D-094).
-  5. **SES production access and Google's consent screen:** your actions once the domain exists (`docs/runbook.md`, Part 4).
+  1. ~~The domain name~~: `scripter.ca`, and the product is Scripter (D-096).
+  2. ~~The go-ahead to deploy~~: yes, with the servers on demand to save the credits (D-096). The deploy itself follows the runbook, step by step with Arnav.
+  3. ~~Two tasks instead of one~~: two, while the servers are up (D-096).
+  4. **Your own end-to-end test,** including the booked by-hand checks, the AWS load-test run, and reviewing the Privacy Policy wording (D-094). Arnav will look at the policy again on the deployed site.
+  5. **SES production access and Google's consent screen:** not needed while Arnav is the only tester; do both before `scripter.ca` goes on a resume, so anyone who clicks it can sign in (`docs/runbook.md`, Part 4).
 - **Claude's choices in D-083 to D-094, standing unless changed:** each entry lists its own. They cover:
   - the 30-minute session window;
   - the skeletons' 150 ms delay;
@@ -267,7 +268,7 @@ Phase 2:
 22. ~~Renaming scripts and episodes~~: click the toolbar title (D-033).
 23. Fountain and .fdx import edge cases: title pages, notes, boneyard, dual dialogue, and unsupported element types.
 24. PDF library: pdf-lib is the spec's example, so confirm it. Courier Prime will need to be bundled locally for PDF embedding, alongside the Google Fonts link.
-25. Product name (still a working title). Folded into choosing the domain, bought now (D-082).
+25. ~~Product name~~: Scripter, at scripter.ca (D-096).
 
 Phase 3:
 
@@ -369,6 +370,57 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-096 · 2026-10-28 · The product is Scripter, at scripter.ca; the beta's servers run on demand, two tasks, DNS in Route 53
+
+- **Context:**
+  - **The name:** Arnav bought `scripter.ca` (at Porkbun) and named the product Scripter, "everywhere, all mentions". This settles open decision 25 and D-089's "I'll pick another".
+  - **The beta:** for now Arnav is the only beta tester, and he wants AWS charges minimal, ideally none.
+  - **The account,** checked read-only:
+    - free plan, active, $119.98 of credits, ending 2027-04-26;
+    - Fargate quotas: 12 vCPU on demand and 12 on Spot (`WrLoad` needs 9.5).
+  - **On the free plan nothing can be billed** (D-038). So "no charges" means making the credits last until April. Two more ways to stretch them:
+    - AWS pays $20 each for trying EC2, RDS, Lambda and Bedrock from the console's "Explore AWS" panel (Budgets already earned its $20);
+    - Organizations, Identity Center and Control Tower stay off, because any of them converts the account to paid.
+- **Decisions (Arnav's calls, each Claude's recommendation):**
+  1. **Name and domain:** Scripter, at `scripter.ca`.
+  2. **How far the rename goes:** everything people see, plus the internal names that are free to change.
+     - **Renamed:** the UI (the SCRIPTER wordmark, page title, "Can't reach Scripter", the Firefox note), the PDF's creator, the Terms and Privacy pages, the invitation email and its sender name, the sign-in code email ("Your Scripter code: {####}"), and every current document (README, SPEC, CLAUDE.md, the runbook, the metrics, the interview notes, the cluster design, prototype v2).
+     - **Internal names renamed:**
+       - the repo and root package (`scripter`) and the local compose project;
+       - the Postgres database (`scripter`, locally and in `WrData`, which isn't deployed yet);
+       - the Cognito pool and client names, in place (`cdk diff` shows no replacement);
+       - the budget (`scripter-monthly`, recreated);
+       - the CloudWatch namespace;
+       - the test issuer.
+     - **Kept:** the `@wr/` package scope, `WR_` settings, the `Wr*` stack names, the `wr/` secrets, `wr-` tables and the `wr_` cookies. The deployed Cognito prefix domain also stays; writers see `auth.scripter.ca` instead (D-097).
+     - **Also kept as written, as records:** the prototype files' names, prototype v1, the accounts-phase mockup, and every earlier log entry (Part 1: never rewrite history). CLAUDE.md's Part 1 changes only in the product's name, on Arnav's instruction.
+  3. **Hosting: the designed architecture, with the servers on demand** (option B).
+     - **Commands:** `beta:up` and `beta:down`.
+     - **Down:** removes the load balancer and tasks and stops Postgres. CloudFront and the web app stay up, so `scripter.ca` shows the existing "Can't reach Scripter" notice.
+     - **Cost:** about $4-5 a month while down, about $1.20 a day while up.
+  4. **DNS in Route 53** ($0.50 a month). Arnav points Porkbun's nameservers at it once; CDK then writes every record.
+  5. **Two tasks while the servers are up,** so the beta is a two-node cluster: a lost Spot task fails over in about 6-8 s, and a failover can be drilled live on `scripter.ca`.
+- **What changes for writers:**
+  - They see Scripter everywhere.
+  - Sign-in codes come from `no-reply@scripter.ca` once the domain is verified.
+  - "Continue with Google" passes through `auth.scripter.ca`, not an `amazoncognito.com` address.
+  - While the servers are down, the site says it can't reach Scripter.
+- **What changes for the system:** a stack for the hosted zone, a servers on/off switch in `WrApp`, a nightly stop for Postgres while it's down, and a second task (D-097).
+- **Rejected (reasons from Arnav's side):**
+  - **A, always on** (about $43 a month): the credits run out around January, and the free plan then closes the account unless it's upgraded and billed.
+  - **C, one small EC2 server with Postgres on it** (about $24 a month, always on): a rework of two stacks and an OS to patch, no managed backups, and the resume's architecture changes from Fargate and RDS.
+  - **DNS at Porkbun** (free): about eight records typed by hand and kept in step by hand.
+  - **One task:** a Spot reclaim pauses everyone for 1-2 minutes, while the second task costs about a cent an hour while up.
+  - **Renaming every prefix too:** it recreates the deployed Cognito pool, SES and budget, means re-creating the Google secret, and touches 200+ references.
+  - **Visible text only:** the repo and database would keep the old name.
+- **Done on the way:**
+  - **Local data:** the local compose volumes were copied to the new project's (`scripter_*`; the old `writers-room_*` volumes are kept as a backup and can be removed with `docker volume rm`), the local database was renamed `scripter`, and `.env` was updated.
+  - **A false alarm:** the change-set diff showed the deployed code email's apostrophes as "?". Cognito actually holds them as UTF-8 (checked with `describe-user-pool`); it was only the diff's display.
+- **Arnav's to-dos:**
+  - rename the GitHub repo to `scripter` (Settings → Repository name; `gh` isn't installed here), then Claude points `origin` at it;
+  - optionally, rename the AWS CLI profile `writers-room` on his machine.
+- **Status:** Arnav's calls; the rename built in this entry's commit.
 
 ### D-095 · 2026-10-27 · Final docs for the phase, and where the beta-readiness checklist stands
 

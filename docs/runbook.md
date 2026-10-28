@@ -1,9 +1,9 @@
-# Writers' Room: Runbook
+# Scripter: Runbook
 
 How to deploy, check, operate and repair the closed beta, and how to run the load tests on AWS. Every command runs in your own terminal (the VS Code terminal is fine), from the repo root unless it says otherwise, with your AWS profile:
 
 ```sh
-export AWS_PROFILE=writers-room
+export AWS_PROFILE=writers-room   # your AWS CLI profile (the name it has on your machine)
 ```
 
 Credentials and secrets stay on your machine: Claude never handles them (D-061). The architecture is in the README; the decisions behind it are D-082 to D-094.
@@ -98,7 +98,7 @@ Postgres is in an isolated subnet, so reach it from **CloudShell in the VPC**:
    sudo dnf install -y postgresql16
    curl -so rds-ca.pem https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem
    aws secretsmanager get-secret-value --secret-id wr/postgres --query SecretString --output text
-   psql "host=<the secret's host> dbname=writers_room user=wr sslmode=verify-full sslrootcert=rds-ca.pem"
+   psql "host=<the secret's host> dbname=scripter user=wr sslmode=verify-full sslrootcert=rds-ca.pem"
    ```
 3. Paste the queries from `docs/metrics.md`, after `\set excluded` with your own addresses.
 

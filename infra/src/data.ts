@@ -90,7 +90,7 @@ export class DataStack extends Stack {
       vpcSubnets: { subnetType: SubnetType.PRIVATE_ISOLATED },
       securityGroups: [dbGroup],
       credentials: Credentials.fromGeneratedSecret('wr', { secretName: `wr/${prefix}postgres` }),
-      databaseName: 'writers_room',
+      databaseName: 'scripter',
       allocatedStorage: 20,
       maxAllocatedStorage: 50,
       storageType: StorageType.GP3,

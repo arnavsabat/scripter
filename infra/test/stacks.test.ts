@@ -16,7 +16,7 @@ const config = loadConfig({
   WR_ALERT_EMAIL: 'alerts@example.com',
   WR_SENDER_EMAIL: 'sender@example.com',
   WR_TEST_RECIPIENTS: 'sender@example.com, friend@example.com',
-  WR_COGNITO_DOMAIN_PREFIX: 'writers-room-test',
+  WR_COGNITO_DOMAIN_PREFIX: 'scripter-test',
 });
 const env = { region: 'us-east-2' };
 
@@ -69,7 +69,7 @@ describe('Cognito (D-030, D-031, D-044)', () => {
       }),
       EmailConfiguration: Match.objectLike({ EmailSendingAccount: 'DEVELOPER' }),
       VerificationMessageTemplate: Match.objectLike({
-        EmailSubject: 'Your Writers’ Room code: {####}',
+        EmailSubject: 'Your Scripter code: {####}',
       }),
     });
   });

@@ -1,6 +1,6 @@
 # Local services for development. Start with `pnpm services:up`.
 # Credentials here are for local development only and must never be reused anywhere else.
-name: writers-room
+name: scripter
 
 services:
   postgres:
@@ -8,14 +8,14 @@ services:
     environment:
       POSTGRES_USER: wr
       POSTGRES_PASSWORD: wr_dev_only
-      POSTGRES_DB: writers_room
+      POSTGRES_DB: scripter
     ports:
       - '5432:5432'
     volumes:
       # Postgres 18 images keep data under /var/lib/postgresql/<major>/, so mount the parent.
       - postgres-data:/var/lib/postgresql
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U wr -d writers_room']
+      test: ['CMD-SHELL', 'pg_isready -U wr -d scripter']
       interval: 5s
       timeout: 3s
       retries: 10
@@ -49,14 +49,14 @@ services:
   sync-1: &sync
     profiles: [cluster]
     build: { context: ., dockerfile: apps/sync/Dockerfile }
-    image: writers-room-sync
+    image: scripter-sync
     depends_on: [postgres, dynamodb, s3]
     environment: &sync-env
       WR_SERVER_ID: sync-1
       WR_INTERNAL_URL: ws://sync-1:4000
       PORT: '4000'
       WR_CLUSTER_SECRET: dev-only-cluster-secret
-      DATABASE_URL: postgres://wr:wr_dev_only@postgres:5432/writers_room
+      DATABASE_URL: postgres://wr:wr_dev_only@postgres:5432/scripter
       COGNITO_REGION: ${COGNITO_REGION:-us-east-2}
       COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
       COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:-}

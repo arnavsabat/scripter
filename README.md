@@ -1,6 +1,6 @@
-# Writers' Room
+# Scripter
 
-A real-time collaborative screenwriting tool built like a TV writers' room (working title). Several writers edit the same episode at once with no conflicts. A writer can fork a **what-if** of an episode, rewrite scenes in it, and **send** chosen scenes back into the main script. A three-way, scene-level comparison shows what changed where, and flags when main changed the same scene too. It looks and feels like Highland: fast, quiet and out of the way of the writing, with true screenplay pages (the industry's page geometry, pagination rules and a matching PDF), Final Draft and Fountain import, and roles for a whole room (showrunner, writers, viewers).
+A real-time collaborative screenwriting tool built like a TV writers' room. Several writers edit the same episode at once with no conflicts. A writer can fork a **what-if** of an episode, rewrite scenes in it, and **send** chosen scenes back into the main script. A three-way, scene-level comparison shows what changed where, and flags when main changed the same scene too. It looks and feels like Highland: fast, quiet and out of the way of the writing, with true screenplay pages (the industry's page geometry, pagination rules and a matching PDF), Final Draft and Fountain import, and roles for a whole room (showrunner, writers, viewers).
 
 The systems centerpiece is a horizontally scaled sync service:
 
@@ -97,7 +97,7 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.zshrc && source ~/.zshrc
 
 **A 3-server cluster:** `pnpm cluster:up` builds the sync server image and starts `sync-1`, `sync-2` and `sync-3` on `localhost:4001`-`4003` (plus the services). Point the app at all three with `VITE_SYNC_URLS=ws://localhost:4001,ws://localhost:4002,ws://localhost:4003 pnpm dev:web`. While you write, you can:
 
-- kill one (`docker kill writers-room-sync-2-1`);
+- kill one (`docker kill scripter-sync-2-1`);
 - freeze one (`docker pause`, then `docker unpause`);
 - stop one gracefully (`docker stop`).
 

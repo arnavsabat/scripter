@@ -21,7 +21,7 @@ export class BudgetsStack extends Stack {
     });
     new CfnBudget(this, 'Monthly', {
       budget: {
-        budgetName: 'writers-room-monthly',
+        budgetName: 'scripter-monthly',
         budgetType: 'COST',
         timeUnit: 'MONTHLY',
         budgetLimit: { amount: BUDGET_LIMIT_USD, unit: 'USD' },

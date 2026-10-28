@@ -9,8 +9,7 @@ if (!servicesEnabled)
     'database tests skipped: run `pnpm services:up`, then `pnpm --filter @wr/api test:services`',
   );
 
-const ADMIN_URL =
-  process.env.DATABASE_URL ?? 'postgres://wr:wr_dev_only@localhost:5432/writers_room';
+const ADMIN_URL = process.env.DATABASE_URL ?? 'postgres://wr:wr_dev_only@localhost:5432/scripter';
 
 export interface TestDb {
   url: string;

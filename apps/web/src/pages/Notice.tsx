@@ -18,7 +18,7 @@ function Notice({
   return (
     <div className="si-page">
       <div className="si" role="alert">
-        <div className="si-mark">WRITERS’ ROOM</div>
+        <div className="si-mark">SCRIPTER</div>
         <h1>{title}</h1>
         <p className="si-sub">{sub}</p>
         <button className="si-c" type="button" onClick={onAction}>
@@ -34,7 +34,7 @@ export function CantReach() {
   const [trying, setTrying] = useState(false);
   return (
     <Notice
-      title="Can’t reach Writers’ Room"
+      title="Can’t reach Scripter"
       sub="Your scripts on this device are safe. Trying again…"
       action="Try again"
       onAction={() => {

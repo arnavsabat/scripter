@@ -36,7 +36,7 @@ export class AuthStack extends Stack {
     const { config } = props;
 
     const pool = new UserPool(this, 'Writers', {
-      userPoolName: 'writers-room',
+      userPoolName: 'scripter',
       featurePlan: FeaturePlan.ESSENTIALS,
       // The email is the username, and "Maya@…" is "maya@…" (D-044 (b)).
       signInAliases: { email: true },
@@ -49,13 +49,13 @@ export class AuthStack extends Stack {
       accountRecovery: AccountRecovery.EMAIL_ONLY,
       email: UserPoolEmail.withSES({
         fromEmail: config.senderEmail,
-        fromName: 'Writers’ Room',
+        fromName: 'Scripter',
         sesRegion: config.region,
       }),
       // The sign-up code email (D-033's wording).
       userVerification: {
         emailStyle: VerificationEmailStyle.CODE,
-        emailSubject: 'Your Writers’ Room code: {####}',
+        emailSubject: 'Your Scripter code: {####}',
         emailBody:
           'Enter {####} to sign in. It expires in a few minutes. If you didn’t ask for it, ignore this email.',
       },
@@ -83,7 +83,7 @@ export class AuthStack extends Stack {
       });
 
     const client = pool.addClient('Web', {
-      userPoolClientName: 'writers-room-web',
+      userPoolClientName: 'scripter-web',
       generateSecret: false, // a public client: the API calls Cognito without a secret (D-031)
       authFlows: { user: true }, // ALLOW_USER_AUTH (email codes) and refresh only; no passwords
       accessTokenValidity: Duration.hours(1),

@@ -266,7 +266,7 @@ describe.skipIf(!servicesEnabled)('API', () => {
       const token = h.lastInviteToken('lee@school.example');
       const mail = h.mailer.sent.at(-1)!;
       expect(mail.subject).toBe('Arnav invited you to The Long Night');
-      expect(mail.text).toContain('Arnav invited you to write on The Long Night in Writers’ Room.');
+      expect(mail.text).toContain('Arnav invited you to write on The Long Night in Scripter.');
       // Lee signs in with a personal address instead: the link still works (one-time, not tied to email).
       const lee = await h.person('Lee', 'lee.personal@example.com');
       const accepted = await lee.call<{ role: string }>('POST', '/api/invitations/accept', {

@@ -1,4 +1,4 @@
-# Writers' Room: Specification (Parts 2-6)
+# Scripter: Specification (Parts 2-6)
 
 Verbatim copy of Parts 2-6 of the project prompt, added October 20, 2026. Where an older decision-log entry conflicts with this file, this file wins. Changes to the spec are recorded as decision-log entries; this file is only edited to apply a logged decision, and each such edit names the entry.
 

@@ -1,10 +1,10 @@
-# Writers' Room: Interview Notes
+# Scripter: Interview Notes
 
 A short brief for talking about the project: the pitch, the four hardest problems with their mechanism and tradeoffs, the numbers you can quote (and how they were measured), and the questions to expect. The deep versions are `docs/sync-cluster.md` (the sync service), `docs/decision-log.md` (every decision, with rejected options), and the code paths named below.
 
 ## The pitch (30 seconds)
 
-"Writers' Room is a real-time collaborative screenwriting tool for TV writers' rooms. Several writers edit one episode at once; anyone can fork a what-if, rewrite scenes, and send chosen scenes back to the main script. Under it is a sync service I built from scratch: every script has one home server, picked by consistent hashing; ownership is a DynamoDB lease with a fencing token; every keystroke is durably appended before anyone sees it; and when a server dies, another takes over in about six seconds with zero lost edits, which a chaos suite and a load-test harness prove."
+"Scripter is a real-time collaborative screenwriting tool for TV writers' rooms. Several writers edit one episode at once; anyone can fork a what-if, rewrite scenes, and send chosen scenes back to the main script. Under it is a sync service I built from scratch: every script has one home server, picked by consistent hashing; ownership is a DynamoDB lease with a fencing token; every keystroke is durably appended before anyone sees it; and when a server dies, another takes over in about six seconds with zero lost edits, which a chaos suite and a load-test harness prove."
 
 ## 1. Exactly one writer per script: leases and fencing tokens
 

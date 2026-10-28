@@ -110,7 +110,7 @@ describe('can’t reach the server (D-084)', () => {
     await signIn();
     await fake('down', { down: true });
     render(<Root syncUrls="ws://127.0.0.1:4787" />);
-    await until(() => text($('.si h1')) === 'Can’t reach Writers’ Room');
+    await until(() => text($('.si h1')) === 'Can’t reach Scripter');
     expect($('input[type="email"]')).toBeNull(); // no sign-in form
     expect(text($('.si-c'))).toBe('Try again');
     await fake('down', { down: false });
@@ -124,9 +124,7 @@ describe('can’t reach the server (D-084)', () => {
     await until(() => $$('.home .ep .nm').length === 3);
     await fake('down', { down: true });
     await clickText('.home-tb .ta', '+ New script');
-    await until(
-      () => toast() === 'Can’t reach Writers’ Room. Check your connection and try again.',
-    );
+    await until(() => toast() === 'Can’t reach Scripter. Check your connection and try again.');
     expect(text($('.home-tb .title'))).toBe('Home');
   });
 });
@@ -210,10 +208,7 @@ describe('Firefox (D-089)', () => {
       await signIn(false);
       render(<Root syncUrls="ws://127.0.0.1:4787" />);
       await clickText('.home-tb .ta', '+ New script');
-      await until(
-        () => toast().startsWith('Writers’ Room works best in Chrome, Edge or Safari.'),
-        8000,
-      );
+      await until(() => toast().startsWith('Scripter works best in Chrome, Edge or Safari.'), 8000);
       expect(localStorage.getItem('wr-firefox-note')).toBe('1');
     } finally {
       Object.defineProperty(navigator, 'userAgent', real);

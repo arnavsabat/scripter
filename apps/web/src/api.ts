@@ -13,7 +13,7 @@ export class ApiFailure extends Error {
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
-export const UNREACHABLE = 'Can’t reach Writers’ Room. Check your connection and try again.';
+export const UNREACHABLE = 'Can’t reach Scripter. Check your connection and try again.';
 
 /** No answer, or a 502-504 from whatever sits in front of the API, reads as "can't reach" (D-084). */
 async function send(method: Method, path: string, body: unknown, token: string | null) {

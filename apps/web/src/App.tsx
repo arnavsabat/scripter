@@ -382,7 +382,7 @@ export function ScriptScreen({
       return; // no storage: better never than every time
     }
     toast.show(
-      'Writers’ Room works best in Chrome, Edge or Safari. In Firefox a few lines may wrap differently on screen; your PDF is always exact.',
+      'Scripter works best in Chrome, Edge or Safari. In Firefox a few lines may wrap differently on screen; your PDF is always exact.',
     );
   }, [opened, toast]);
 

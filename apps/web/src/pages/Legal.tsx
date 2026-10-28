@@ -26,7 +26,7 @@ function Page({ title, children }: { title: string; children: React.ReactNode })
     <div className="si-page">
       <div className="lg">
         <div className="top">
-          <span className="si-mark">WRITERS’ ROOM</span>
+          <span className="si-mark">SCRIPTER</span>
         </div>
         <h1>{title}</h1>
         <p className="upd">Last updated {UPDATED}</p>
@@ -96,14 +96,14 @@ export function Terms() {
         You own what you write. You let us store and show it to the people you share it with, only
         so the app works.
       </p>
-      <h2>Using Writers’ Room</h2>
+      <h2>Using Scripter</h2>
       <p>
         Use it to write. Don’t use it to break the law, harass people, or attack or overload the
         service.
       </p>
       <h2>It’s a beta</h2>
       <p>
-        Writers’ Room is free while it’s in beta, and things may break. We work hard not to lose
+        Scripter is free while it’s in beta, and things may break. We work hard not to lose
         anything, but keep your own copies of anything important (PDF export).
       </p>
       <h2>Accounts</h2>

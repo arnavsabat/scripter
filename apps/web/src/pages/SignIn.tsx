@@ -128,7 +128,7 @@ export function SignIn({ invite }: { invite?: InvitePreview | null }) {
   return (
     <div className="si-page">
       <div className="si">
-        <div className="si-mark">WRITERS’ ROOM</div>
+        <div className="si-mark">SCRIPTER</div>
 
         {step.name === 'email' && (
           <form onSubmit={sendCode} noValidate>
@@ -164,7 +164,7 @@ export function SignIn({ invite }: { invite?: InvitePreview | null }) {
               Continue
             </button>
             <p className="si-legal">
-              By continuing, you agree to the Writers’&nbsp;Room{' '}
+              By continuing, you agree to the Scripter{' '}
               <button type="button" onClick={() => navigate('/terms')}>
                 Terms of Service
               </button>{' '}

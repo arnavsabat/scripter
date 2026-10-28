@@ -153,8 +153,8 @@ export async function exportPdf(p: Pagination, meta: PdfMeta): Promise<void> {
       : meta.titlePage.title,
   );
   if (meta.titlePage.writers.length) doc.setAuthor(meta.titlePage.writers.join(' & '));
-  doc.setCreator('Writers’ Room');
-  doc.setProducer('Writers’ Room');
+  doc.setCreator('Scripter');
+  doc.setProducer('Scripter');
   const bytes = await doc.save();
   const url = URL.createObjectURL(new Blob([bytes as BlobPart], { type: 'application/pdf' }));
   const a = document.createElement('a');

@@ -1,4 +1,4 @@
-# Writers' Room: Metrics
+# Scripter: Metrics
 
 Two kinds of numbers live here:
 
@@ -26,7 +26,7 @@ Browser events can be lost (a closed tab, a blocked request); the server events 
 
 ### How to run the queries
 
-Locally: `docker compose exec postgres psql -U wr writers_room`. On AWS: see `docs/runbook.md` ("Reading the beta metrics").
+Locally: `docker compose exec postgres psql -U wr scripter`. On AWS: see `docs/runbook.md` ("Reading the beta metrics").
 
 Your own testing would skew a small beta, so every query below leaves out the accounts listed in `:excluded`. Set it first, in psql (your addresses never go in this public file):
 

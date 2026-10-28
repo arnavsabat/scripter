@@ -57,7 +57,7 @@ export async function testIssuerFromJwks(
 function issuerFor(privateKey: CryptoKey, publicJwk: JWK, clientId: string): TestIssuer {
   const kid = 'test-key';
   const jwk = { ...publicJwk, kid, alg: 'RS256', use: 'sig' };
-  const issuer = 'https://issuer.test.writers-room.invalid';
+  const issuer = 'https://issuer.test.scripter.invalid';
   return {
     trusted: { issuer, clientId, keys: createLocalJWKSet({ keys: [jwk] }) },
     publicJwk: jwk,
@@ -90,7 +90,7 @@ function issuerFor(privateKey: CryptoKey, publicJwk: JWK, clientId: string): Tes
 /** The issuer for a test key whose public half came from another process (see publicJwk). */
 export function trustedTestKey(jwk: JWK, clientId = 'test-client'): TrustedIssuer {
   return {
-    issuer: 'https://issuer.test.writers-room.invalid',
+    issuer: 'https://issuer.test.scripter.invalid',
     clientId,
     keys: createLocalJWKSet({ keys: [jwk] }),
   };

@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "The Writers' Room web client (React + Vite).",
+  "description": "The Scripter web client (React + Vite).",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
