@@ -397,6 +397,14 @@ export class BetaStack extends Stack {
     new CfnOutput(this, 'ServiceName', { value: service.serviceName });
     new CfnOutput(this, 'PurgeTaskDefinition', { value: purge.taskDefinitionArn });
     new CfnOutput(this, 'ServersGroup', { value: data.servers.securityGroupId });
+    new CfnOutput(this, 'LogGroup', { value: logs.logGroupName });
+    new CfnOutput(this, 'PublicSubnets', {
+      value: vpc.selectSubnets({ subnetType: SubnetType.PUBLIC }).subnetIds.join(','),
+    });
+    new CfnOutput(this, 'PrivateSubnets', {
+      value: vpc.selectSubnets({ subnetType: SubnetType.PRIVATE_ISOLATED }).subnetIds.join(','),
+      description: 'For a CloudShell VPC environment that reads the metrics (docs/runbook.md)',
+    });
   }
 }
 

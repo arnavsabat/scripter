@@ -20,6 +20,16 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **Editor behavior:** SPEC Part 4. Flat ProseMirror block schema, Enter/Tab state machine (defaults, to be confirmed in the editor phase), permissive schema with visible fixes, Yjs per-user undo.
 - **Architecture:** SPEC Part 5 and D-002. pnpm TypeScript monorepo; React + Vite; custom y-protocols sync server; Fastify; Postgres; DynamoDB for edit log, leases and membership; S3 snapshots; Cognito; CDK; lean AWS.
 - **Page geometry:** true screenplay geometry at 96 px per inch (D-003).
+- **Beta-readiness phase, built (D-083 to D-094):**
+  - **Usage:** server-side counting plus three browser events; crash reports go to the logs; the beta metrics are SQL in `docs/metrics.md` (D-083).
+  - **States:** skeletons, the "can't reach" notice, crash boundaries per panel and page, and empty notes (D-084, D-085).
+  - **Accessibility:** an audit in CI, three tokens nudged for contrast, and a way out of the page through the element menu (D-086).
+  - **Performance:** budgets for three writers on 110 pages (D-087).
+  - **Parity:** a guard against prototype v2 (D-088).
+  - **The 30-day purge** (D-090).
+  - **The deploy stacks:** `WrData`, `WrApp`, `WrCert` (D-091).
+  - **Load tests:** the harness (D-092) and the load-test cluster `WrLoad` (D-093).
+  - **The Privacy Policy** brought up to date, and 7-day recovery (D-094).
 - **Browsers (D-089):** Chrome, Edge and Safari supported; Firefox works, with a one-time note that a few lines may wrap differently on screen.
 - **Beta-readiness phase (D-082):** RDS `db.t4g.micro` Postgres with 7-day backups; a domain bought now; CloudWatch logs, alarms and browser crash reports; load tests proven locally, then run once on a temporary AWS cluster against the rooms + capacity targets; usage events recorded where they happen, with a user and an episode ID; the beta metrics as SQL in `docs/metrics.md`; esbuild bundles for the production servers.
 - **Unsynced edits:** closing or reloading a script that has edits the server hasn't acknowledged brings up the browser's leave prompt (D-069).
@@ -150,6 +160,23 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **Waiting on Arnav to finish the beta-readiness phase** (D-089 onwards):
+  1. **The domain name** (D-089: "I'll pick another"). Everything is built against a placeholder.
+  2. **The go-ahead to deploy** (D-089: build now, deploy later), and whether the budget stays at $40 against about $45-55 a month on demand.
+  3. **Two tasks instead of one** (Claude's recommendation, from writing the risks). With one Spot task, an interruption leaves no second sync server, so everyone waits the minute or two a replacement takes to start, instead of the 6-8 s failover the cluster gives. Their edits wait on their devices meanwhile. A second Spot task is about $8 a month (the task plus a public IPv4 address).
+  4. **Your own end-to-end test,** including the booked by-hand checks, the AWS load-test run, and reviewing the Privacy Policy wording (D-094).
+  5. **SES production access and Google's consent screen:** your actions once the domain exists (`docs/runbook.md`, Part 4).
+- **Claude's choices in D-083 to D-094, standing unless changed:** each entry lists its own. They cover:
+  - the 30-minute session window;
+  - the skeletons' 150 ms delay;
+  - closing a crashed menu;
+  - the empty-note wording;
+  - the task size and alarm thresholds;
+  - the purge's 09:00 UTC run;
+  - deleted what-ifs waiting 30 days;
+  - the lease item going with a purge;
+  - the load-test cluster's key living in the generator's task definition.
+
 - **D-080, what-ifs, still Claude's defaults** (the window, fully sent what-ifs, restore confirm and rename/delete were decided in D-081): the undo warning is a toast with Undo anyway · Keep; automatic snapshots only before sends and restores and when a what-if begins; viewers can see what-ifs; only editors snapshot; 14 px snapshot rows; deleted scenes listed struck through; `--on-accent` for the dark-mode primary button; "This scene isn't in main yet."
 
 - ~~D-077: long toasts wrap~~: kept (D-079).
@@ -253,6 +280,11 @@ Phase 3:
 
 ## Future versions
 
+- **From the beta-readiness phase:**
+  - **Group commit** for busy scripts: merge the updates queued behind a slow append into one log entry (D-092).
+  - **Making Firefox exact:** per-browser break tables (D-089).
+  - **Changes drawn outside the text,** so removed text doesn't shift page view's breaks (D-080).
+  - **The leave prompt on Home too** (D-069).
 - **Competitive gaps Arnav added (D-079):** inline bold, italic and underline; dual dialogue; an editable title page (see D-076); scene numbers and revisions.
 
 - **Editable title page (D-076):** draft date, contact block, "based on", and credit wording, exported with the script. v1 generates one from the names we have.
@@ -297,10 +329,25 @@ Rejected since the log moved into the repo:
 - jsdom, or no web tests (D-015): jsdom can't measure layout, so it can't check the no-rewrap promise; no tests would leave undo-per-action unguarded.
 - Pushing only at phase ends, or asking each time (D-015): GitHub would lag behind the real work.
 
+Rejected in the beta-readiness phase (details in each entry):
+
+- **Hosting (D-082):** Aurora Serverless v2 (the first request after an idle pause takes about 15 s); Postgres inside the container (no managed backups).
+- **Monitoring (D-082):** Sentry (a third party seeing writers' sessions).
+- **Usage (D-082):** counting everything from the browser (ad blockers and closed tabs drop events).
+- **States (D-084):** a spinner, a loading line or a progress bar (Arnav chose skeletons); a toast on the sign-in page for an outage (writers would still see a form they can't use).
+- **Accessibility (D-086):** keeping the prototype's failing contrast; leaving the page with F6, Ctrl+M, or walking off the top (invisible or easy to trigger by accident).
+- **Browsers (D-089):** blocking Firefox (turning testers away for a cosmetic difference); making it exact now (1-2 days, and another engine to re-measure).
+
 Earlier rejections, with reasons from the writer's point of view, are in the imported log below (section "Rejected options and why").
 
 ## Known risks
 
+- New (D-091): **one sync server on Fargate Spot.** A Spot interruption or a crash leaves no second server, so writers wait for a replacement task (a minute or two) instead of the 6-8 s cluster failover. They keep typing on their devices and lose nothing. Mitigation proposed: two tasks (Proposed, item 3).
+- New (D-091): **CloudFront's VPC origin carrying the sync WebSocket** is the one part synth can't check. It's step 4 of the runbook's checks, with a fallback ready (an internet-facing load balancer for `/doc/*`, locked to CloudFront by a secret header).
+- New (D-092): **each script's updates are appended strictly one at a time,** so one script takes at most one update per DynamoDB round trip. That's fine at beta scale (about 15 keys a second for a busy room); group commit is the fix if a room ever needs more.
+- New (D-093): **DynamoDB is billed per keystroke** (a transactional append plus its lease check). It's pennies at beta scale; a 1,000-writer load test is about $20-25 an hour of typing.
+- New (D-089): **Firefox wraps a few lines differently** from pagination on screen (about 1% of action paragraphs); the PDF and page breaks are unaffected. Firefox users get a one-time note.
+- Measured (D-092): D-023's DynamoDB Local risk now has a number. It saturates at about 100-150 transactional appends a second on a laptop, so local load runs prove behavior, not capacity.
 - Resolved (D-061, D-065): the email-code flow's assumptions were checked on the real pool. Sign-up with no password and `UsernameExistsException` hold. An unconfirmed account's sign-in request gets a fake challenge, and `ResendConfirmationCode` succeeds even for a confirmed account. So the API asks `AdminGetUser` for the account's status.
 - New (D-031): the sync servers depend on Postgres to authorize *new* connections. If it's unavailable, writers already connected keep editing, but reconnecting writers (after a failover, say) are refused until it returns. Mitigations to consider later: caching recent decisions for a short time, and a Postgres replica.
 - Mid-line paragraph splits under concurrent editing (Yjs binding). Measured in the spike (D-012, test 2): nothing is lost and the structure never corrupts, but text typed concurrently in the second half of a line lands on the first half, and an in-progress word can tear. The risk is accepted pending P2.
@@ -322,6 +369,40 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-095 · 2026-10-27 · Final docs for the phase, and where the beta-readiness checklist stands
+
+- **Written:**
+  - **`README.md`:** what it is, an architecture diagram (Mermaid, rendered by GitHub), how a keystroke travels, how to run, test and deploy it.
+  - **`docs/runbook.md`:**
+    - deploying, in order;
+    - checking a deploy (including the WebSocket through CloudFront's VPC origin);
+    - opening the beta (SES production access, Google's consent screen);
+    - everyday operations (updates, migrations, the metrics from CloudShell in the VPC, the purge);
+    - what to do for each alarm, and restoring from backups;
+    - the load tests on AWS;
+    - pausing and teardown.
+  - **`docs/interview-notes.md`:** the pitch; the four hardest problems (leases and fencing, failover with zero lost edits, pagination as a pure function, the scene-level three-way comparison), each with mechanism, numbers and tradeoffs; numbers to quote with their sources; and likely questions.
+  - **`docs/metrics.md`:** the beta metrics' SQL, the editor and pagination numbers, and the local load-test numbers. The AWS load-test numbers wait for the deploy.
+- **Small additions on the way:** `WrApp` outputs its log group and subnets for the runbook's commands, and `WrLoad`'s server count is a context value (`-c loadServers=1` for the ramp).
+- **The pages phase's beta-readiness checklist, item by item:**
+  1. **Deploy the app:** built, synthesized and tested (D-091, D-093), with AdminGetUser and the 30-day purge. Not deployed: waiting for Arnav (D-089).
+  2. **The domain and SES production access:** waiting for Arnav to name the domain; production access is his request once it exists (runbook Part 4).
+  3. **Google's consent screen:** Arnav's action (runbook Part 4).
+  4. **Load tests:** the harness is built and proven locally (D-092). The AWS run comes after the deploy (runbook Part 7).
+  5. **Usage counting:** done (D-083).
+  6. **Browser support:** decided and measured (D-089).
+  7. **Arnav's own testing:** waiting, together with the booked by-hand checks.
+  - **"Should fix":**
+    - the outage that looked like a sign-out: fixed (D-085);
+    - the import lost to a reload: fixed (D-085);
+    - Cognito's deletion protection: on (D-091);
+    - Privacy and Terms: brought up to date for his review (D-094);
+    - backups: RDS 7 days plus DynamoDB point-in-time recovery (D-091, D-094);
+    - error monitoring: decided (D-082) and built (D-083, D-091);
+    - the leave prompt on Home: still open (D-069), proposed for a future version.
+- **The runbook's end-to-end run:** every part that runs without AWS was run locally (the images built and run against the compose services, all stacks synthesized, the load tests on local server processes, the bundled AWS load-test path). The AWS parts run for the first time with the first deploy.
+- **Status:** written; the phase is done when Arnav has tested end to end and approved (the phase prompt).
 
 ### D-094 · 2026-10-27 · Checklist leftovers: the Privacy Policy brought up to date, 7-day recovery, and the viewer's unopened what-if
 

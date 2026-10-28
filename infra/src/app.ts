@@ -38,4 +38,9 @@ new BetaStack(app, 'WrApp', {
   auth,
   ...(cert ? { certificate: cert.certificate } : {}),
 });
-new LoadStack(app, 'WrLoad', { env, data });
+// 3 servers (D-082); `-c loadServers=1` for the ramp, which measures one server alone.
+new LoadStack(app, 'WrLoad', {
+  env,
+  data,
+  servers: Number(app.node.tryGetContext('loadServers') ?? 3),
+});
