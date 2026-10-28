@@ -3,7 +3,7 @@
 import { navigate } from '../router';
 import './signin.css';
 
-const UPDATED = 'October 26, 2026';
+const UPDATED = 'October 27, 2026';
 const CONTACT = 'sabat.arnav@gmail.com';
 
 function Back() {
@@ -46,8 +46,21 @@ export function Privacy() {
           Your email address and name, so you can sign in and your room can see who’s writing.
         </li>
         <li>The scripts you and your room write, so they’re there when you come back.</li>
-        <li>Counts of things that happen, like “a PDF was exported”. Never what you wrote.</li>
+        <li>
+          Counts of things that happen, like “a PDF was exported”, with who did it, in which script
+          and when. Never what you wrote.
+        </li>
+        <li>
+          Reports of errors in the app (what went wrong and where in our code), so we can fix them.
+          They never include your writing.
+        </li>
       </ul>
+      <h2>On your device</h2>
+      <p>
+        Your browser keeps a copy of the scripts you open, so you can keep writing offline; it syncs
+        when you’re back. Signing out removes those copies. One cookie keeps you signed in; we don’t
+        use advertising or tracking cookies.
+      </p>
       <h2>Who can see your scripts</h2>
       <p>
         Only people in that series: the showrunner, and the writers and viewers they invite. We
@@ -57,12 +70,17 @@ export function Privacy() {
       <h2>Where it lives</h2>
       <p>
         On Amazon Web Services in the United States (Ohio). Sign-in codes and invitations are sent
-        by email through Amazon.
+        by email through Amazon. If you sign in with Google, Google tells us your name and email
+        address, nothing else.
       </p>
-      <h2>Deleting your account</h2>
+      <h2>Deleting</h2>
       <p>
-        Email {CONTACT} and we’ll delete your account and your email address within 30 days. Series
-        you share with others stay with them.
+        A script or series you delete waits 30 days under Recently deleted, in case it was a
+        mistake, and is then erased for good. Backups of the database are kept for 7 days.
+      </p>
+      <p>
+        To delete your account, email {CONTACT} and we’ll delete it and your email address within 30
+        days. Series you share with others stay with them.
       </p>
       <h2>Changes</h2>
       <p>If this policy changes, we’ll email you before it takes effect.</p>

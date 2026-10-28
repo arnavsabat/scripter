@@ -15,7 +15,7 @@ interface Props {
   onSendScene?: (sceneId: string) => void;
   onCompareScene?: (sceneId: string) => void;
   /** No script on screen yet (D-084): skeleton lines, or, offline, a note saying when it opens. */
-  waiting?: 'loading' | 'offline' | null;
+  waiting?: 'loading' | 'offline' | 'unseeded' | null;
 }
 
 /** ⌘ on a Mac, Ctrl elsewhere (SPEC 3.9). */
@@ -61,6 +61,11 @@ export function ScriptPage({
             {!view && waiting === 'loading' && <ScriptSkeleton />}
             {!view && waiting === 'offline' && (
               <p className="offline-note">This script opens when you’re back online.</p>
+            )}
+            {!view && waiting === 'unseeded' && (
+              <p className="offline-note">
+                No one has opened this what-if yet. It appears here once one of its writers does.
+              </p>
             )}
             {view && overlay?.kind === 'element' && (
               <div

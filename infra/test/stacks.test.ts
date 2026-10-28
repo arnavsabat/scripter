@@ -168,6 +168,14 @@ describe('the beta (D-082, D-091)', () => {
     data.resourceCountIs('AWS::DynamoDB::GlobalTable', 3);
     data.hasResourceProperties('AWS::DynamoDB::GlobalTable', {
       TableName: 'wr-edit-log',
+      Replicas: [
+        Match.objectLike({
+          PointInTimeRecoverySpecification: {
+            PointInTimeRecoveryEnabled: true,
+            RecoveryPeriodInDays: 7,
+          },
+        }),
+      ],
       KeySchema: [
         { AttributeName: 'docId', KeyType: 'HASH' },
         { AttributeName: 'k', KeyType: 'RANGE' },

@@ -183,7 +183,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - ~~D-020: storage-backed tests not yet run~~: resolved in D-021. All 6 pass against DynamoDB Local and SeaweedFS, three runs in a row, including the SIGKILL crash of a real server process.
 - ~~D-020: no client heartbeat~~: decided in D-022 (ping every 5 s, give up after 10 s).
 - **D-080: Changes shows removed text inline,** so page view's breaks (computed from the script itself) don't account for it while Changes is on.
-- **D-080: a viewer opening a never-opened what-if sees it empty** (only an editor can seed it from its base).
+- ~~D-080: a viewer opening a never-opened what-if sees it empty~~: it now says so, and the script appears when a writer opens it (D-094).
 - ~~D-080: usage counting isn't built~~: built in D-083.
 - **D-069: the leave prompt covers the open script only.** A script left for Home while still offline gets no prompt when Home is closed. A normal window keeps the copy and syncs it later; an incognito window loses it. Options to bring when it matters: prompt on Home too, or keep the script's connection open until it's synced.
 - ~~D-069: an unreachable API looks like being signed out~~: fixed in D-085 (the "can't reach" notice).
@@ -322,6 +322,22 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-094 · 2026-10-27 · Checklist leftovers: the Privacy Policy brought up to date, 7-day recovery, and the viewer's unopened what-if
+
+- **The Privacy Policy** (`apps/web/src/pages/Legal.tsx`; D-029's text, for Arnav to review before the beta) now says what this phase built:
+  - usage counts record who, which script and when, never content;
+  - error reports carry what went wrong and where in the code, never writing;
+  - the browser keeps a copy of opened scripts for offline work, and signing out removes it;
+  - one cookie keeps you signed in, with no advertising or tracking cookies;
+  - Google tells us only your name and email address;
+  - deleted scripts wait 30 days under Recently deleted, then are erased;
+  - database backups are kept for 7 days.
+  - The Terms are unchanged.
+- **Backups, made to match that sentence:** DynamoDB's point-in-time recovery keeps 35 days unless told otherwise, so the edit log and coordination table now keep 7, like RDS. Snapshot objects in S3 aren't versioned, so the purge's deletes are final.
+- **D-080's open issue: a viewer on a what-if no writer has opened yet** saw an empty page, because only an editor may seed it from its base. Now the page says "No one has opened this what-if yet. It appears here once one of its writers does." The script appears by itself the moment a writer opens it. The wording is Claude's, in D-085's note style.
+- **Tests:** a browser test for the viewer's note and the script arriving; the 7-day recovery in the stack test.
+- **Status:** Claude's changes; the policy wording is for Arnav's review.
 
 ### D-093 · 2026-10-27 · The load-test cluster for AWS (`WrLoad`), built and synthesized
 

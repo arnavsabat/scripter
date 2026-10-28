@@ -107,13 +107,17 @@ export class DataStack extends Stack {
 
     // The sync service's DynamoDB tables (SPEC 5.4), on demand. The edit log and coordination
     // table (leases, snapshot pointers) get point-in-time recovery: they hold the writing.
+    // (Snapshot objects in S3 aren't versioned: the purge's deletes are final.)
     const table = (name: string, pk: string, sk?: string, pitr = true) =>
       new TableV2(this, name, {
         tableName: `wr-${prefix}${name}`,
         partitionKey: { name: pk, type: AttributeType.STRING },
         ...(sk ? { sortKey: { name: sk, type: AttributeType.STRING } } : {}),
         billing: Billing.onDemand(),
-        pointInTimeRecoverySpecification: { pointInTimeRecoveryEnabled: pitr },
+        // 7 days, like Postgres's backups, so "kept for 7 days" in the Privacy Policy holds.
+        pointInTimeRecoverySpecification: pitr
+          ? { pointInTimeRecoveryEnabled: true, recoveryPeriodInDays: 7 }
+          : { pointInTimeRecoveryEnabled: false },
         removalPolicy: RemovalPolicy.RETAIN,
       });
     this.tables = {

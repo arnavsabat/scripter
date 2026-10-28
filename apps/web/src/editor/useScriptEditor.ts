@@ -47,6 +47,8 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
   const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
   const [others, setOthers] = useState<PresenceUser[]>([]);
   const [cue, setCue] = useState<Cue>(null);
+  /** A viewer on a what-if no writer has opened yet: nothing to show until one does (D-094). */
+  const [unseeded, setUnseeded] = useState<Session | null>(null);
   /**
    * Why the server turned this connection away for good (4403, 4410…), for the page to act on.
    * Kept with its session: a new session starts clean, so a second refusal of the same kind
@@ -153,6 +155,11 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
           if (c.synced) localCopies.markSynced(session.docId);
           if (c.fatal) setRefusal({ session, fatal: c.fatal });
           if (!created && !seeding && c.caughtUp) {
+            // A viewer can't seed it (that would be an edit): wait for a writer to (D-094).
+            if (session.canEdit === false && session.seedState && fragment.length === 0) {
+              setUnseeded(session);
+              return;
+            }
             const empty = session.canEdit !== false && fragment.length === 0;
             // A new what-if: its base snapshot of main. Applying it twice (two people opening
             // it at once) changes nothing: it's the same Yjs state either way (D-080).
@@ -199,6 +206,15 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
       });
 
       if (fragment.length > 0) open();
+      // The writer seeded it while a viewer waited: show it now.
+      const seeded = () => {
+        if (!created && fragment.length > 0 && c.caughtUp) {
+          setUnseeded(null);
+          open();
+        }
+      };
+      ydoc.on('update', seeded);
+      cleanups.push(() => ydoc.off('update', seeded));
     });
 
     return () => {
@@ -230,5 +246,15 @@ export function useScriptEditor(session: Session, handlers: ScriptEditorHandlers
     [editor],
   );
 
-  return { mountRef, editor, scenes, currentSceneId, others, cue, fatal, jumpTo };
+  return {
+    mountRef,
+    editor,
+    scenes,
+    currentSceneId,
+    others,
+    cue,
+    fatal,
+    jumpTo,
+    unseeded: unseeded === session,
+  };
 }

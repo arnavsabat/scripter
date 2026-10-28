@@ -10,8 +10,10 @@ import '../src/base.css';
 import '../src/app.css';
 import { reloadAuthForTests } from '../src/auth';
 import { PageBoundary, PanelBoundary } from '../src/components/Boundary';
+import { App } from '../src/App';
 import { Root } from '../src/Root';
 import { navigate } from '../src/router';
+import { newEpisode, seed, session } from './helpers';
 
 const testPage = location.pathname + location.search;
 const mounted: { root: ReactRoot; host: HTMLElement }[] = [];
@@ -218,5 +220,31 @@ describe('Firefox (D-089)', () => {
       delete (navigator as unknown as Record<string, unknown>).userAgent;
       localStorage.removeItem('wr-firefox-note');
     }
+  });
+});
+
+describe('a viewer on a what-if no writer has opened yet (D-094)', () => {
+  it('says so, then shows the script as soon as a writer opens it', async () => {
+    const doc = newEpisode();
+    render(
+      <App
+        session={{
+          ...session('Priya', doc),
+          canEdit: false,
+          seedState: () => Promise.resolve(new Uint8Array()),
+        }}
+      />,
+    );
+    await until(() =>
+      text($('.page .offline-note')).startsWith('No one has opened this what-if yet.'),
+    );
+    expect($('.left .sk-rows')).toBeNull(); // not a loading skeleton: it's waiting for a writer
+    // A writer opens it (seeding it from its base, D-080).
+    await seed(doc, [
+      { type: 'scene_heading', text: 'INT. KITCHEN - NIGHT' },
+      { type: 'action', text: 'Mara stares at the sink.' },
+    ]);
+    await until(() => $$('.ProseMirror.script > p.el').length === 2, 8000);
+    await until(() => !$('.page .offline-note'));
   });
 });

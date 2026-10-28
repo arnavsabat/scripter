@@ -456,7 +456,7 @@ export function ScriptScreen({
           scenes={handle.scenes}
           currentSceneId={handle.currentSceneId}
           onJump={handle.jumpTo}
-          loading={!handle.editor}
+          loading={!handle.editor && !handle.unseeded}
           {...(comparison !== undefined ? { comparison } : {})}
           drafts={
             drafts && current ? (
@@ -499,7 +499,15 @@ export function ScriptScreen({
           setOverlay={setOverlay}
           onSendScene={trySend}
           onCompareScene={(id) => openCompare(id)}
-          waiting={handle.editor ? null : handle.cue === 'offline' ? 'offline' : 'loading'}
+          waiting={
+            handle.editor
+              ? null
+              : handle.unseeded
+                ? 'unseeded'
+                : handle.cue === 'offline'
+                  ? 'offline'
+                  : 'loading'
+          }
         />
         {whatIfInfo && (
           <aside className="right" aria-label="Compare">
