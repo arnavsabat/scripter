@@ -195,3 +195,28 @@ describe('empty states (D-084)', () => {
     ]);
   });
 });
+
+describe('Firefox (D-089)', () => {
+  it('says once that a few lines may wrap differently, and never again in that browser', async () => {
+    const real = Object.getOwnPropertyDescriptor(Navigator.prototype, 'userAgent')!;
+    Object.defineProperty(navigator, 'userAgent', {
+      configurable: true,
+      get: () => 'Mozilla/5.0 (Macintosh; rv:157.0) Gecko/20100101 Firefox/157.0',
+    });
+    try {
+      localStorage.removeItem('wr-firefox-note');
+      await signIn(false);
+      render(<Root syncUrls="ws://127.0.0.1:4787" />);
+      await clickText('.home-tb .ta', '+ New script');
+      await until(
+        () => toast().startsWith('Writers’ Room works best in Chrome, Edge or Safari.'),
+        8000,
+      );
+      expect(localStorage.getItem('wr-firefox-note')).toBe('1');
+    } finally {
+      Object.defineProperty(navigator, 'userAgent', real);
+      delete (navigator as unknown as Record<string, unknown>).userAgent;
+      localStorage.removeItem('wr-firefox-note');
+    }
+  });
+});

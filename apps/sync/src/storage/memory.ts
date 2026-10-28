@@ -95,6 +95,11 @@ export class MemoryEditLog implements EditLog {
     if (doc) for (const seq of [...doc.keys()]) if (seq < belowSeq) doc.delete(seq);
     return Promise.resolve();
   }
+
+  forget(docId: string) {
+    this.entries.delete(docId);
+    return Promise.resolve();
+  }
 }
 
 export class MemorySnapshotStore implements SnapshotStore {
@@ -118,6 +123,12 @@ export class MemorySnapshotStore implements SnapshotStore {
     if (current && current.seq >= snapshot.seq) return Promise.resolve(); // the pointer only moves forward
     this.snapshots.set(docId, { seq: snapshot.seq, state: snapshot.state.slice() });
     this.saves += 1;
+    return Promise.resolve();
+  }
+
+  forget(docId: string) {
+    this.snapshots.delete(docId);
+    this.leases.leases.delete(docId);
     return Promise.resolve();
   }
 }

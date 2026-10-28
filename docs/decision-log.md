@@ -20,6 +20,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **Editor behavior:** SPEC Part 4. Flat ProseMirror block schema, Enter/Tab state machine (defaults, to be confirmed in the editor phase), permissive schema with visible fixes, Yjs per-user undo.
 - **Architecture:** SPEC Part 5 and D-002. pnpm TypeScript monorepo; React + Vite; custom y-protocols sync server; Fastify; Postgres; DynamoDB for edit log, leases and membership; S3 snapshots; Cognito; CDK; lean AWS.
 - **Page geometry:** true screenplay geometry at 96 px per inch (D-003).
+- **Browsers (D-089):** Chrome, Edge and Safari supported; Firefox works, with a one-time note that a few lines may wrap differently on screen.
 - **Beta-readiness phase (D-082):** RDS `db.t4g.micro` Postgres with 7-day backups; a domain bought now; CloudWatch logs, alarms and browser crash reports; load tests proven locally, then run once on a temporary AWS cluster against the rooms + capacity targets; usage events recorded where they happen, with a user and an episode ID; the beta metrics as SQL in `docs/metrics.md`; esbuild bundles for the production servers.
 - **Unsynced edits:** closing or reloading a script that has edits the server hasn't acknowledged brings up the browser's leave prompt (D-069).
 - **Local S3-compatible store:** SeaweedFS (D-004).
@@ -191,7 +192,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **D-020: web test runs end with a 10-second wait.** Vite's own browser connections outlive the test server's teardown, so Vitest waits out its timeout. The run still exits 0, and our servers leave nothing open.
 
 - **Spike follow-ups (D-012):**
-  - The key editor tests have only run in Chromium; WebKit and Firefox still need running in the editor phase.
+  - ~~The key editor tests have only run in Chromium.~~ The whole web suite ran in WebKit and Firefox in D-089: 170 of 176 pass, and the six are explained there.
   - Duplicate-ID repair after merges must become deterministic.
   - The word diff must group changes into phrases.
   - Watch the beta for test 2's split degradation.
@@ -228,7 +229,7 @@ Phase 2:
 20. ~~Email delivery~~ and ~~the invite link flow~~: SES on our own domain (D-030); one-time links (D-032).
 21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
 - New (found 2026-10-24, accounts phase): the prototype's blue primary button (`.pb`, white text on `--accent`) fails SPEC 3.11's 4.5:1 contrast in dark mode: white on `#6EA2E6` is about 2.6:1 (light mode, on `#2F6DB5`, is about 5.3:1). It's used for Compare's "Send mine to main". Options to bring Arnav: dark text on the dark-mode accent, a deeper dark-mode accent for filled buttons only, or the inverted-surface style used by sign-in's Continue (D-028).
-- New (D-042, moved by D-046): the 30-day purge job (D-037) isn't built yet. It needs new delete operations on the DynamoDB edit log and S3 snapshots, plus a daily schedule, so it's built in the deploy phase, before real users. Until then, soft-deleted items are only hidden.
+- ~~New (D-042, moved by D-046): the 30-day purge job (D-037) isn't built yet.~~ Built in D-090; scheduled by the deploy stack.
 - Resolved (2026-10-26, flaky under load): about one in ten full `pnpm test` runs on a busy laptop failed. Three load-sensitive waits were fixed:
   - **`collab.test.tsx`** now waits for the "Reconnecting…" cue, because the client fetches a fresh token first (D-046).
   - **The new forwarding-hop access test** gets 10 s waits.
@@ -321,6 +322,35 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-090 · 2026-10-27 · The 30-day purge built (beta-readiness checklist)
+
+- **What it does** (`apps/sync/src/purge.ts`, run daily by `purge-cli.ts`): series, episodes and what-ifs deleted more than 30 days ago (D-037) are removed for good. For each of their drafts it deletes the edit log (every DynamoDB item, incomplete chunk groups included), every snapshot object, the snapshot pointer and the lease. It also deletes the restore points in S3 under `restore-points/`. Only then does it delete the database rows, in one transaction; cascades take the drafts, snapshots, writers, invitations and RECENT entries, and usage counts keep their rows with the episode emptied. Postgres is the work list, so a purge that dies halfway is finished the next day. `--dry-run` only counts.
+- **Where it lives:** in the sync service, which owns the edit-log and snapshot formats. That added `forget(docId)` to the edit log and snapshot stores, in DynamoDB/S3 and in memory.
+- **Claude's choices (say if any should change):**
+  - **Deleted what-ifs** (which have no restore, D-081) also wait the 30 days before they're purged, as a safety net; they're never shown in the meantime.
+  - **The lease item goes too.** That restarts the document's epoch numbering, which is safe only because a purged draft's ID is never used again (it's a UUID, and its row is gone, so access is refused).
+  - **The schedule:** daily, as a scheduled task in the deploy stack.
+- **Tests:** against Postgres with the in-memory storage: a dry run changes nothing; what's past 30 days goes with its storage and restore points; a 29-day-old deletion, live drafts, and a live what-if's base snapshot are untouched; a second run finds nothing. Against DynamoDB Local and SeaweedFS: forgetting removes the log, the snapshots, the pointer and the lease, and forgetting twice is harmless.
+- **Status:** built and tested; it's scheduled in the deploy stack.
+
+### D-089 · 2026-10-27 · Browser support for the beta, measured; the deploy waits; the domain to be named
+
+- **Measured** (the pages phase's checklist item 6): line wrapping on 1,500 paragraphs per engine, half realistic screenplay prose and half adversarial text, compared with what pagination counts.
+  - **WebKit (Safari):** 0 differences, like Chromium (Chrome and Edge).
+  - **Firefox:** breaks a few character pairs differently, mainly a hyphen before a digit ("555-|0199"), plus some slashes and quotes. That's about 1% of realistic action paragraphs, and more in the narrow dialogue and parenthetical columns. Pagination, page breaks and the PDF are the same everywhere; only Firefox's on-screen wrapping of those lines can differ.
+  - **Chromium:** one adversarial case: a word longer than the whole line, with an en dash exactly where it overflows. Chromium fills the line rather than leave the dash alone on it. It's vanishingly rare in real scripts, so it's logged here rather than special-cased.
+- **The whole web suite in WebKit and Firefox:** 170 of 176 pass (`WR_BROWSERS=webkit,firefox`; `vitest.config.ts` now takes the browser list). The six are:
+  1. Firefox wrapping, as above.
+  2. Two Safari Tab tests. Safari's default Tab moves between form fields only (buttons need Option+Tab or the "Press Tab to highlight each item" setting); that's the browser, not the app.
+  3. One WebKit clipboard test: the test can't grant clipboard access, and the app correctly shows the link to copy by hand.
+  4. Firefox co-writing in the two-editors-side-by-side test, whose 816 px pages overflow their 720 px slots. Single-editor clicks in Firefox place the caret correctly at every position tried.
+  5. A view-only test racing the D-085 skeleton, whose `.script` class it matched. Fixed by waiting for the real editor; the same fix went into the share test.
+- **Arnav's calls:**
+  1. **Browsers: Chrome, Edge and Safari are supported, and Firefox works** with a quiet, one-time toast the first time it opens a script: "Writers' Room works best in Chrome, Edge or Safari. In Firefox a few lines may wrap differently on screen; your PDF is always exact." It's remembered per browser in localStorage. Rejected: making Firefox exact (per-browser break tables, about 1-2 days, and another engine to re-measure every release); blocking Firefox (turning testers away for a mostly cosmetic difference).
+  2. **The domain:** Arnav will pick a name other than the two whois showed free (`usewritersroom.com`, `writersroomhq.com`). Until then everything is built against a placeholder.
+  3. **Build now, deploy later:** the deploy stacks are built, synthesized and tested, and the load tests are run locally, but nothing is deployed to AWS until Arnav says so. No cost yet. Rejected for now: deploying with the budget raised to $60 (Claude's recommendation), or with the $40 alarms kept.
+- **Status:** Arnav's calls. Built: the Firefox toast and its test, and the browser list in the test config.
 
 ### D-088 · 2026-10-27 · Visual audit against prototype v2 (beta-readiness step 5): every difference fixed or explained
 

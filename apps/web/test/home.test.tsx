@@ -138,7 +138,7 @@ describe('creating, opening and renaming (D-033, D-037)', () => {
     await until(() => $<HTMLInputElement>('.toolbar input.ren'));
     expect($<HTMLInputElement>('.toolbar input.ren')!.value).toBe('Untitled script');
     // The page finishes loading meanwhile; the title keeps the keyboard.
-    await until(() => $('.layer:not(.off) .script'));
+    await until(() => $('.layer:not(.off) .ProseMirror.script'));
     await new Promise((r) => setTimeout(r, 300));
     expect(document.activeElement?.classList.contains('ren')).toBe(true);
     await userEvent.keyboard('Night Bus{Enter}');
@@ -182,8 +182,10 @@ describe('creating, opening and renaming (D-033, D-037)', () => {
     await until(() => episodeRows().includes('Ep 2 · Low Tide'));
     await clickText('.home .ep .nm', 'Ep 2 · Low Tide');
     await until(() => text($('.layer:not(.off) .vo')) === 'View only');
-    await until(() => $('.layer:not(.off) .script'));
-    expect($('.layer:not(.off) .script')!.getAttribute('contenteditable')).toBe('false');
+    await until(() => $('.layer:not(.off) .ProseMirror.script'));
+    expect($('.layer:not(.off) .ProseMirror.script')!.getAttribute('contenteditable')).toBe(
+      'false',
+    );
     expect($('.layer:not(.off) .title.rn')).toBeNull(); // can't rename it either
   });
 });
@@ -344,7 +346,7 @@ describe('losing access while writing (D-046)', () => {
     await openAsArnav();
     await until(() => episodeRows().length === 3);
     await clickText('.home .ep .nm', 'Ep 1 · Pilot');
-    await until(() => $('.layer:not(.off) .script'));
+    await until(() => $('.layer:not(.off) .ProseMirror.script'));
     const draft = location.pathname.split('/').pop()!.slice(0, 8);
     await fetch(`${CONTROL}/access?name=Arnav&doc=ep-${draft}&mode=deleted`);
     await until(() => toast() === 'This episode was deleted by the showrunner.', 8000);

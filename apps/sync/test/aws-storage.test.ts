@@ -171,6 +171,25 @@ describe.skipIf(!enabled)('DynamoDB + S3 storage (local services)', () => {
     });
   });
 
+  describe('the 30-day purge (D-090)', () => {
+    it('forgets a document: its whole log, every snapshot object, the pointer and the lease', async () => {
+      const doc = `forget-${run}`;
+      const fence = await own(doc);
+      for (let seq = 0; seq < 3; seq++)
+        await storage.log.append(doc, seq, new Uint8Array([seq]), fence);
+      await storage.snapshots.save(doc, { seq: 2, state: new Uint8Array([7]) }, fence);
+      await storage.snapshots.save(doc, { seq: 3, state: new Uint8Array([8]) }, fence);
+      await storage.log.forget(doc);
+      await storage.snapshots.forget(doc);
+      expect((await storage.log.readFrom(doc, 0)).entries).toEqual([]);
+      expect(await storage.snapshots.load(doc)).toBeNull();
+      expect(await storage.leases.peek(doc)).toBeNull();
+      // Forgetting again (a purge redone after a crash) is harmless.
+      await storage.log.forget(doc);
+      await storage.snapshots.forget(doc);
+    });
+  });
+
   describe('membership', () => {
     it('records heartbeats and removes a server that leaves', async () => {
       await storage.members.heartbeat({ id: `m-${run}`, url: 'ws://x:1' });

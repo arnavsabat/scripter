@@ -150,6 +150,11 @@ export class DynamoEditLog implements EditLog {
     }
     if (batch.length) await send();
   }
+
+  /** Every item, incomplete groups included: no seq reaches 15 digits. */
+  forget(docId: string) {
+    return this.truncateBelow(docId, 999_999_999_999_999);
+  }
 }
 
 export function dynamoClient(endpoint: string | undefined, region: string) {

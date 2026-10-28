@@ -103,6 +103,7 @@ export async function apiHarness() {
     app,
     admin,
     db,
+    blobs,
     issuer,
     mailer,
     cognito,

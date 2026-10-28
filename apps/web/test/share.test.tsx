@@ -58,7 +58,7 @@ async function openEpisode(series: string, episode: string) {
   await clickText('.left .row .nm', series);
   await until(() => $$('.home .ep .nm').some((n) => text(n) === episode));
   await clickText('.home .ep .nm', episode);
-  await until(() => $('.layer:not(.off) .script'));
+  await until(() => $('.layer:not(.off) .ProseMirror.script'));
 }
 const openShare = async () => {
   await commands.clickAt('.layer:not(.off) button[aria-label="Share"]', 10, 10);

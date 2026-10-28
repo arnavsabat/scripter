@@ -12,6 +12,8 @@
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
+  DeleteObjectsCommand,
+  ListObjectsV2Command,
   GetObjectCommand,
   HeadBucketCommand,
   NoSuchKey,
@@ -19,12 +21,13 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import {
+  DeleteItemCommand,
   DynamoDBClient,
   GetItemCommand,
   TransactWriteItemsCommand,
   TransactionCanceledException,
 } from '@aws-sdk/client-dynamodb';
-import { leaseCheck, pointerKey } from './coordination';
+import { leaseCheck, leaseKey, pointerKey } from './coordination';
 import { FencedError, type Fence, type Snapshot, type SnapshotStore } from './types';
 
 const objectKey = (docId: string, epoch: number, seq: number) =>
@@ -127,6 +130,39 @@ export class S3SnapshotStore implements SnapshotStore {
         .send(new DeleteObjectCommand({ Bucket: this.bucket, Key: previous.key }))
         .catch(() => {});
   }
+
+  async forget(docId: string) {
+    // Objects first, then the pointer and the lease: a purge cut short is simply redone.
+    await deletePrefix(this.s3, this.bucket, `snapshots/${docId}/`, [`snapshots/${docId}.ybin`]);
+    for (const Key of [pointerKey(docId), leaseKey(docId)])
+      await this.dynamo.send(new DeleteItemCommand({ TableName: this.coordinationTable, Key }));
+  }
+}
+
+/** Deletes the objects under `prefix` (and `extra` keys), a page of up to 1,000 at a time. */
+export async function deletePrefix(
+  s3: S3Client,
+  bucket: string,
+  prefix: string,
+  extra: string[] = [],
+) {
+  let token: string | undefined;
+  let first = true;
+  do {
+    const page = await s3.send(
+      new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, ContinuationToken: token }),
+    );
+    const keys = [...(page.Contents ?? []).map((o) => o.Key!), ...(first ? extra : [])];
+    first = false;
+    if (keys.length)
+      await s3.send(
+        new DeleteObjectsCommand({
+          Bucket: bucket,
+          Delete: { Objects: keys.map((Key) => ({ Key })), Quiet: true },
+        }),
+      );
+    token = page.NextContinuationToken;
+  } while (token);
 }
 
 export function s3Client(

@@ -25,7 +25,7 @@ import {
 } from '@aws-sdk/client-dynamodb';
 import type { Acquired, Fence, Lease, LeaseStore, Member, MembershipStore } from './types';
 
-const leaseKey = (docId: string) => ({ pk: { S: `lease#${docId}` } });
+export const leaseKey = (docId: string) => ({ pk: { S: `lease#${docId}` } });
 export const pointerKey = (docId: string) => ({ pk: { S: `snap#${docId}` } });
 
 /** The transaction item that fences a write: "the lease still names this server and epoch". */

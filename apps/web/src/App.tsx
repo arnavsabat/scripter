@@ -77,6 +77,8 @@ export interface ExportInfo {
   writers: () => Promise<string[]>;
 }
 
+const FIREFOX_NOTE = 'wr-firefox-note';
+
 export function ScriptScreen({
   session,
   title,
@@ -368,6 +370,21 @@ export function ScriptScreen({
       toast.show('Couldn’t export the PDF. Please try again.');
     }
   };
+
+  // Firefox wraps a few lines differently from pagination (D-089): say so once per browser.
+  const opened = !!handle.editor;
+  useEffect(() => {
+    if (!opened || !/Firefox\//.test(navigator.userAgent)) return;
+    try {
+      if (localStorage.getItem(FIREFOX_NOTE)) return;
+      localStorage.setItem(FIREFOX_NOTE, '1');
+    } catch {
+      return; // no storage: better never than every time
+    }
+    toast.show(
+      'Writers’ Room works best in Chrome, Edge or Safari. In Firefox a few lines may wrap differently on screen; your PDF is always exact.',
+    );
+  }, [opened, toast]);
 
   const reportFatal = useEffectEvent((reason: NonNullable<typeof handle.fatal>) =>
     onFatal?.(reason),

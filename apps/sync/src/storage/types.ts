@@ -45,6 +45,8 @@ export interface EditLog {
   readFrom(docId: string, fromSeq: number): Promise<LogTail>;
   /** Deletes every entry with seq < belowSeq (after a snapshot pointer has moved past them). */
   truncateBelow(docId: string, belowSeq: number): Promise<void>;
+  /** Deletes the document's whole log: the 30-day purge of deleted scripts (D-037, D-090). */
+  forget(docId: string): Promise<void>;
 }
 
 export interface Snapshot {
@@ -61,6 +63,8 @@ export interface SnapshotStore {
    * write that only ever moves forward. Rejects with FencedError if the lease has moved on.
    */
   save(docId: string, snapshot: Snapshot, fence: Fence): Promise<void>;
+  /** Deletes every snapshot object, the pointer and the lease: the 30-day purge (D-090). */
+  forget(docId: string): Promise<void>;
 }
 
 export interface Lease {

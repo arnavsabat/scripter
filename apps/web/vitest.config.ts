@@ -33,11 +33,18 @@ export default defineConfig({
       enabled: true,
       headless: true,
       // Copy invite link writes to the clipboard (D-032), which a browser allows only when granted.
-      provider: playwright({
-        contextOptions: { permissions: ['clipboard-read', 'clipboard-write'] },
-      }),
+      // Only Chromium knows these permissions; WebKit and Firefox refuse to start with them.
+      provider: playwright(
+        (process.env.WR_BROWSERS ?? 'chromium') === 'chromium'
+          ? { contextOptions: { permissions: ['clipboard-read', 'clipboard-write'] } }
+          : {},
+      ),
       commands: { clickAt },
-      instances: [{ browser: 'chromium', viewport: { width: 1440, height: 900 } }],
+      // WR_BROWSERS=webkit,firefox runs the same tests in Safari's and Firefox's engines (D-089).
+      instances: (process.env.WR_BROWSERS ?? 'chromium').split(',').map((b) => ({
+        browser: b.trim() as 'chromium' | 'webkit' | 'firefox',
+        viewport: { width: 1440, height: 900 },
+      })),
     },
   },
 });
