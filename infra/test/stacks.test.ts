@@ -8,15 +8,22 @@ import { BetaStack } from '../src/beta';
 import { BudgetsStack } from '../src/budgets';
 import { CertStack } from '../src/cert';
 import { DataStack } from '../src/data';
+import { DnsStack } from '../src/dns';
 import { LoadStack } from '../src/load';
 import { loadConfig } from '../src/config';
 import { EmailStack } from '../src/email';
 
-const config = loadConfig({
+const settings = {
   WR_ALERT_EMAIL: 'alerts@example.com',
   WR_SENDER_EMAIL: 'sender@example.com',
   WR_TEST_RECIPIENTS: 'sender@example.com, friend@example.com',
   WR_COGNITO_DOMAIN_PREFIX: 'scripter-test',
+};
+const config = loadConfig(settings);
+const withDomain = loadConfig({
+  ...settings,
+  WR_DOMAIN: 'example.com',
+  WR_HOSTED_ZONE_ID: 'Z123',
 });
 const env = { region: 'us-east-2' };
 
@@ -40,6 +47,37 @@ describe('budget alarms (SPEC 5.5)', () => {
       ],
     });
     expect(JSON.stringify(t.toJSON())).toContain('alerts@example.com');
+  });
+});
+
+describe('the domain (D-096, D-097)', () => {
+  it('its name alone makes only the zone; with the zone ID, the stacks use it', () => {
+    const named = loadConfig({ ...settings, WR_DOMAIN: 'example.com' });
+    expect(named.zoneName).toBe('example.com');
+    expect(named.domain).toBeUndefined();
+    expect(named.fromEmail).toBe('sender@example.com');
+    expect(withDomain.domain).toEqual({ name: 'example.com', hostedZoneId: 'Z123' });
+    expect(withDomain.fromEmail).toBe('no-reply@example.com');
+    expect(withDomain.senderEmail).toBe('sender@example.com'); // still an SES identity
+    expect(withDomain.appUrls).toEqual(['http://localhost:5173', 'https://example.com']);
+  });
+
+  it('a retained Route 53 zone that prints its nameservers', () => {
+    const t = Template.fromStack(new DnsStack(new App(), 'N', { env, zoneName: 'example.com' }));
+    t.hasResource('AWS::Route53::HostedZone', {
+      Properties: { Name: 'example.com.' },
+      DeletionPolicy: 'Retain',
+    });
+    t.hasOutput('NameServers', {});
+  });
+
+  it('codes come from no-reply@ the domain, a verified SES domain identity', () => {
+    const t = Template.fromStack(new AuthStack(new App(), 'A', { env, config: withDomain }));
+    t.hasResourceProperties('AWS::Cognito::UserPool', {
+      EmailConfiguration: Match.objectLike({ From: 'Scripter <no-reply@example.com>' }),
+    });
+    const [pool] = Object.values(t.findResources('AWS::Cognito::UserPool'));
+    expect(JSON.stringify(pool)).toContain(':identity/example.com');
   });
 });
 
@@ -123,12 +161,10 @@ describe('Cognito (D-030, D-031, D-044)', () => {
 });
 
 describe('the beta (D-082, D-091)', () => {
-  const build = (domain = false) => {
+  const build = (domain = false, servers = true) => {
     const app = new App();
     const env2 = { account: '111111111111', region: 'us-east-2' };
-    const cfg = domain
-      ? { ...config, domain: { name: 'example.com', hostedZoneId: 'Z123' } }
-      : config;
+    const cfg = domain ? withDomain : config;
     const auth = new AuthStack(app, 'A', { env: env2, config: cfg });
     const data = new DataStack(app, 'D', { env: env2 });
     const cert = domain
@@ -145,11 +181,13 @@ describe('the beta (D-082, D-091)', () => {
       auth,
       image: ContainerImage.fromRegistry('public.ecr.aws/docker/library/node:24-alpine'),
       ...(cert ? { certificate: cert.certificate } : {}),
+      servers,
     });
     return {
       data: Template.fromStack(data),
       beta: Template.fromStack(beta),
       auth: Template.fromStack(auth),
+      ...(cert ? { cert: Template.fromStack(cert) } : {}),
     };
   };
   const { data, beta, auth } = build();
@@ -186,9 +224,10 @@ describe('the beta (D-082, D-091)', () => {
       for (const res of Object.values(data.findResources(r)))
         expect((res as { DeletionPolicy?: string }).DeletionPolicy).toBe('Retain');
     data.resourceCountIs('AWS::EC2::NatGateway', 0);
+    data.hasOutput('DbInstanceId', {}); // for beta:up and beta:down
   });
 
-  it('one ARM Fargate Spot task with the API and the sync server, migrating on start', () => {
+  it('two ARM Fargate Spot tasks, each the API and a sync server, migrating on start', () => {
     beta.hasResourceProperties('AWS::ECS::TaskDefinition', {
       RuntimePlatform: { CpuArchitecture: 'ARM64', OperatingSystemFamily: 'LINUX' },
       ContainerDefinitions: Match.arrayWith([
@@ -208,7 +247,7 @@ describe('the beta (D-082, D-091)', () => {
       ]),
     });
     beta.hasResourceProperties('AWS::ECS::Service', {
-      DesiredCount: 1,
+      DesiredCount: 2,
       CapacityProviderStrategy: [{ CapacityProvider: 'FARGATE_SPOT', Weight: 1 }],
       DeploymentConfiguration: Match.objectLike({
         MinimumHealthyPercent: 100,
@@ -235,7 +274,10 @@ describe('the beta (D-082, D-091)', () => {
     const policies = JSON.stringify(beta.findResources('AWS::IAM::Policy'));
     expect(policies).toContain('cognito-idp:AdminGetUser');
     expect(policies).toContain('dynamodb:DescribeTable');
-    beta.hasResourceProperties('AWS::Events::Rule', { ScheduleExpression: 'cron(0 9 * * ? *)' });
+    beta.hasResourceProperties('AWS::Events::Rule', {
+      ScheduleExpression: 'cron(0 9 * * ? *)',
+      State: 'ENABLED',
+    });
   });
 
   it('alarms email Arnav: servers down, 5xx, edit-log trouble, crash bursts, a failed purge, the database', () => {
@@ -253,12 +295,85 @@ describe('the beta (D-082, D-091)', () => {
     auth.hasResourceProperties('AWS::Cognito::UserPool', { DeletionProtection: 'ACTIVE' });
   });
 
-  it('with a domain: its certificate from us-east-1 and an alias record', () => {
-    const t = build(true).beta;
+  it('with a domain: its certificate from us-east-1, the site and sign-in at auth.<domain>', () => {
+    const { beta: t, cert } = build(true);
+    cert!.hasResourceProperties('AWS::CertificateManager::Certificate', {
+      DomainName: 'example.com',
+      SubjectAlternativeNames: ['auth.example.com'],
+    });
     t.hasResourceProperties('AWS::CloudFront::Distribution', {
       DistributionConfig: Match.objectLike({ Aliases: ['example.com'] }),
     });
-    t.resourceCountIs('AWS::Route53::RecordSet', 1);
+    t.hasResourceProperties('AWS::Cognito::UserPoolDomain', { Domain: 'auth.example.com' });
+    t.resourceCountIs('AWS::Route53::RecordSet', 2);
+    // Cognito refuses a custom domain whose parent doesn't resolve yet.
+    const [apex] = Object.keys(
+      t.findResources('AWS::Route53::RecordSet', { Properties: { Name: 'example.com.' } }),
+    );
+    t.hasResource('AWS::Cognito::UserPoolDomain', { DependsOn: Match.arrayWith([apex]) });
+    // The API's Google sign-in goes through auth.<domain>, and its mail comes from the domain.
+    const [signIn] = Object.keys(t.findResources('AWS::Cognito::UserPoolDomain'));
+    const api = Object.values(t.findResources('AWS::ECS::TaskDefinition'))
+      .flatMap(
+        (d) =>
+          (
+            d as {
+              Properties: { ContainerDefinitions: { Name: string; Environment: unknown[] }[] };
+            }
+          ).Properties.ContainerDefinitions,
+      )
+      .find((c) => c.Name === 'api')!;
+    const envOf = (name: string) =>
+      JSON.stringify(api.Environment.find((e) => (e as { Name: string }).Name === name));
+    expect(envOf('COGNITO_DOMAIN')).toContain(signIn);
+    expect(envOf('WR_SENDER_EMAIL')).toContain('no-reply@example.com');
+    expect(envOf('APP_URL')).toContain('https://example.com');
+  });
+
+  it('servers down (D-097): no load balancer or tasks, 503s at the edge, Postgres kept stopped', () => {
+    const { beta: t } = build(true, false);
+    t.resourceCountIs('AWS::ElasticLoadBalancingV2::LoadBalancer', 0);
+    t.resourceCountIs('AWS::ECS::Service', 0);
+    t.resourceCountIs('AWS::CloudFront::VpcOrigin', 0);
+    // /api/* and /doc/* still exist, answered by a function, so the app sees "can't reach".
+    const fns = t.findResources('AWS::CloudFront::Function');
+    const down = Object.entries(fns).find(([, f]) => JSON.stringify(f).includes('statusCode: 503'));
+    expect(down).toBeDefined();
+    t.hasResourceProperties('AWS::CloudFront::Distribution', {
+      DistributionConfig: Match.objectLike({
+        CacheBehaviors: Match.arrayWith(
+          ['/api/*', '/doc/*'].map((PathPattern) =>
+            Match.objectLike({
+              PathPattern,
+              FunctionAssociations: [
+                Match.objectLike({
+                  EventType: 'viewer-request',
+                  FunctionARN: { 'Fn::GetAtt': [down![0], 'FunctionARN'] },
+                }),
+              ],
+            }),
+          ),
+        ),
+      }),
+    });
+    // The site, its domain and sign-in stay.
+    t.resourceCountIs('AWS::Cognito::UserPoolDomain', 1);
+    t.resourceCountIs('AWS::Route53::RecordSet', 2);
+    // No purge (it needs Postgres), only the alarms that can still fire, and a nightly stop.
+    t.hasResourceProperties('AWS::Events::Rule', { State: 'DISABLED' });
+    t.resourceCountIs('AWS::CloudWatch::Alarm', 3);
+    t.hasResourceProperties('AWS::Scheduler::Schedule', {
+      ScheduleExpression: 'cron(0 10 * * ? *)',
+      Target: Match.objectLike({ RetryPolicy: Match.objectLike({ MaximumRetryAttempts: 0 }) }),
+    });
+    const [stop] = Object.values(t.findResources('AWS::Scheduler::Schedule'));
+    expect(JSON.stringify(stop)).toContain(':aws-sdk:rds:stopDBInstance');
+    expect(JSON.stringify(stop)).toContain('DbInstanceIdentifier');
+    expect(JSON.stringify(t.findResources('AWS::IAM::Policy'))).toContain('rds:StopDBInstance');
+  });
+
+  it('servers up: no schedule stopping Postgres', () => {
+    beta.resourceCountIs('AWS::Scheduler::Schedule', 0);
   });
 });
 

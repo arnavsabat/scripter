@@ -8,22 +8,32 @@ export AWS_PROFILE=writers-room   # your AWS CLI profile (the name it has on you
 
 Credentials and secrets stay on your machine: Claude never handles them (D-061). The architecture is in the README; the decisions behind it are D-082 to D-094.
 
-**Status of this runbook (2026-10-27):** every stack is built, synthesized and tested (`pnpm --filter @wr/infra synth`, `infra/test/stacks.test.ts`), and the server and load-test images were built and run locally. Nothing in Parts 2-8 has run against AWS yet: the deploy waits for your go-ahead (D-089). The first real deploy is the end-to-end run of this document; fix anything it gets wrong in the same commit.
+**Status of this runbook (2026-10-28):** every stack is built, synthesized and tested (`pnpm --filter @wr/infra synth`, `infra/test/stacks.test.ts`), and the server and load-test images were built and run locally. Nothing in Parts 2-8 has run against AWS yet: the deploy waits for your go-ahead (D-089). The first real deploy is the end-to-end run of this document; fix anything it gets wrong in the same commit.
 
 ---
 
 ## Part 1. Before the first deploy (once)
 
 1. **Docker running** (OrbStack). CDK builds the server image during `cdk deploy`.
-2. **The domain** (D-082). Buy it in the Route 53 console (Registered domains → Register), which also creates its hosted zone. Then, in `infra/.env.local`:
-   ```sh
-   WR_DOMAIN=yourdomain.com
-   WR_HOSTED_ZONE_ID=Z0…          # Route 53 → Hosted zones → yourdomain.com
-   WR_SENDER_EMAIL=codes@yourdomain.com
-   WR_APP_URLS=http://localhost:5173,https://yourdomain.com
-   ```
-   Without a domain the beta still deploys, on CloudFront's own address (`https://d….cloudfront.net`), with SES in its sandbox.
-3. **The AWS plan.** The account is on the free plan (D-038). Upgrade it to the paid plan before the beta (Billing console → Account plan), so nothing is closed when the credits run out. The budget alarms stay at $20 and $40 unless you change them (`infra/src/budgets.ts`). The beta runs at about $45-55 a month on demand (D-089), so expect the $40 email.
+2. **The domain's DNS in Route 53** (D-096, D-097). `scripter.ca` is registered at Porkbun; its records live in a Route 53 zone that the `WrDns` stack makes.
+   1. In `infra/.env.local`, add `WR_DOMAIN=scripter.ca` (nothing else yet), then:
+      ```sh
+      pnpm --filter @wr/infra deploy:dns
+      ```
+      It prints `WrDns.HostedZoneId` and `WrDns.NameServers` (four `ns-….awsdns-…` names).
+   2. At Porkbun: Domain Management → `scripter.ca` → **Authoritative Nameservers** → Edit. Replace Porkbun's with the four from `NameServers`, and save. If the domain shows **DNSSEC** records, delete them first, or the domain stops resolving.
+   3. Wait until the world sees the switch (minutes, sometimes a few hours for `.ca`):
+      ```sh
+      dig +short NS scripter.ca      # must print the four awsdns names
+      ```
+   4. Add `WR_HOSTED_ZONE_ID=<WrDns.HostedZoneId>` to `infra/.env.local`. From now on every stack uses the domain:
+      - the site at `https://scripter.ca`, added to the app URLs by itself;
+      - sign-in at `auth.scripter.ca`;
+      - mail from `no-reply@scripter.ca`.
+3. **The AWS plan.** The account is on the free plan (D-038): it can't be charged, and spends its credits ($119.98 on 2026-10-28, until 2027-04-26; check with `aws freetier get-account-plan-state --region us-east-1`). With the servers down between sessions it uses about $4-5 a month, and about $1.20 a day while they're up (D-096), so the credits last until April.
+   - AWS pays $20 more each for trying EC2, RDS, Lambda and Bedrock from the console home's **Explore AWS** panel. Launch something tiny and delete it.
+   - Don't turn on AWS Organizations, IAM Identity Center or Control Tower: any of them converts the account to paid.
+   - Before 2027-04-26, decide whether to upgrade to paid (then it bills, at the same small amounts) or let the account close.
 4. **Postgres version.** `infra/src/data.ts` asks for Postgres 18.3. Check what RDS offers in us-east-2 that day, and use the newest 18.x:
    ```sh
    aws rds describe-db-engine-versions --engine postgres --region us-east-2 \
@@ -35,25 +45,42 @@ Credentials and secrets stay on your machine: Claude never handles them (D-061).
 In order; each takes a few minutes. `pnpm --filter @wr/infra diff` shows what any of them would change first.
 
 ```sh
-pnpm --filter @wr/infra deploy:email   # with a domain: the domain identity, DKIM and DMARC records
-pnpm --filter @wr/infra deploy:auth    # Cognito: deletion protection on; the app URLs for Google
-pnpm --filter @wr/infra deploy:data    # the network, Postgres, DynamoDB, the snapshot bucket (kept forever)
-pnpm --filter @wr/infra deploy:cert    # only with a domain: the certificate, in us-east-1
-pnpm --filter @wr/infra deploy:app     # builds the web app, then CloudFront, the load balancer, the task
+pnpm --filter @wr/infra deploy:email   # the domain identity, its DKIM and DMARC records
 ```
 
-`deploy:app` prints `WrApp.Url`. **Without a domain**, add that URL to `WR_APP_URLS` and run `deploy:auth` again, so "Continue with Google" can return to it.
+**Wait until SES has verified the domain** (usually minutes once DKIM's records are in Route 53):
+
+```sh
+aws sesv2 get-email-identity --email-identity scripter.ca --query VerifiedForSendingStatus   # true
+```
+
+Cognito refuses to send from `no-reply@scripter.ca` until then. Then:
+
+```sh
+pnpm --filter @wr/infra deploy:auth    # Cognito: mail from no-reply@scripter.ca; scripter.ca for Google
+pnpm --filter @wr/infra deploy:data    # the network, Postgres, DynamoDB, the snapshot bucket (kept forever)
+pnpm --filter @wr/infra deploy:cert    # the certificate for scripter.ca and auth.scripter.ca, in us-east-1
+pnpm --filter @wr/infra deploy:app     # = beta:up: builds the web app; CloudFront, sign-in domain, load balancer, two tasks
+```
+
+The first `deploy:app` takes longer (often 15-30 minutes): CloudFront, and Cognito's `auth.scripter.ca`, which runs its own CloudFront distribution. It prints:
+
+- `WrApp.Url`: `https://scripter.ca`;
+- `WrApp.GoogleRedirectUri`: `https://auth.scripter.ca/oauth2/idpresponse`.
+
+**Google:** in the Google Cloud console, open the OAuth client → **Authorized redirect URIs** → add `WrApp.GoogleRedirectUri`. Keep the old `amazoncognito.com` one until you've seen Google sign-in work on `scripter.ca`.
 
 **Confirm the alarm email.** AWS emails `WR_ALERT_EMAIL` a "Subscription confirmation" link for the alerts topic. Click it, or no alarm will ever reach you.
 
-## Part 3. Checking a deploy (do this every time)
+## Part 3. Checking a deploy (do this every time the servers come up)
 
-1. **The API:** `curl https://<url>/api/health` should print `{"ok":true}`.
-2. **The servers:** in the ECS console (cluster from `WrApp.ClusterName`), the service has 1 running task. Under EC2 → Target groups, both target groups (API, sync) show 1 healthy target.
-3. **Sign in** with an email code, then with Google.
-4. **Write:** open a script, type, and reload. The toolbar must not stay on "Reconnecting…", and your typing must still be there. This proves the WebSocket works through CloudFront's VPC origin (D-091), the one thing synth can't check. If it fails, look at the sync logs (step 6). If CloudFront isn't upgrading the connection, tell Claude: the fallback is an internet-facing load balancer for `/doc/*` only, locked to CloudFront by a secret header.
+1. **The API:** `curl https://scripter.ca/api/health` should print `{"ok":true}`.
+2. **The servers:** in the ECS console (cluster from `WrApp.ClusterName`), the service has 2 running tasks. Under EC2 → Target groups, both target groups (API, sync) show 2 healthy targets.
+3. **Sign in** with an email code (it comes from `no-reply@scripter.ca`), then with Google (the address bar passes through `auth.scripter.ca`).
+4. **Write:** open a script, type, and reload. The toolbar must not stay on "Reconnecting…", and your typing must still be there. This proves the WebSocket works through CloudFront's VPC origin (D-091), the one thing synth can't check. If it fails, look at the sync logs (step 7). If CloudFront isn't upgrading the connection, tell Claude: the fallback is an internet-facing load balancer for `/doc/*` only, locked to CloudFront by a secret header.
 5. **Two writers:** in a second browser (or Incognito), open the same script and watch each other's typing and cursors.
-6. **The logs:**
+6. **A failover drill** (D-096: the two tasks are a cluster). While both windows type, stop one task: ECS console → the service → Tasks → pick one → Stop. Writing pauses for about 6-8 s ("Reconnecting…") and carries on, with nothing lost, while ECS starts a replacement. The sync logs show the other task taking the script's lease.
+7. **The logs:**
    ```sh
    aws logs tail <WrApp.LogGroup> --follow --since 10m      # api/…, sync/… and purge/… streams
    ```
@@ -61,8 +88,22 @@ pnpm --filter @wr/infra deploy:app     # builds the web app, then CloudFront, th
 
 ## Part 4. Opening the beta to testers
 
-1. **SES production access** (only with a domain). In the SES console (us-east-2), choose Account dashboard → Request production access. Use case, for example: "Transactional email only: one-time sign-in codes and invitations to a closed beta of a screenwriting app, about 50 recipients who signed up themselves. No marketing." AWS usually answers within a day. Until then, mail reaches only verified addresses.
-2. **Google's consent screen.** In the Google Cloud console, under APIs & Services → OAuth consent screen, publish the app ("In production"), or add each tester under Test users (up to 100).
+Not needed while you're the only tester (you're on both allow-lists). Do both before `scripter.ca` goes on a resume or to anyone else, so whoever clicks it can sign in.
+
+1. **SES production access.** SES starts in a sandbox: it delivers only to addresses verified by hand, at most 200 a day. In the SES console (us-east-2), choose Account dashboard → Request production access:
+   - **Mail type:** transactional.
+   - **Website:** `https://scripter.ca`.
+   - **Use case,** for example: "Transactional email only: one-time sign-in codes and invitations for Scripter, a screenwriting app in closed beta. Recipients sign up themselves. No marketing. Bounces and complaints are handled by Cognito and SES defaults."
+   - AWS usually answers within a day.
+2. **Google's consent screen.** The OAuth app is in Testing, so only its listed test users can use Google sign-in. In the Google Cloud console → Google Auth Platform:
+   - **Branding:**
+     - **App name:** Scripter.
+     - **Support email:** yours.
+     - **Home page:** `https://scripter.ca`.
+     - **Privacy policy:** `https://scripter.ca/privacy`.
+     - **Terms:** `https://scripter.ca/terms`.
+     - **Authorized domain:** `scripter.ca`.
+   - **Audience:** Publish app. We ask only for name and email, so Google needs no security review, though it may take a few days to verify the branding.
 3. **Invite:** create the series on Home, then Members → invite by email. The invitation link signs them up and joins them.
 
 ## Part 5. Everyday operations
@@ -75,7 +116,7 @@ pnpm --filter @wr/infra deploy:app     # builds the web app, then CloudFront, th
 pnpm --filter @wr/infra deploy:app
 ```
 
-ECS starts the new task before it stops the old one. For a few seconds two sync servers run, and the leases hand scripts over (D-022). If the new task never becomes healthy, the deployment circuit breaker rolls it back by itself. To go back by hand: `git checkout <previous commit>`, then `deploy:app` again, then `git checkout main`.
+Run it with the servers up (`deploy:app` is `beta:up`). ECS starts the new tasks before it stops the old ones. For a few seconds four sync servers run, and the leases hand scripts over (D-022). If the new task never becomes healthy, the deployment circuit breaker rolls it back by itself. To go back by hand: `git checkout <previous commit>`, then `deploy:app` again, then `git checkout main`.
 
 **Migrations** run when the API starts (`WR_MIGRATE_ON_START`). They are new numbered files only; never edit an applied one. Before a migration that drops or rewrites data, take a manual snapshot first:
 
@@ -117,7 +158,7 @@ aws ecs run-task --cluster <WrApp.ClusterName> --task-definition <WrApp.PurgeTas
 
 | Alarm | What it means | What to do |
 |---|---|---|
-| `ApiDown` / `SyncDown` | No healthy API or sync target for 3 minutes. | ECS console → the service → Events. A Spot interruption or a crash is replaced by itself in a minute or two; writers keep typing on their device meanwhile and nothing is lost (D-082). If tasks keep failing, read the stopped task's reason and the logs, and roll back. |
+| `ApiDown` / `SyncDown` | No healthy API or sync target for 3 minutes: both tasks are gone. | ECS console → the service → Events. One lost task is a 6-8 s failover to the other (D-096); losing both (Spot reclaiming both) means a minute or two until replacements start, while writers keep typing on their device and lose nothing (D-082). If tasks keep failing, read the stopped task's reason and the logs, and roll back. |
 | `ServerErrors` | 5 or more 5xx errors from the servers in 5 minutes. | Logs: look for `"level":50` (Fastify errors) in `api/…`. |
 | `EditLogTrouble` | An append, snapshot, truncate or room load failed. | Logs: the `sync/…` stream's `error` lines. DynamoDB throttling or an outage shows here; writers' edits wait on their devices and resend (zero lost edits), but nothing new becomes durable until it clears (Known risks). |
 | `CrashBurst` | 20 or more browser crash reports in an hour (D-083). | Logs: `browser error` lines show the message, stack and app version. A fresh release is the usual cause: roll back. |
@@ -138,7 +179,7 @@ Restore into a **new** resource, check it, then point the app at it. Never overw
 
 ## Part 7. Load tests on AWS (D-082, D-093)
 
-They give the resume's numbers. You need `WrData` deployed (it provides the network); `WrApp` doesn't have to be. Budget roughly $5-10 for the four scenarios, mostly DynamoDB writes (D-093).
+They give the resume's numbers. You need `WrData` deployed (it provides the network); `WrApp` can be down (`beta:down`), which saves its cost meanwhile. Budget roughly $5-10 for the four scenarios, mostly DynamoDB writes (D-093).
 
 ```sh
 pnpm --filter @wr/infra deploy:load            # 3 servers
@@ -175,15 +216,22 @@ pnpm --filter @wr/infra destroy:load
 
 The servers' own logs (`sync/…` streams) show the failover from their side: who took which lease, and when.
 
-## Part 8. Pausing, costs and teardown
+## Part 8. Servers up and down, costs and teardown
 
-- **Pause the servers** (between test sessions; writers can't connect meanwhile):
-  ```sh
-  aws ecs update-service --cluster <WrApp.ClusterName> --service <WrApp.ServiceName> --desired-count 0
-  ```
-  Set it back to 1 to resume. The load balancer (about $18 a month) and Postgres keep running.
-- **Tear the app down:** `cd infra && npx cdk destroy WrApp`. The data stack keeps everything: Postgres (with deletion protection), the tables and the bucket.
-- **Cost check:** Billing → Cost Explorer, by service. The budget alarms email you at $20 and $40.
+The beta's servers run on demand (D-096, D-097):
+
+```sh
+pnpm --filter @wr/infra beta:down   # after a session: no load balancer or tasks; Postgres stopped
+pnpm --filter @wr/infra beta:up     # before one (about 10 minutes): Postgres started, then the servers
+```
+
+- **While down:**
+  - `scripter.ca` stays up and shows "Can't reach Scripter" (the API and sync answer 503 at CloudFront).
+  - Your scripts are safe in DynamoDB, S3 and the stopped Postgres.
+  - The daily purge and the servers' alarms are off, so deletions older than 30 days wait for the next time the servers are up.
+  - AWS starts a database that has been stopped for 7 days; a nightly schedule (10:00 UTC) stops it again.
+- **Costs:** about $4-5 a month while down (Postgres storage, secrets, the hosted zone), about $1.20 a day while up (mostly the load balancer and Postgres). Billing → Cost Explorer shows them by service, and the budget alarms email you at $20 and $40.
+- **Tear the app down entirely:** `cd infra && npx cdk destroy WrApp`. The data stack keeps everything: Postgres (with deletion protection), the tables and the bucket. The hosted zone (`WrDns`) is kept too.
 - **Changing secrets** (no automatic rotation is set up):
   - **The cluster secret:** set a new value with `aws secretsmanager put-secret-value --secret-id wr/cluster-secret --secret-string <new>`, then run `deploy:app` so the task picks it up.
   - **The Postgres password:** set it with `aws rds modify-db-instance --db-instance-identifier <id> --master-user-password <new> --apply-immediately`, update the `password` field of `wr/postgres` to match, then run `deploy:app`.

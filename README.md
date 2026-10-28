@@ -9,7 +9,7 @@ The systems centerpiece is a horizontally scaled sync service:
 - **A durable edit log:** every keystroke is stored before anyone sees it.
 - **Failover with zero lost edits,** proven by a chaos suite and a load-test harness.
 
-**Status:** feature-complete for the closed beta: editor, real-time sync, pagination and page view, PDF, import, accounts and roles, what-ifs. The AWS deploy is built and tested but not yet live. See `docs/SPEC.md` for the specification, `docs/decision-log.md` for every decision and why it was made, `docs/metrics.md` for measured numbers, and `docs/interview-notes.md` for the hardest problems and their tradeoffs.
+**Status:** feature-complete for the closed beta: editor, real-time sync, pagination and page view, PDF, import, accounts and roles, what-ifs. The AWS deploy is built and tested; it goes live at `scripter.ca`, with its servers run on demand while the beta has one tester (D-096). See `docs/SPEC.md` for the specification, `docs/decision-log.md` for every decision and why it was made, `docs/metrics.md` for measured numbers, and `docs/interview-notes.md` for the hardest problems and their tradeoffs.
 
 ## Architecture
 
@@ -23,7 +23,7 @@ flowchart LR
   E -- "WebSocket /doc/*" --> CF
   CF -- "/*" --> S3W[("S3: the web app")]
   CF -- "VPC origin" --> LB["Internal load balancer"]
-  subgraph Task["Fargate task (ARM, Spot)"]
+  subgraph Task["Two Fargate tasks (ARM, Spot), each"]
     API["API<br/>Fastify"]
     SYNC["Sync server<br/>y-protocols"]
   end
@@ -35,7 +35,7 @@ flowchart LR
   SYNC -- "snapshots" --> S3S[("S3<br/>snapshots, restore points")]
   API --> S3S
   API --> COG["Cognito<br/>email codes, Google"]
-  SYNC -. "forward to the home server" .-> SYNC2["other sync servers<br/>(the load-test cluster, deploys)"]
+  SYNC -. "forward to the home server" .-> SYNC2["the other task's sync server<br/>(and the load-test cluster)"]
 ```
 
 **How a keystroke travels:**
@@ -123,8 +123,9 @@ The web suite includes an accessibility audit (contrast, names and focus on ever
 The CDK app in `infra/src` defines the accounts stacks (`WrBudgets`, `WrEmail`, `WrAuth`) and the beta:
 
 - **`WrData`:** Postgres, DynamoDB, S3 and the network, all kept forever;
-- **`WrCert`:** the domain's certificate;
-- **`WrApp`:** CloudFront, the load balancer and the task, the daily purge, and the alarms;
+- **`WrDns`:** the domain's Route 53 zone (the domain is registered at Porkbun);
+- **`WrCert`:** the certificate for the site and `auth.<domain>`, the sign-in domain;
+- **`WrApp`:** CloudFront, the sign-in domain, the load balancer and two tasks, the daily purge, and the alarms. `pnpm --filter @wr/infra beta:up` / `beta:down` brings the servers up or takes them away (the site stays up);
 - **`WrLoad`:** the temporary load-test cluster.
 
 Settings come from the git-ignored `infra/.env.local` (see `infra/.env.local.example`). The procedure, checks, alarms and recovery steps are in `docs/runbook.md`.

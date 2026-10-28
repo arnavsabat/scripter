@@ -1,5 +1,6 @@
 // The domain's certificate (D-082, D-091), in us-east-1: CloudFront only takes certificates from
-// there. Validated by DNS records in the domain's Route 53 zone, renewed by AWS.
+// there, and neither does Cognito's custom sign-in domain, auth.<domain> (D-097). Validated by DNS
+// records in the domain's Route 53 zone, renewed by AWS.
 import { Stack, type StackProps } from 'aws-cdk-lib';
 import { Certificate, CertificateValidation } from 'aws-cdk-lib/aws-certificatemanager';
 import { HostedZone } from 'aws-cdk-lib/aws-route53';
@@ -20,6 +21,7 @@ export class CertStack extends Stack {
     });
     this.certificate = new Certificate(this, 'Certificate', {
       domainName: props.domain.name,
+      subjectAlternativeNames: [`auth.${props.domain.name}`],
       validation: CertificateValidation.fromDns(zone),
     });
   }

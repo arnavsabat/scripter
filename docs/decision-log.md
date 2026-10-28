@@ -30,7 +30,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - **The deploy stacks:** `WrData`, `WrApp`, `WrCert` (D-091).
   - **Load tests:** the harness (D-092) and the load-test cluster `WrLoad` (D-093).
   - **The Privacy Policy** brought up to date, and 7-day recovery (D-094).
-- **Name, domain and hosting (D-096):** the product is Scripter, at `scripter.ca`, with DNS in Route 53. The beta's servers run on demand (`beta:up` / `beta:down`), as two Fargate Spot tasks while up; CloudFront and the web app stay up throughout.
+- **Name, domain and hosting (D-096, built in D-097):** the product is Scripter, at `scripter.ca`, with DNS in Route 53. The beta's servers run on demand (`beta:up` / `beta:down`), as two Fargate Spot tasks while up; CloudFront and the web app stay up throughout.
 - **Browsers (D-089):** Chrome, Edge and Safari supported; Firefox works, with a one-time note that a few lines may wrap differently on screen.
 - **Beta-readiness phase (D-082):** RDS `db.t4g.micro` Postgres with 7-day backups; a domain bought now; CloudWatch logs, alarms and browser crash reports; load tests proven locally, then run once on a temporary AWS cluster against the rooms + capacity targets; usage events recorded where they happen, with a user and an episode ID; the beta metrics as SQL in `docs/metrics.md`; esbuild bundles for the production servers.
 - **Unsynced edits:** closing or reloading a script that has edits the server hasn't acknowledged brings up the browser's leave prompt (D-069).
@@ -343,7 +343,10 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Known risks
 
-- New (D-091): **one sync server on Fargate Spot.** A Spot interruption or a crash leaves no second server, so writers wait for a replacement task (a minute or two) instead of the 6-8 s cluster failover. They keep typing on their devices and lose nothing. Mitigation proposed: two tasks (Proposed, item 3).
+- ~~D-091: one sync server on Fargate Spot~~: two tasks (D-096, D-097). Spot can still reclaim both at once; then writers wait a minute or two for replacements, typing on their devices and losing nothing.
+- New (D-096): **the free plan ends on 2027-04-26,** or sooner if the credits run out. The account then closes (AWS keeps its data for 90 days) unless Arnav upgrades it to paid. Running the servers on demand keeps the credits lasting until then.
+- New (D-097): **while the servers are down, `scripter.ca` can't be used,** and anyone who visits sees "Can't reach Scripter". Bring them up (`beta:up`, about 10 minutes) before a session, a demo or interview weeks.
+- New (D-097): **Cognito's custom domain and CloudFront** can take up to an hour on the first deploy. That's slow, but only once.
 - New (D-091): **CloudFront's VPC origin carrying the sync WebSocket** is the one part synth can't check. It's step 4 of the runbook's checks, with a fallback ready (an internet-facing load balancer for `/doc/*`, locked to CloudFront by a secret header).
 - New (D-092): **each script's updates are appended strictly one at a time,** so one script takes at most one update per DynamoDB round trip. That's fine at beta scale (about 15 keys a second for a busy room); group commit is the fix if a room ever needs more.
 - New (D-093): **DynamoDB is billed per keystroke** (a transactional append plus its lease check). It's pennies at beta scale; a 1,000-writer load test is about $20-25 an hour of typing.
@@ -370,6 +373,52 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-097 · 2026-10-28 · Built: the domain's zone, sign-in at auth.scripter.ca, two tasks, and the servers on demand
+
+- **What D-096 needed, built (Claude's implementation of Arnav's calls):**
+  - **`WrDns`** (`infra/src/dns.ts`): a retained Route 53 public zone for `scripter.ca`, printing its four nameservers for Porkbun.
+    - The settings take the domain in two steps. `WR_DOMAIN` alone makes only the zone. Adding `WR_HOSTED_ZONE_ID` turns the domain on everywhere else: `https://scripter.ca` joins the app URLs by itself, and mail comes from `no-reply@scripter.ca` (a verified SES domain identity). The old sender address stays an SES identity.
+  - **Sign-in at `auth.scripter.ca`:**
+    - Cognito's custom domain, in `WrApp`, beside the deployed prefix domain (a pool may have one of each), so nothing in `WrAuth` is replaced.
+    - The certificate in `WrCert` also covers `auth.scripter.ca` (Cognito, like CloudFront, takes certificates only from us-east-1).
+    - Cognito requires the parent domain to resolve, so the custom domain waits for the site's record.
+    - Its record points straight at the domain's `cloudFrontEndpoint` attribute. CDK's `UserPoolDomainTarget` would add a Lambda-backed lookup for the same value.
+    - The API's Google flow uses it; `WrApp` prints the new Google redirect URI for Arnav to add.
+  - **Two tasks** (`desiredCount: 2`): each runs the API and a sync server. A deploy briefly runs four.
+  - **The servers on demand:** `WrApp` takes `-c servers=off`.
+    - **Off removes:** the service, the load balancer, its target groups and the VPC origin.
+    - **`/api/*` and `/doc/*` still exist,** answered at the edge by a CloudFront Function with a 503, which the app already reads as "can't reach" (D-085), and from which the sync client keeps retrying.
+    - **Off also changes:** the daily purge is disabled (it needs Postgres), and only the alarms that can still fire stay (edit-log trouble, crash bursts, a failed purge). The servers' and database's alarms go, since a stopped database's missing metrics would read as "storage low".
+    - **A nightly EventBridge Scheduler call** (10:00 UTC, no Lambda, no retries) stops Postgres again, because RDS starts a stopped database after 7 days.
+  - **`infra/scripts/beta.sh`** (`pnpm --filter @wr/infra beta:up` / `beta:down`; `deploy:app` is now `beta:up`):
+    - **up:** starts Postgres, waits until it's available (the tasks migrate and connect on start), builds the web app, then deploys with the servers;
+    - **down:** deploys without them, then stops Postgres.
+    - `WrData` now outputs its database's ID for this.
+- **Docs:** the runbook's Parts 1-4 and 8 are rewritten:
+  - Porkbun's nameservers and DNSSEC;
+  - waiting for SES to verify the domain before `deploy:auth`;
+  - the Google redirect URI;
+  - a failover drill on the two tasks;
+  - when to request SES production access and publish Google's consent screen;
+  - up and down, and the costs.
+  - The README, the interview notes, CLAUDE.md and `.env.local.example` match.
+- **Tests:** the stack tests grow from 15 to 20:
+  - the two-step domain settings;
+  - the retained zone;
+  - mail from the domain;
+  - the certificate's second name;
+  - the sign-in domain waiting for the site's record, and the API using it;
+  - two tasks;
+  - servers down (no load balancer, tasks or VPC origin; the 503 function on both paths; the purge disabled; three alarms; the nightly stop).
+  - Every stack synthesizes with the domain set, servers up and down.
+- **For writers:** while the servers are down, `scripter.ca` loads and says it can't reach Scripter, with Try again. Deletions older than 30 days wait for the next time the servers are up to be erased (the Privacy Policy promises 30 days, then erasure, without a stated hour).
+- **Claude's choices, standing unless changed:**
+  - the nightly stop at 10:00 UTC;
+  - `no-reply@` as the sender;
+  - the 503's body (`{"error":"servers down"}`);
+  - keeping the old Google redirect URI until the new one is proven.
+- **Status:** built and tested; nothing deployed yet. The deploy runs with Arnav, following the runbook.
 
 ### D-096 · 2026-10-28 · The product is Scripter, at scripter.ca; the beta's servers run on demand, two tasks, DNS in Route 53
 

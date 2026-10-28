@@ -5,7 +5,7 @@
 // The network has no NAT gateway (about $35 a month, the D-082-era cost levers): the task gets
 // a public address for reaching Cognito and SES, gateway endpoints (free) carry DynamoDB and S3
 // traffic, and Postgres and the load balancer sit in isolated subnets with no internet route.
-import { Duration, RemovalPolicy, Stack, type StackProps } from 'aws-cdk-lib';
+import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from 'aws-cdk-lib';
 import { AttributeType, Billing, TableV2 } from 'aws-cdk-lib/aws-dynamodb';
 import {
   GatewayVpcEndpointAwsService,
@@ -104,6 +104,8 @@ export class DataStack extends Stack {
       cloudwatchLogsRetention: RetentionDays.ONE_MONTH,
       autoMinorVersionUpgrade: true,
     });
+    // For `beta:up` / `beta:down`, which start and stop it (D-097).
+    new CfnOutput(this, 'DbInstanceId', { value: this.db.instanceIdentifier });
 
     // The sync service's DynamoDB tables (SPEC 5.4), on demand. The edit log and coordination
     // table (leases, snapshot pointers) get point-in-time recovery: they hold the writing.

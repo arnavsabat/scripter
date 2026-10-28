@@ -102,7 +102,8 @@ A short brief for talking about the project: the pitch, the four hardest problem
   - **For:** offline editing merges deterministically, and the server never has to transform operations.
   - **Against:** y-prosemirror replaces the whole ProseMirror document on every remote change. That set three rules for all editor code: never append a fix in the same dispatch as a remote change; recompute every decoration from the document; and anchor the viewport to the cursor's block (D-012, D-013).
 - **A home server per script, not a stateless fleet.** Yjs needs one in-memory document per script to merge and broadcast. AWS Lambda with API Gateway WebSockets was rejected for that reason (stateless, so no home).
-- **One small task runs both the API and sync for the beta,** behind CloudFront with a private VPC origin, so the load balancer has no public address. The multi-server cluster is spun up only for load tests.
+- **Two small tasks run the API and sync for the beta,** behind CloudFront with a private VPC origin, so the load balancer has no public address. Two, so the beta is itself a cluster: a lost Spot task is a 6-8 s failover, not a minute of nobody syncing. The three-server cluster is spun up only for load tests.
+- **The servers run on demand** while the beta has one tester (D-096). `beta:down` removes the load balancer and tasks and stops Postgres; CloudFront answers the API and sync with 503s, which the app already shows as "can't reach". That takes the cost from about $43 a month to about $4-5 while down, about $1.20 a day while up. The tradeoff is a 10-minute `beta:up` before a session, and no always-on link.
 - **Usage is counted, never content** (SPEC 5.9): events with a user, a script and a time, mostly recorded by the servers, so ad blockers can't skew them.
 - **Accessibility was audited by test,** not by eye: contrast against the composited background on every screen in both themes, names on every control, and visible focus, in CI.
 

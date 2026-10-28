@@ -2,14 +2,19 @@
 //
 //   writers ──https──▶ CloudFront ─┬─ /*       ──▶ S3 (the web app, private, OAC)
 //                                  ├─ /api/*   ──┐
-//                                  └─ /doc/*   ──┴▶ internal load balancer ─▶ one Fargate task
+//                                  └─ /doc/*   ──┴▶ internal load balancer ─▶ two Fargate tasks
 //                                                   (a VPC origin: no public address)   ├ api  :4100
 //                                                                                       └ sync :4000
 //
-// One small always-on task (ARM, Fargate Spot): the API and the sync server as two containers
-// from one image. A Spot interruption is a failover the sync design already survives with zero
-// lost edits (D-082's levers). The daily purge (D-090) runs as its own short task. Alarms email
+// Two small tasks (ARM, Fargate Spot, D-096), each the API and a sync server as two containers
+// from one image: a two-node cluster, so a Spot interruption is the 6-8 s failover the sync design
+// survives with zero lost edits. The daily purge (D-090) runs as its own short task. Alarms email
 // Arnav (D-082: CloudWatch only).
+//
+// The servers run on demand (D-096, D-097; `beta:up` / `beta:down`): with `servers: false` there's
+// no load balancer and no tasks, /api/* and /doc/* answer 503 (the app's "Can't reach" notice,
+// D-085), the purge and the servers' alarms are off, and a nightly schedule keeps Postgres stopped
+// (RDS restarts a stopped database after 7 days). CloudFront, the web app and the domain stay.
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from 'aws-cdk-lib';
 import type { ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
 import {
@@ -60,6 +65,13 @@ import { PolicyStatement } from 'aws-cdk-lib/aws-iam';
 import { FilterPattern, LogGroup, MetricFilter, RetentionDays } from 'aws-cdk-lib/aws-logs';
 import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
 import { CloudFrontTarget } from 'aws-cdk-lib/aws-route53-targets';
+import {
+  Schedule as Scheduled,
+  ScheduleExpression,
+  ScheduleTargetInput,
+} from 'aws-cdk-lib/aws-scheduler';
+import { Universal } from 'aws-cdk-lib/aws-scheduler-targets';
+import { UserPoolDomain } from 'aws-cdk-lib/aws-cognito';
 import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3';
 import { BucketDeployment, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { Topic } from 'aws-cdk-lib/aws-sns';
@@ -82,6 +94,8 @@ export interface BetaStackProps extends StackProps {
   certificate?: ICertificate;
   /** Tests build the stack without Docker: a placeholder image. */
   image?: ContainerImage;
+  /** The load balancer and tasks exist (D-097: `-c servers=off` takes them away). Default true. */
+  servers?: boolean;
 }
 
 export class BetaStack extends Stack {
@@ -91,6 +105,25 @@ export class BetaStack extends Stack {
     super(scope, id, props);
     const { config, data, auth } = props;
     const { vpc } = data;
+    const on = props.servers ?? true;
+    const zone =
+      config.domain &&
+      HostedZone.fromHostedZoneAttributes(this, 'Zone', {
+        hostedZoneId: config.domain.hostedZoneId,
+        zoneName: config.domain.name,
+      });
+
+    // ---- Sign-in at auth.<domain> (D-097) -------------------------------------------------
+    // Cognito's custom domain, so "Continue with Google" passes through the product's own address.
+    // It needs the certificate (us-east-1) and the domain's own A record (below) to exist first.
+    const signIn =
+      config.domain &&
+      props.certificate &&
+      new UserPoolDomain(this, 'SignIn', {
+        userPool: auth.pool,
+        customDomain: { domainName: `auth.${config.domain.name}`, certificate: props.certificate },
+      });
+    const cognitoDomain = signIn ? signIn.baseUrl() : auth.domain.baseUrl();
 
     // ---- The servers ---------------------------------------------------------------------
     const cluster = new Cluster(this, 'Cluster', { vpc, enableFargateCapacityProviders: true });
@@ -133,15 +166,15 @@ export class BetaStack extends Stack {
         operatingSystemFamily: OperatingSystemFamily.LINUX,
       },
     });
-    const api = task.addContainer('api', {
+    task.addContainer('api', {
       image,
       command: ['node', 'api.js'],
       environment: {
         ...environment,
         API_PORT: '4100',
         APP_URL: appUrl,
-        COGNITO_DOMAIN: auth.domain.baseUrl(),
-        WR_SENDER_EMAIL: config.senderEmail,
+        COGNITO_DOMAIN: cognitoDomain,
+        WR_SENDER_EMAIL: config.fromEmail,
         WR_MIGRATE_ON_START: '1',
       },
       secrets,
@@ -149,7 +182,7 @@ export class BetaStack extends Stack {
       logging: new AwsLogDriver({ logGroup: logs, streamPrefix: 'api' }),
       stopTimeout: Duration.seconds(20),
     });
-    const sync = task.addContainer('sync', {
+    task.addContainer('sync', {
       image,
       command: ['node', 'sync.js'],
       // auto: the task's own private address, so servers can forward to each other (D-022).
@@ -162,65 +195,7 @@ export class BetaStack extends Stack {
     });
     grantStorage(task, data, auth, config);
 
-    const service = new FargateService(this, 'Service', {
-      cluster,
-      taskDefinition: task,
-      desiredCount: 1,
-      capacityProviderStrategies: [{ capacityProvider: 'FARGATE_SPOT', weight: 1 }],
-      assignPublicIp: true, // no NAT (data.ts): the task reaches Cognito and SES directly
-      vpcSubnets: { subnetType: SubnetType.PUBLIC },
-      securityGroups: [data.servers],
-      // A deploy starts the new task before the old one stops: two sync servers briefly, which
-      // the leases and the graceful handoff are built for.
-      minHealthyPercent: 100,
-      maxHealthyPercent: 200,
-      circuitBreaker: { rollback: true },
-      enableExecuteCommand: true,
-    });
-
-    // ---- The load balancer: internal, reached only by CloudFront through the VPC ---------
-    const lb = new ApplicationLoadBalancer(this, 'Lb', {
-      vpc,
-      internetFacing: false,
-      vpcSubnets: { subnetType: SubnetType.PRIVATE_ISOLATED },
-      securityGroup: data.lb,
-      idleTimeout: Duration.seconds(120), // longer than the client's 5 s heartbeat (D-022)
-    });
-    const listener = lb.addListener('Http', {
-      port: 80,
-      protocol: ApplicationProtocol.HTTP,
-      open: false, // the data stack's rule: from inside the VPC only
-      defaultAction: ListenerAction.fixedResponse(404, {
-        contentType: 'text/plain',
-        messageBody: 'not found',
-      }),
-    });
-    const apiTargets = listener.addTargets('Api', {
-      priority: 10,
-      conditions: [ListenerCondition.pathPatterns(['/api/*'])],
-      port: 4100,
-      protocol: ApplicationProtocol.HTTP,
-      targets: [
-        service.loadBalancerTarget({ containerName: api.containerName, containerPort: 4100 }),
-      ],
-      healthCheck: {
-        path: '/api/health',
-        interval: Duration.seconds(15),
-        healthyThresholdCount: 2,
-      },
-      deregistrationDelay: Duration.seconds(15),
-    });
-    const syncTargets = listener.addTargets('Sync', {
-      priority: 20,
-      conditions: [ListenerCondition.pathPatterns(['/doc/*'])],
-      port: 4000,
-      protocol: ApplicationProtocol.HTTP,
-      targets: [
-        service.loadBalancerTarget({ containerName: sync.containerName, containerPort: 4000 }),
-      ],
-      healthCheck: { path: '/healthz', interval: Duration.seconds(15), healthyThresholdCount: 2 },
-      deregistrationDelay: Duration.seconds(35), // the sync container's graceful stop, plus a beat
-    });
+    const servers = on ? this.addServers(cluster, task, data) : undefined;
 
     // ---- The web app and CloudFront ------------------------------------------------------
     const web = new Bucket(this, 'Web', {
@@ -238,20 +213,40 @@ export class BetaStack extends Stack {
         "function handler(event) { var r = event.request; if (r.uri.indexOf('.') === -1) r.uri = '/index.html'; return r; }",
       ),
     });
-    const servers = VpcOrigin.withApplicationLoadBalancer(lb, {
-      protocolPolicy: OriginProtocolPolicy.HTTP_ONLY,
-      readTimeout: Duration.seconds(60),
-    });
-    const toServers: BehaviorOptions = {
-      origin: servers,
-      viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
-      allowedMethods: AllowedMethods.ALLOW_ALL,
-      cachePolicy: CachePolicy.CACHING_DISABLED,
-      originRequestPolicy: OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
-    };
+    const site = S3BucketOrigin.withOriginAccessControl(web);
+    const toServers: BehaviorOptions = servers
+      ? {
+          origin: VpcOrigin.withApplicationLoadBalancer(servers.lb, {
+            protocolPolicy: OriginProtocolPolicy.HTTP_ONLY,
+            readTimeout: Duration.seconds(60),
+          }),
+          viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
+          allowedMethods: AllowedMethods.ALLOW_ALL,
+          cachePolicy: CachePolicy.CACHING_DISABLED,
+          originRequestPolicy: OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+        }
+      : {
+          // Servers down: answered at the edge, never reaching the bucket. A 503 is what the app
+          // reads as "can't reach" (D-085), and the sync client keeps retrying with backoff.
+          origin: site,
+          viewerProtocolPolicy: ViewerProtocolPolicy.HTTPS_ONLY,
+          allowedMethods: AllowedMethods.ALLOW_ALL,
+          cachePolicy: CachePolicy.CACHING_DISABLED,
+          functionAssociations: [
+            {
+              function: new CfFunction(this, 'ServersDown', {
+                runtime: FunctionRuntime.JS_2_0,
+                code: FunctionCode.fromInline(
+                  "function handler(event) { return { statusCode: 503, statusDescription: 'Service Unavailable', headers: { 'content-type': { value: 'application/json' }, 'cache-control': { value: 'no-store' } }, body: { encoding: 'text', data: '{\"error\":\"servers down\"}' } }; }",
+                ),
+              }),
+              eventType: FunctionEventType.VIEWER_REQUEST,
+            },
+          ],
+        };
     this.distribution = new Distribution(this, 'Cdn', {
       defaultBehavior: {
-        origin: S3BucketOrigin.withOriginAccessControl(web),
+        origin: site,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         cachePolicy: CachePolicy.CACHING_OPTIMIZED,
         functionAssociations: [{ function: spa, eventType: FunctionEventType.VIEWER_REQUEST }],
@@ -264,15 +259,26 @@ export class BetaStack extends Stack {
         ? { domainNames: [config.domain.name], certificate: props.certificate }
         : {}),
     });
-    if (config.domain) {
-      const zone = HostedZone.fromHostedZoneAttributes(this, 'Zone', {
-        hostedZoneId: config.domain.hostedZoneId,
-        zoneName: config.domain.name,
-      });
-      new ARecord(this, 'Apex', {
+    if (zone) {
+      const apex = new ARecord(this, 'Apex', {
         zone,
         target: RecordTarget.fromAlias(new CloudFrontTarget(this.distribution)),
       });
+      if (signIn) {
+        signIn.node.addDependency(apex); // Cognito checks that the parent domain resolves
+        new ARecord(this, 'SignInRecord', {
+          zone,
+          recordName: 'auth',
+          // Cognito serves the domain from its own CloudFront distribution. (CDK's
+          // UserPoolDomainTarget looks that up through a Lambda; the attribute needs none.)
+          target: RecordTarget.fromAlias({
+            bind: () => ({
+              dnsName: signIn.cloudFrontEndpoint,
+              hostedZoneId: CloudFrontTarget.getHostedZoneId(this),
+            }),
+          }),
+        });
+      }
     }
     // The built app (apps/web/dist, `pnpm --filter @wr/web build`), replaced on every deploy.
     if (existsSync(WEB_DIST))
@@ -303,6 +309,7 @@ export class BetaStack extends Stack {
     grantStorage(purge, data, auth, config);
     new Rule(this, 'PurgeDaily', {
       schedule: Schedule.cron({ hour: '9', minute: '0' }), // 09:00 UTC, early morning in Toronto
+      enabled: on, // it needs Postgres, which is stopped while the servers are down
       targets: [
         new EcsTask({
           cluster,
@@ -328,25 +335,57 @@ export class BetaStack extends Stack {
         treatMissingData: below ? TreatMissingData.BREACHING : TreatMissingData.NOT_BREACHING,
       }).addAlarmAction(new SnsAction(topic));
     const minute = Duration.minutes(1);
-    alarm(
-      'ApiDown',
-      apiTargets.metrics.healthyHostCount({ period: minute, statistic: 'Minimum' }),
-      1,
-      true,
-      3,
-    );
-    alarm(
-      'SyncDown',
-      syncTargets.metrics.healthyHostCount({ period: minute, statistic: 'Minimum' }),
-      1,
-      true,
-      3,
-    );
-    alarm(
-      'ServerErrors',
-      lb.metrics.httpCodeTarget(HttpCodeTarget.TARGET_5XX_COUNT, { period: Duration.minutes(5) }),
-      5,
-    );
+    // The servers' and the database's alarms exist only while they run (a stopped database's
+    // missing metrics would read as "storage low").
+    if (servers) {
+      alarm(
+        'ApiDown',
+        servers.apiTargets.metrics.healthyHostCount({ period: minute, statistic: 'Minimum' }),
+        1,
+        true,
+        3,
+      );
+      alarm(
+        'SyncDown',
+        servers.syncTargets.metrics.healthyHostCount({ period: minute, statistic: 'Minimum' }),
+        1,
+        true,
+        3,
+      );
+      alarm(
+        'ServerErrors',
+        servers.lb.metrics.httpCodeTarget(HttpCodeTarget.TARGET_5XX_COUNT, {
+          period: Duration.minutes(5),
+        }),
+        5,
+      );
+      alarm(
+        'DbStorageLow',
+        data.db.metricFreeStorageSpace({ period: Duration.minutes(15) }),
+        2 * 1024 ** 3,
+        true,
+      );
+      alarm('DbBusy', data.db.metricCPUUtilization({ period: Duration.minutes(15) }), 80);
+    } else {
+      // RDS starts a database that has been stopped for 7 days; stop it again every night.
+      new Scheduled(this, 'KeepDbStopped', {
+        schedule: ScheduleExpression.cron({ hour: '10', minute: '0' }),
+        target: new Universal({
+          service: 'rds',
+          action: 'stopDBInstance',
+          input: ScheduleTargetInput.fromObject({
+            DbInstanceIdentifier: data.db.instanceIdentifier,
+          }),
+          policyStatements: [
+            new PolicyStatement({
+              actions: ['rds:StopDBInstance'],
+              resources: [data.db.instanceArn],
+            }),
+          ],
+          retryAttempts: 0, // already stopped is an error, and harmless
+        }),
+      });
+    }
     // Anything that threatens a durable edit: an append, a snapshot or a load that failed.
     const durability = new MetricFilter(this, 'DurabilityErrors', {
       logGroup: logs,
@@ -379,13 +418,6 @@ export class BetaStack extends Stack {
       metricValue: '1',
     });
     alarm('PurgeFailed', purgeFailed.metric({ period: Duration.hours(1), statistic: 'Sum' }), 1);
-    alarm(
-      'DbStorageLow',
-      data.db.metricFreeStorageSpace({ period: Duration.minutes(15) }),
-      2 * 1024 ** 3,
-      true,
-    );
-    alarm('DbBusy', data.db.metricCPUUtilization({ period: Duration.minutes(15) }), 80);
 
     new CfnOutput(this, 'Url', {
       value: config.domain
@@ -394,7 +426,12 @@ export class BetaStack extends Stack {
       description: 'The beta; add it to WR_APP_URLS for Google sign-in, then redeploy WrAuth',
     });
     new CfnOutput(this, 'ClusterName', { value: cluster.clusterName });
-    new CfnOutput(this, 'ServiceName', { value: service.serviceName });
+    if (servers) new CfnOutput(this, 'ServiceName', { value: servers.service.serviceName });
+    if (signIn)
+      new CfnOutput(this, 'GoogleRedirectUri', {
+        value: `${signIn.baseUrl()}/oauth2/idpresponse`,
+        description: 'Add to the Google OAuth client as an authorized redirect URI',
+      });
     new CfnOutput(this, 'PurgeTaskDefinition', { value: purge.taskDefinitionArn });
     new CfnOutput(this, 'ServersGroup', { value: data.servers.securityGroupId });
     new CfnOutput(this, 'LogGroup', { value: logs.logGroupName });
@@ -405,6 +442,68 @@ export class BetaStack extends Stack {
       value: vpc.selectSubnets({ subnetType: SubnetType.PRIVATE_ISOLATED }).subnetIds.join(','),
       description: 'For a CloudShell VPC environment that reads the metrics (docs/runbook.md)',
     });
+  }
+
+  /** The load balancer and the two tasks behind it: what `beta:down` takes away (D-097). */
+  private addServers(cluster: Cluster, task: FargateTaskDefinition, data: DataStack) {
+    const { vpc } = data;
+    const service = new FargateService(this, 'Service', {
+      cluster,
+      taskDefinition: task,
+      desiredCount: 2, // a two-node cluster (D-096)
+      capacityProviderStrategies: [{ capacityProvider: 'FARGATE_SPOT', weight: 1 }],
+      assignPublicIp: true, // no NAT (data.ts): the task reaches Cognito and SES directly
+      vpcSubnets: { subnetType: SubnetType.PUBLIC },
+      securityGroups: [data.servers],
+      // A deploy starts the new tasks before the old ones stop, which the leases and the graceful
+      // handoff are built for.
+      minHealthyPercent: 100,
+      maxHealthyPercent: 200,
+      circuitBreaker: { rollback: true },
+      enableExecuteCommand: true,
+    });
+
+    // ---- The load balancer: internal, reached only by CloudFront through the VPC ---------
+    const lb = new ApplicationLoadBalancer(this, 'Lb', {
+      vpc,
+      internetFacing: false,
+      vpcSubnets: { subnetType: SubnetType.PRIVATE_ISOLATED },
+      securityGroup: data.lb,
+      idleTimeout: Duration.seconds(120), // longer than the client's 5 s heartbeat (D-022)
+    });
+    const listener = lb.addListener('Http', {
+      port: 80,
+      protocol: ApplicationProtocol.HTTP,
+      open: false, // the data stack's rule: from inside the VPC only
+      defaultAction: ListenerAction.fixedResponse(404, {
+        contentType: 'text/plain',
+        messageBody: 'not found',
+      }),
+    });
+    const apiTargets = listener.addTargets('Api', {
+      priority: 10,
+      conditions: [ListenerCondition.pathPatterns(['/api/*'])],
+      port: 4100,
+      protocol: ApplicationProtocol.HTTP,
+      targets: [service.loadBalancerTarget({ containerName: 'api', containerPort: 4100 })],
+      healthCheck: {
+        path: '/api/health',
+        interval: Duration.seconds(15),
+        healthyThresholdCount: 2,
+      },
+      deregistrationDelay: Duration.seconds(15),
+    });
+    const syncTargets = listener.addTargets('Sync', {
+      priority: 20,
+      conditions: [ListenerCondition.pathPatterns(['/doc/*'])],
+      port: 4000,
+      protocol: ApplicationProtocol.HTTP,
+      targets: [service.loadBalancerTarget({ containerName: 'sync', containerPort: 4000 })],
+      healthCheck: { path: '/healthz', interval: Duration.seconds(15), healthyThresholdCount: 2 },
+      deregistrationDelay: Duration.seconds(35), // the sync container's graceful stop, plus a beat
+    });
+
+    return { service, lb, apiTargets, syncTargets };
   }
 }
 

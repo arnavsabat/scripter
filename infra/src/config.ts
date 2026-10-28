@@ -8,8 +8,10 @@ export interface InfraConfig {
   region: string;
   /** Budget alerts go here (D-038). */
   alertEmail: string;
-  /** SES sender for sign-in codes and invitations, until the domain exists (D-038). */
+  /** A verified SES address (D-038): the sender until the domain exists, and an SES identity after. */
   senderEmail: string;
+  /** Who sign-in codes and invitations come from: `no-reply@<domain>` once its zone exists (D-096). */
+  fromEmail: string;
   /** Addresses SES's sandbox may send to: the demo's accounts (D-054). */
   testRecipients: string[];
   /** Globally unique prefix for the Cognito sign-in domain (<prefix>.auth.<region>.amazoncognito.com). */
@@ -18,7 +20,9 @@ export interface InfraConfig {
   appUrls: string[];
   /** The Google OAuth client, once created (step 8, part 2). */
   google?: { clientId: string; secretName: string };
-  /** The beta's domain (D-082), once bought: its Route 53 hosted zone. Unset: CloudFront's address. */
+  /** The domain's name (WR_DOMAIN, D-096): WrDns makes its Route 53 zone (D-097). */
+  zoneName?: string;
+  /** The domain, once its zone exists (WR_HOSTED_ZONE_ID, from WrDns). Unset: CloudFront's address. */
   domain?: { name: string; hostedZoneId: string };
 }
 
@@ -35,16 +39,23 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): InfraConfig {
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean);
+  // The domain counts once its zone exists: before that, only WrDns uses the name.
+  const domain =
+    env.WR_DOMAIN && env.WR_HOSTED_ZONE_ID
+      ? { name: env.WR_DOMAIN, hostedZoneId: env.WR_HOSTED_ZONE_ID }
+      : undefined;
+  const appUrls = list(env.WR_APP_URLS ?? 'http://localhost:5173');
+  if (domain && !appUrls.includes(`https://${domain.name}`)) appUrls.push(`https://${domain.name}`);
   return {
     region: env.WR_AWS_REGION ?? 'us-east-2',
     alertEmail: need('WR_ALERT_EMAIL'),
     senderEmail: need('WR_SENDER_EMAIL'),
+    fromEmail: domain ? `no-reply@${domain.name}` : need('WR_SENDER_EMAIL'),
     testRecipients: list(need('WR_TEST_RECIPIENTS')),
     domainPrefix: need('WR_COGNITO_DOMAIN_PREFIX'),
-    appUrls: list(env.WR_APP_URLS ?? 'http://localhost:5173'),
-    ...(env.WR_DOMAIN
-      ? { domain: { name: env.WR_DOMAIN, hostedZoneId: need('WR_HOSTED_ZONE_ID') } }
-      : {}),
+    appUrls,
+    ...(env.WR_DOMAIN ? { zoneName: env.WR_DOMAIN } : {}),
+    ...(domain ? { domain } : {}),
     ...(env.WR_GOOGLE_CLIENT_ID
       ? {
           google: {

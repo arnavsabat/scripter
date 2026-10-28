@@ -47,10 +47,12 @@ export class AuthStack extends Stack {
       // level; our app client below permits only USER_AUTH, and nobody is ever given a password.
       signInPolicy: { allowedFirstAuthFactors: { password: true, emailOtp: true } },
       accountRecovery: AccountRecovery.EMAIL_ONLY,
+      // From no-reply@<domain> once the domain is an SES identity (D-096), else the verified address.
       email: UserPoolEmail.withSES({
-        fromEmail: config.senderEmail,
+        fromEmail: config.fromEmail,
         fromName: 'Scripter',
         sesRegion: config.region,
+        ...(config.domain ? { sesVerifiedDomain: config.domain.name } : {}),
       }),
       // The sign-up code email (D-033's wording).
       userVerification: {
