@@ -163,6 +163,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **D-102, the load-test failure:** fixes and a rerun (options in Claude's message of 2026-10-29): lease renewal that doesn't fight appends; DynamoDB capacity for the test tables (warm throughput, or a warm-up ramp); group commit; and the harness counting acknowledged-but-missing edits separately from never-acknowledged ones.
 - ~~D-100, CloudFront → load balancer (504)~~: (a), CloudFront's origin-facing prefix list (D-100).
 - **Waiting on Arnav to finish the beta-readiness phase** (D-089 onwards):
   1. ~~The domain name~~: `scripter.ca`, and the product is Scripter (D-096).
@@ -378,6 +379,38 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-102 · 2026-10-29 · The first AWS load test: 1,000 writers overwhelmed a cold DynamoDB table, and lease renewals fought the appends
+
+- **Setup:**
+  - Arnav gave Claude local permission rules (`.claude/settings.local.json`, git-ignored): `WrLoad` deploy/destroy, ECS run-task/stop-task, `beta:up`/`beta:down`.
+  - Claude reviewed `WrLoad`'s security changes (only its own `wr-lt-*` tables and bucket, no access to the beta) and deployed it: 3 servers, all joined as one cluster.
+- **`rooms`, 05:11 UTC** (1,000 writers, 200 scripts of 5, 3 minutes; result in `tools/loadtest/results/aws-rooms.json`):
+
+  | Measure | Result | Target |
+  |---|---|---|
+  | Keystrokes | 417,711 | |
+  | Latency p50 / p95 / p99 | 30,001 ms (the harness's cap) | p95 under 150 ms |
+  | Writers unacknowledged at the end | 182 | 0 |
+  | "Lost" characters | 70,872 | 0 |
+  | Failed writers | 0 | 0 |
+  | Connect time | 5.8 s | |
+
+  **A fail.**
+- **Causes** (CloudWatch and the servers' logs):
+  1. **DynamoDB throttling on the new on-demand edit-log table:** 1,700-2,600 WCU a second consumed, 20,000-32,000 throttled writes a minute. A cold on-demand table has few partitions (each at most 1,000 WCU a second); the 200 scripts' appends exceeded them before DynamoDB could split.
+  2. **The backlog cascaded:**
+     - throttled appends queued behind each room's one-at-a-time append;
+     - lease renewals collided with append transactions on the lease item (590 `TransactionConflictException`s, the D-101 issue at scale);
+     - 2 leases lapsed ("room lost ownership");
+     - the fence refused the old epoch's appends (92 "append failed; closing connection"), and those writers reconnected and resent;
+     - 3 truncates were throttled.
+- **What the run does and doesn't show:**
+  - Fencing held: no write from a stale owner was accepted.
+  - The harness's "lost" counts every typed character missing from the final read-back, including edits never acknowledged (still on the 182 writers' clients when the run stopped). So this run can't say whether any *acknowledged* edit was lost, and "zero lost edits" is not claimed from it.
+  - Cost: under $2 (DynamoDB writes and about 10 minutes of the generator).
+- **Options:** see Proposed.
+- **Status:** a finding, logged before any fix; awaiting Arnav.
 
 ### D-101 · 2026-10-29 · The runbook's checks pass on scripter.ca, and the first failover drill on the live cluster
 
