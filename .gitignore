@@ -15,3 +15,6 @@ cdk.out/
 
 # Parity screenshots (D-088)
 apps/web/test/.shots/
+
+# Claude Code local settings (permissions, on this machine only)
+.claude/settings.local.json
