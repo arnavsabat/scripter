@@ -7,7 +7,12 @@ export interface Me {
   id: string;
   name: string;
   email: string;
+  /** A guest's demo ends then (D-108); null for everyone else. */
+  guestUntil?: string | null;
 }
+
+/** Whether this is a guest trying the demo, for the permission rules (D-108). */
+export const accountOf = (me: Me) => ({ guest: Boolean(me.guestUntil) });
 
 export interface SignedIn {
   accessToken: string;

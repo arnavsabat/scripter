@@ -63,3 +63,14 @@ export function canMerge(user: Access, scope: EpisodeScope): boolean {
 
 /** Only members with the writer role can be added as an episode's co-writer (D-032). */
 export const canBeCoWriter = (role: Role | null): boolean => role === 'writer';
+
+/** Who's signed in, beyond their place in a series: a guest trying the demo, or not (D-108). */
+export interface Account {
+  guest: boolean;
+}
+
+/**
+ * Inviting someone by email, or joining a series from an invitation. Guests can't, so the demo
+ * never sends email to anyone and no guest lands in someone else's room (D-108).
+ */
+export const canInvite = (account: Account): boolean => !account.guest;

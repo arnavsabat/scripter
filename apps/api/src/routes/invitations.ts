@@ -2,7 +2,8 @@
 // 14 days; whoever opens it and signs in joins, with any email address.
 import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';
-import { seriesFor } from '../access';
+import { canInvite } from '@wr/shared';
+import { accountOf, guestRefused, seriesFor } from '../access';
 import type { AppDeps } from '../app';
 import { notifyAccess, withTx } from '../db/tx';
 import { ApiError, notFound } from '../errors';
@@ -107,8 +108,9 @@ export function invitationRoutes(app: FastifyInstance, { db }: AppDeps): void {
         },
       },
     },
-    async (req) =>
-      withTx(db, async (c) => {
+    async (req) => {
+      if (!canInvite(accountOf(req.user))) throw guestRefused();
+      return withTx(db, async (c) => {
         const { rows } = await c.query<InvitationRow>(
           `${SELECT} where i.token_hash = $1 for update of i`,
           [hashToken(req.body.token)],
@@ -116,15 +118,17 @@ export function invitationRoutes(app: FastifyInstance, { db }: AppDeps): void {
         if (!rows[0])
           throw new ApiError(404, 'invitation_unknown', 'This invitation link isn’t valid.');
         return join(c, rows[0], req.user.id);
-      }),
+      });
+    },
   );
 
   // From INVITATIONS in the home sidebar: for the address it was sent to.
   app.post<{ Params: { id: string } }>(
     '/api/invitations/:id/accept',
     { schema: { params: idParams } },
-    async (req) =>
-      withTx(db, async (c) => {
+    async (req) => {
+      if (!canInvite(accountOf(req.user))) throw guestRefused();
+      return withTx(db, async (c) => {
         const { rows } = await c.query<InvitationRow>(`${SELECT} where i.id = $1 for update of i`, [
           req.params.id,
         ]);
@@ -132,7 +136,8 @@ export function invitationRoutes(app: FastifyInstance, { db }: AppDeps): void {
         if (!inv || inv.email.toLowerCase() !== req.user.email.toLowerCase())
           throw notFound('That invitation');
         return join(c, inv, req.user.id);
-      }),
+      });
+    },
   );
 
   app.patch<{ Params: { id: string }; Body: { role: 'writer' | 'viewer' } }>(

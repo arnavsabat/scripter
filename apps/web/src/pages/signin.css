@@ -203,3 +203,8 @@
   font: inherit;
   font-size: 13px;
 }
+/* "Try a demo script" (D-108): the legal line's style, a little apart from it. */
+.si-demo {
+  margin-top: 28px;
+  font-size: 13px;
+}

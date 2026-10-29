@@ -6,6 +6,7 @@ import {
   canView,
   isRole,
   type Access,
+  type Account,
   type EpisodeScope,
   type SeriesScope,
 } from '@wr/shared';
@@ -27,6 +28,17 @@ export interface EpisodeRow {
 }
 
 export const NO_ACCESS = 'You don’t have access to this episode. Ask the showrunner.';
+
+/** What the permission rules know about who's signed in (D-108). */
+export const accountOf = (user: { guestUntil: Date | null }): Account => ({
+  guest: user.guestUntil !== null,
+});
+export const guestRefused = () =>
+  new ApiError(
+    403,
+    'guest',
+    'The demo can’t invite anyone or join a room. Create an account to write with others.',
+  );
 
 export async function loadAccess(q: Q, userId: string, seriesId: string): Promise<Access> {
   const { rows } = await q.query<{ role: string | null; assigned: string[] }>(

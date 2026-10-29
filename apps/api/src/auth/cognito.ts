@@ -1,14 +1,22 @@
 // Cognito's sign-in API, called from our server with plain JSON requests (D-031). Our app client
 // is public (no secret), so these calls need no AWS signing. Google goes through Cognito's
 // /oauth2 endpoints with PKCE, straight to Google, so Cognito's own pages never show.
-// One call is an admin call, signed with the server's AWS credentials: an account's status (D-065).
+// The admin calls are signed with the server's AWS credentials: an account's status (D-065), and
+// guests (D-108), who sign in with a password nobody sees on the server-only guest client.
 import {
+  AdminCreateUserCommand,
+  AdminDeleteUserCommand,
   AdminGetUserCommand,
+  AdminInitiateAuthCommand,
+  AdminSetUserPasswordCommand,
   CognitoIdentityProviderClient,
 } from '@aws-sdk/client-cognito-identity-provider';
+import { randomBytes } from 'node:crypto';
 
 export interface CognitoConfig {
   clientId: string;
+  /** The server-only guest client (D-108); unset, there's no demo. */
+  guestClientId?: string;
   /** https://cognito-idp.<region>.amazonaws.com/ (tests point it at a local fake). */
   apiUrl: string;
   /** The pool's domain, e.g. https://<prefix>.auth.<region>.amazoncognito.com (for Google). */
@@ -60,6 +68,16 @@ export function cognitoClient(cfg: CognitoConfig) {
     ...(cfg.credentials ? { credentials: cfg.credentials } : {}),
   });
 
+  /** An admin call through the SDK, with its refusals in the same shape as the plain calls'. */
+  async function adminCall<T>(send: () => Promise<T>, what: string): Promise<T> {
+    try {
+      return await send();
+    } catch (err) {
+      const e = err as { name?: string; message?: string };
+      throw new CognitoError(e.name ?? 'UnknownError', e.message ?? `${what} failed`);
+    }
+  }
+
   async function call<T>(operation: string, body: object): Promise<T> {
     const res = await fetch(cfg.apiUrl, {
       method: 'POST',
@@ -103,15 +121,73 @@ export function cognitoClient(cfg: CognitoConfig) {
      * whether accounts exist, and re-sends sign-up codes even to confirmed accounts (D-065).
      */
     async isConfirmed(email: string): Promise<boolean> {
-      try {
-        const r = await admin.send(
-          new AdminGetUserCommand({ UserPoolId: cfg.userPoolId, Username: email }),
-        );
-        return r.UserStatus !== 'UNCONFIRMED';
-      } catch (err) {
-        const e = err as { name?: string; message?: string };
-        throw new CognitoError(e.name ?? 'UnknownError', e.message ?? 'AdminGetUser failed');
-      }
+      const r = await adminCall(
+        () => admin.send(new AdminGetUserCommand({ UserPoolId: cfg.userPoolId, Username: email })),
+        'AdminGetUser',
+      );
+      return r.UserStatus !== 'UNCONFIRMED';
+    },
+    /** Whether "Try a demo script" works here: the guest client is configured. */
+    guests: Boolean(cfg.guestClientId),
+    /**
+     * A guest (D-108): a confirmed user at an address that receives no mail, sent nothing, with a
+     * random password used once, here, to sign in on the guest client. Nobody ever sees it.
+     */
+    async createGuest(email: string): Promise<Tokens> {
+      const ClientId = cfg.guestClientId;
+      if (!ClientId) throw new CognitoError('NoGuestClient', 'guests are not configured');
+      const UserPoolId = cfg.userPoolId;
+      const password = `${randomBytes(30).toString('base64url')}Aa1!`; // meets any password policy
+      await adminCall(
+        () =>
+          admin.send(
+            new AdminCreateUserCommand({
+              UserPoolId,
+              Username: email,
+              UserAttributes: [
+                { Name: 'email', Value: email },
+                { Name: 'email_verified', Value: 'true' },
+              ],
+              MessageAction: 'SUPPRESS',
+            }),
+          ),
+        'AdminCreateUser',
+      );
+      await adminCall(
+        () =>
+          admin.send(
+            new AdminSetUserPasswordCommand({
+              UserPoolId,
+              Username: email,
+              Password: password,
+              Permanent: true,
+            }),
+          ),
+        'AdminSetUserPassword',
+      );
+      const r = await adminCall(
+        () =>
+          admin.send(
+            new AdminInitiateAuthCommand({
+              UserPoolId,
+              ClientId,
+              AuthFlow: 'ADMIN_USER_PASSWORD_AUTH',
+              AuthParameters: { USERNAME: email, PASSWORD: password },
+            }),
+          ),
+        'AdminInitiateAuth',
+      );
+      return tokens(r as AuthResult);
+    },
+    /** Removes a Cognito user for good (the purge's last step for a guest, D-108). */
+    async deleteUser(username: string): Promise<void> {
+      await adminCall(
+        () =>
+          admin.send(
+            new AdminDeleteUserCommand({ UserPoolId: cfg.userPoolId, Username: username }),
+          ),
+        'AdminDeleteUser',
+      );
     },
     async resendSignUpCode(email: string): Promise<void> {
       await call('ResendConfirmationCode', { ClientId, Username: email });
@@ -158,18 +234,22 @@ export function cognitoClient(cfg: CognitoConfig) {
         }),
       );
     },
-    async refresh(refreshToken: string): Promise<Tokens> {
+    /** `guest`: a guest's token, issued to the guest client, is refreshed and revoked there. */
+    async refresh(refreshToken: string, guest = false): Promise<Tokens> {
       return tokens(
         await call<AuthResult>('InitiateAuth', {
-          ClientId,
+          ClientId: guest ? cfg.guestClientId : ClientId,
           AuthFlow: 'REFRESH_TOKEN_AUTH',
           AuthParameters: { REFRESH_TOKEN: refreshToken },
         }),
       );
     },
     /** Sign out: the refresh token (and the access tokens it issued) stop working. */
-    async revoke(refreshToken: string): Promise<void> {
-      await call('RevokeToken', { ClientId, Token: refreshToken });
+    async revoke(refreshToken: string, guest = false): Promise<void> {
+      await call('RevokeToken', {
+        ClientId: guest ? cfg.guestClientId : ClientId,
+        Token: refreshToken,
+      });
     },
     googleUrl(redirectUri: string, state: string, codeChallenge: string): string {
       const q = new URLSearchParams({

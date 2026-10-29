@@ -314,6 +314,12 @@ function HomeToolbar({
   );
 }
 
+/** "Demo · ends in 23 h" (D-108). */
+function demoEnds(until: string) {
+  const hours = Math.max(0, Math.ceil((Date.parse(until) - Date.now()) / 3600_000));
+  return hours > 1 ? `Demo · ends in ${hours} h` : 'Demo · ends within the hour';
+}
+
 function AccountMenu({
   me,
   onClose,
@@ -351,7 +357,8 @@ function AccountMenu({
     >
       <div className="mh">
         {me.name}
-        <small>{me.email}</small>
+        {/* A guest's address is made up; what matters is when the demo ends (D-108). */}
+        <small>{me.guestUntil ? demoEnds(me.guestUntil) : me.email}</small>
       </div>
       <div className="sep" role="separator" />
       <button
@@ -363,7 +370,7 @@ function AccountMenu({
           onSignOut();
         }}
       >
-        Sign out
+        {me.guestUntil ? 'Create an account' : 'Sign out'}
       </button>
     </div>
   );

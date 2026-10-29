@@ -13,6 +13,8 @@ interface User {
   id: string;
   name: string;
   email: string;
+  /** Guests only (D-108). */
+  guestUntil?: string;
 }
 
 export async function startFakeApi(issuer: TestIssuer) {
@@ -116,6 +118,19 @@ export async function startFakeApi(issuer: TestIssuer) {
         users.set(email, u);
         const s = await issue(u);
         return send(res, 200, { ...s.body, needsName: !known }, { 'set-cookie': s.cookie });
+      }
+      // "Try a demo script" (D-108): a guest for a day.
+      if (m === 'POST' && path === '/api/auth/guest') {
+        const n = [...users.values()].filter((u) => u.guestUntil).length + 1;
+        const u: User = {
+          id: `g-${n}`,
+          name: 'Guest',
+          email: `guest-${n}@guest.test`,
+          guestUntil: new Date(Date.now() + 24 * 3600_000).toISOString(),
+        };
+        users.set(u.email, u);
+        const s = await issue(u);
+        return send(res, 200, s.body, { 'set-cookie': s.cookie });
       }
       if (m === 'POST' && path === '/api/auth/refresh') {
         const email = refresh.get(cookie(req) ?? '');

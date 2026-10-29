@@ -29,6 +29,8 @@ export class AuthStack extends Stack {
   /** For the app stack: the servers verify tokens from this pool and client (D-091). */
   readonly pool: UserPool;
   readonly client: UserPoolClient;
+  /** "Try a demo script" (D-108): server-only, signed in with the admin password flow. */
+  readonly guestClient: UserPoolClient;
   readonly domain: UserPoolDomain;
 
   constructor(scope: Construct, id: string, props: StackProps & { config: InfraConfig }) {
@@ -107,15 +109,33 @@ export class AuthStack extends Stack {
     // Naming Google on the client doesn't make CloudFormation create the provider first.
     if (google) client.node.addDependency(google);
 
+    // Guests (D-108): the API creates a silent user and signs it in here with a random password
+    // nobody sees. Only the admin flow, which needs the server's AWS credentials, so the public
+    // can't use this client; no OAuth, no Google, no refresh beyond the demo's day.
+    const guestClient = pool.addClient('Guests', {
+      userPoolClientName: 'scripter-guests',
+      generateSecret: false,
+      authFlows: { adminUserPassword: true },
+      accessTokenValidity: Duration.hours(1),
+      idTokenValidity: Duration.hours(1),
+      refreshTokenValidity: Duration.days(1),
+      preventUserExistenceErrors: true,
+      enableTokenRevocation: true,
+      supportedIdentityProviders: [UserPoolClientIdentityProvider.COGNITO],
+      disableOAuth: true,
+    });
+
     const domain = pool.addDomain('SignIn', {
       cognitoDomain: { domainPrefix: config.domainPrefix },
     });
 
     this.pool = pool;
     this.client = client;
+    this.guestClient = guestClient;
     this.domain = domain;
     new CfnOutput(this, 'UserPoolId', { value: pool.userPoolId });
     new CfnOutput(this, 'ClientId', { value: client.userPoolClientId });
+    new CfnOutput(this, 'GuestClientId', { value: guestClient.userPoolClientId });
     new CfnOutput(this, 'Domain', { value: domain.baseUrl() });
     new CfnOutput(this, 'GoogleRedirectUri', {
       value: `${domain.baseUrl()}/oauth2/idpresponse`,

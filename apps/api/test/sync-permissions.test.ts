@@ -110,6 +110,25 @@ describe.skipIf(!servicesEnabled)('permissions at the sync server', () => {
     await h?.close();
   });
 
+  it('a guest is someone to the sync server for their day, and nobody after it (D-108)', async () => {
+    const guest = async (until: string) => {
+      const { rows } = await h.admin.query<{ id: string }>(
+        `insert into users (email, name, guest_until)
+           values ('guest-' || gen_random_uuid() || '@guest.app.test', 'Guest', now() + $1::interval)
+         returning id`,
+        [until],
+      );
+      const sub = `guest-sub-${rows[0]!.id}`;
+      await h.admin.query(
+        `insert into user_identities (cognito_sub, user_id, provider) values ($1, $2, 'guest')`,
+        [sub, rows[0]!.id],
+      );
+      return sub;
+    };
+    expect(await access.identify(await guest('1 hour'))).toMatchObject({ name: 'Guest' });
+    expect(await access.identify(await guest('-1 second'))).toBeNull();
+  });
+
   it('a writer can’t edit an episode they aren’t assigned to', async () => {
     const m = open(maya, draft[1]!); // Ep 2: Maya is a writer in the series, but not on this episode
     await m.c.whenSynced(); // she may read it

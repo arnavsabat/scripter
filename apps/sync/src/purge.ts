@@ -3,6 +3,8 @@
 // sync service's storage), its restore points (S3, under restore-points/), then the database
 // rows. Postgres is the work list: rows go last, so a purge cut short is simply finished the
 // next day. Runs daily as a scheduled task (purge-cli.ts); never on anything deleted more recently.
+// Guests past their day (D-108) go the same way: their scripts at once, then the person and their
+// Cognito user.
 import type pg from 'pg';
 import type { Storage } from './storage/types';
 
@@ -13,6 +15,8 @@ export interface PurgeDeps {
   deleteBlob: (key: string) => Promise<void>;
   /** How long a deletion waits under RECENTLY DELETED (D-037). */
   days?: number;
+  /** Deletes a guest's Cognito user (D-108); unset, guests' scripts go but the people wait. */
+  deleteCognitoUser?: (username: string) => Promise<void>;
   /** Count only; delete nothing. */
   dryRun?: boolean;
 }
@@ -22,33 +26,45 @@ export interface PurgeResult {
   episodes: number;
   drafts: number;
   restorePoints: number;
+  guests: number;
 }
+
+/** A series is a guest's when an expired guest is in it and nobody else who's still here is. */
+const GUEST_SERIES = `(exists (select 1 from series_members m join users u on u.id = m.user_id
+                              where m.series_id = s.id and u.guest_until < now())
+   and not exists (select 1 from series_members m join users u on u.id = m.user_id
+                    where m.series_id = s.id and (u.guest_until is null or u.guest_until >= now())))`;
 
 export async function purge({
   db,
   storage,
   deleteBlob,
+  deleteCognitoUser,
   days = 30,
   dryRun = false,
 }: PurgeDeps): Promise<PurgeResult> {
   const cutoff = `${days} days`;
-  // What's due: series past the window; episodes past it (or in a due series); drafts past it
-  // (deleted what-ifs) or in a due episode.
+  // What's due: series past the window or an expired guest's; episodes past it (or in a due
+  // series); drafts past it (deleted what-ifs) or in a due episode.
+  const seriesDue = `(s.deleted_at < now() - $1::interval or ${GUEST_SERIES})`;
   const { rows: series } = await db.query<{ id: string }>(
-    `select id from series where deleted_at < now() - $1::interval`,
+    `select s.id from series s where ${seriesDue}`,
     [cutoff],
   );
   const { rows: episodes } = await db.query<{ id: string }>(
     `select e.id from episodes e join series s on s.id = e.series_id
-      where e.deleted_at < now() - $1::interval or s.deleted_at < now() - $1::interval`,
+      where e.deleted_at < now() - $1::interval or ${seriesDue}`,
     [cutoff],
   );
   const { rows: drafts } = await db.query<{ id: string; episode_id: string }>(
     `select d.id, d.episode_id from drafts d
        join episodes e on e.id = d.episode_id join series s on s.id = e.series_id
       where d.deleted_at < now() - $1::interval or e.deleted_at < now() - $1::interval
-         or s.deleted_at < now() - $1::interval`,
+         or ${seriesDue}`,
     [cutoff],
+  );
+  const { rows: guests } = await db.query<{ id: string; email: string }>(
+    `select id, email from users where guest_until < now()`,
   );
   const { rows: points } = await db.query<{ s3_key: string }>(
     `select s3_key from snapshots where draft_id = any($1::uuid[]) and s3_key like 'restore-points/%'`,
@@ -59,6 +75,7 @@ export async function purge({
     episodes: episodes.length,
     drafts: drafts.length,
     restorePoints: points.length,
+    guests: deleteCognitoUser ? guests.length : 0,
   };
   if (dryRun) return result;
 
@@ -86,5 +103,13 @@ export async function purge({
   } finally {
     client.release();
   }
+
+  // 3. Expired guests, now that their scripts are gone: the Cognito user, then the person (whose
+  //    usage counts keep their rows, anonymous). A failure leaves the row for tomorrow's run.
+  if (deleteCognitoUser)
+    for (const g of guests) {
+      await deleteCognitoUser(g.email);
+      await db.query(`delete from users where id = $1`, [g.id]);
+    }
   return result;
 }

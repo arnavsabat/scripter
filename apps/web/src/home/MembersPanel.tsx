@@ -1,10 +1,10 @@
 // The Members panel (D-030, D-027, D-051): everyone in the series with their role and episodes.
 // The showrunner changes roles, removes people (after an inline confirm), cancels invitations and
 // invites by email; everyone else sees the same list, read-only.
-import { colorFor } from '@wr/shared';
+import { canInvite, colorFor } from '@wr/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { ApiFailure, api } from '../api';
-import type { Me } from '../auth';
+import { accountOf, type Me } from '../auth';
 import { Icon } from '../components/Icons';
 import { RowsSkeleton } from '../components/Skeleton';
 import { Menu, type MenuItem } from '../components/Menu';
@@ -256,7 +256,15 @@ export function MembersPanel({
           </div>
         ))}
       </div>
-      {sr && (
+      {sr && !canInvite(accountOf(me)) && (
+        // Guests can't invite anyone, so the demo never sends email (D-108).
+        <div className="rf inv">
+          <p className="demo-note">
+            The demo can’t invite anyone. Create an account to write with others.
+          </p>
+        </div>
+      )}
+      {sr && canInvite(accountOf(me)) && (
         <div className="rf inv">
           <label className="fl" htmlFor="invite-email">
             Invite to {s.name}

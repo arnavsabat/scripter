@@ -1,14 +1,22 @@
 // Signing in (SPEC 5.6; D-028, D-031). The API is the browser's go-between for Cognito: the
 // long-lived refresh token lives in an httpOnly cookie page scripts can't read, and the browser
 // only ever holds a 1-hour access token, in memory.
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import type { AppDeps, User } from '../app';
 import { CognitoError, type Tokens } from '../auth/cognito';
 import { linkSignIn } from '../auth/link';
+import { withTx } from '../db/tx';
 import { ApiError } from '../errors';
+import { GUEST_HOURS, NOT_EXPIRED, USER } from '../user';
+import { perWindow } from './reports';
 
 const REFRESH = 'wr_refresh';
+/** A guest's refresh token is the guest client's, so the cookie says so (D-108). */
+const GUEST_MARK = 'g:';
+/** "Try a demo script" (D-108): per visitor an hour, and in all a day. */
+const GUESTS_PER_HOUR = 5;
+const GUESTS_PER_DAY = 200;
 const OAUTH = 'wr_oauth';
 const REFRESH_DAYS = 30;
 
@@ -72,6 +80,9 @@ export function authRoutes(app: FastifyInstance, deps: AppDeps): void {
     maxAge: REFRESH_DAYS * 24 * 3600,
   };
   const pub = { config: { public: true } };
+  const guestsAllowed = perWindow(GUESTS_PER_HOUR, 3600_000);
+  /** Guests are at guest.<our host>: our own domain, which receives no mail. */
+  const guestDomain = `guest.${new URL(appUrl).hostname}`;
 
   /** Codes are sent from here: a new address gets a sign-up code, a known one a sign-in code. */
   async function begin(email: string): Promise<Attempt> {
@@ -213,9 +224,59 @@ export function authRoutes(app: FastifyInstance, deps: AppDeps): void {
     },
   );
 
+  // "Try a demo script" (D-108): a Cognito guest on the server-only guest client, a person who
+  // lasts a day, and the same session as anyone's. The browser creates the demo script itself.
+  app.post('/api/auth/guest', pub, async (req, reply) => {
+    if (!auth.cognito.guests) throw new ApiError(404, 'no_demo', 'The demo isn’t available here.');
+    if (!guestsAllowed(req.ip))
+      throw new ApiError(429, 'slow_down', 'That’s a lot of demos. Try again in an hour.');
+    const { rows: today } = await db.query<{ n: number }>(
+      `select count(*)::int as n from users
+        where guest_until is not null and created_at > now() - interval '1 day'`,
+    );
+    if (today[0]!.n >= GUESTS_PER_DAY)
+      throw new ApiError(
+        429,
+        'demo_full',
+        'The demo is busy today. Sign in or create an account to try Scripter.',
+      );
+    let tokens: Tokens;
+    try {
+      tokens = await auth.cognito.createGuest(`guest-${randomUUID()}@${guestDomain}`);
+    } catch (err) {
+      req.log.error({ err }, 'guest sign-in failed');
+      throw new ApiError(502, 'sign_in_failed', 'The demo didn’t start. Please try again.');
+    }
+    const claims = await auth.verifyId(tokens.idToken);
+    if (!claims)
+      throw new ApiError(502, 'sign_in_failed', 'The demo didn’t start. Please try again.');
+    const user = await withTx(db, async (c) => {
+      const { rows } = await c.query<User>(
+        `insert into users (email, name, guest_until)
+           values ($1, 'Guest', now() + make_interval(hours => $2))
+         returning id, name, email, guest_until as "guestUntil"`,
+        [claims.email, GUEST_HOURS],
+      );
+      await c.query(
+        `insert into user_identities (cognito_sub, user_id, provider) values ($1, $2, 'guest')`,
+        [claims.sub, rows[0]!.id],
+      );
+      return rows[0]!;
+    });
+    req.log.info({ guest: user.id }, 'guest started');
+    if (tokens.refreshToken)
+      void reply.setCookie(REFRESH, GUEST_MARK + tokens.refreshToken, {
+        ...cookieOpts,
+        maxAge: GUEST_HOURS * 3600,
+      });
+    return { accessToken: tokens.accessToken, expiresIn: tokens.expiresIn, user };
+  });
+
   // On every page load, and before the access token expires.
   app.post('/api/auth/refresh', pub, async (req, reply) => {
-    const refreshToken = req.cookies[REFRESH];
+    const cookie = req.cookies[REFRESH];
+    const guest = cookie?.startsWith(GUEST_MARK) ?? false;
+    const refreshToken = guest ? cookie!.slice(GUEST_MARK.length) : cookie;
     const signedOut = () => {
       void reply.clearCookie(REFRESH, { path: '/api/auth' });
       return new ApiError(401, 'signed_out', 'Please sign in again.');
@@ -223,26 +284,32 @@ export function authRoutes(app: FastifyInstance, deps: AppDeps): void {
     if (!refreshToken) throw signedOut();
     let tokens: Tokens;
     try {
-      tokens = await auth.cognito.refresh(refreshToken);
+      tokens = await auth.cognito.refresh(refreshToken, guest);
     } catch {
       throw signedOut();
     }
     const verified = await deps.verify(tokens.accessToken);
     const { rows } = verified
       ? await db.query<User>(
-          `select u.id, u.name, u.email from user_identities i join users u on u.id = i.user_id
-            where i.cognito_sub = $1`,
+          `select ${USER} from user_identities i join users u on u.id = i.user_id
+            where i.cognito_sub = $1 and ${NOT_EXPIRED}`,
           [verified.sub],
         )
       : { rows: [] };
     if (!rows[0]) throw signedOut();
-    if (tokens.refreshToken) void reply.setCookie(REFRESH, tokens.refreshToken, cookieOpts);
+    // Guests keep the one cookie they were given; it ends with the demo (D-108).
+    if (tokens.refreshToken && !guest)
+      void reply.setCookie(REFRESH, tokens.refreshToken, cookieOpts);
     return { accessToken: tokens.accessToken, expiresIn: tokens.expiresIn, user: rows[0] };
   });
 
   app.post('/api/auth/signout', pub, async (req, reply) => {
-    const refreshToken = req.cookies[REFRESH];
-    if (refreshToken) await auth.cognito.revoke(refreshToken).catch(() => {});
+    const cookie = req.cookies[REFRESH];
+    const guest = cookie?.startsWith(GUEST_MARK) ?? false;
+    if (cookie)
+      await auth.cognito
+        .revoke(guest ? cookie.slice(GUEST_MARK.length) : cookie, guest)
+        .catch(() => {});
     void reply.clearCookie(REFRESH, { path: '/api/auth' });
     return { ok: true };
   });
@@ -263,7 +330,8 @@ export function authRoutes(app: FastifyInstance, deps: AppDeps): void {
       const name = req.body.name.trim();
       if (!name) throw new ApiError(400, 'bad_request', 'Type a name.');
       const { rows } = await db.query<User>(
-        `update users set name = $2 where id = $1 returning id, name, email`,
+        `update users set name = $2 where id = $1
+         returning id, name, email, guest_until as "guestUntil"`,
         [req.user.id, name],
       );
       return rows[0];

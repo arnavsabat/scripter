@@ -30,22 +30,25 @@ export async function apiHarness() {
   await migrate(admin);
   const db = new pg.Pool({ connectionString: tdb.url, max: 5 });
   const issuer = await createTestIssuer();
+  // The web client and the guest client (D-108), as on AWS.
+  const trusted = { ...issuer.trusted, clientIds: ['test-client', 'test-guests'] as const };
   const mailer = memoryMailer();
   const blobs = memoryBlobs();
   const cognito = await fakeCognito(issuer);
   const app = await buildApp({
     db,
-    verify: tokenVerifier([issuer.trusted]),
+    verify: tokenVerifier([trusted]),
     auth: {
       cognito: cognitoClient({
-        clientId: issuer.trusted.clientId,
+        clientId: 'test-client',
+        guestClientId: 'test-guests',
         apiUrl: cognito.url,
         oauthUrl: cognito.url,
         region: 'us-east-2',
         userPoolId: 'us-east-2_test',
         credentials: { accessKeyId: 'test', secretAccessKey: 'test' },
       }),
-      verifyId: idTokenVerifier(issuer.trusted),
+      verifyId: idTokenVerifier(trusted),
     },
     mailer,
     blobs,

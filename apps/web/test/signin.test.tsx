@@ -7,6 +7,7 @@ import '@wr/shared/tokens.css';
 import '../src/base.css';
 import '../src/app.css';
 import { reloadAuthForTests } from '../src/auth';
+import { DEMO_CREDIT, demoScript } from '../src/demo/demo';
 import { Root } from '../src/Root';
 import { navigate } from '../src/router';
 
@@ -193,5 +194,76 @@ describe('invitation links (D-032)', () => {
     open('/i/used-abcdefghijklmnopqrstuvwxyz');
     await until(() => toast().includes('expired or was already used'));
     await until(() => heading() === 'Sign in or create an account');
+  });
+});
+
+describe('Try a demo script (D-108)', () => {
+  it('the scene comes in whole: one heading, the whole team talking, nothing dropped', () => {
+    const { title, blocks, report } = demoScript();
+    expect(title).toBe('The Avengers (excerpt)');
+    expect(blocks[0]).toEqual({
+      type: 'scene_heading',
+      text: 'INT. CONFERENCE TABLE, BRIDGE, CARRIER - CONTINUOUS',
+    });
+    expect(blocks.filter((b) => b.type === 'scene_heading')).toHaveLength(1);
+    const cast = new Set(
+      blocks.filter((b) => b.type === 'character').map((b) => b.text.replace(/ \(CONT’D\)$/, '')),
+    );
+    expect([...cast].sort()).toEqual(
+      ['BANNER', 'FURY', 'MARIA HILL', 'NATASHA', 'STEVE', 'THOR', 'TONY'].sort(),
+    );
+    expect(blocks.at(-1)).toEqual({
+      type: 'action',
+      text: 'ON A SHIELD WORKER: He goes back to playing Galaga.',
+    });
+    // Only the title page's credit lines are left out (they aren't script text).
+    expect(report.message('x', 1)).not.toMatch(/dual|centered|boneyard|note/);
+  });
+
+  it('one click: signed in as a guest, in their own copy of the scene, with the credit', async () => {
+    open();
+    await until(() => heading() === 'Sign in or create an account');
+    await userEvent.click(button('Try a demo script'));
+    await until(() => location.pathname.startsWith('/e/'));
+    await until(
+      () =>
+        $('.ProseMirror .el[data-type="scene_heading"]')?.textContent ===
+        'INT. CONFERENCE TABLE, BRIDGE, CARRIER - CONTINUOUS',
+      10_000,
+    );
+    expect(toast()).toBe(DEMO_CREDIT);
+    expect(document.querySelectorAll('.ProseMirror .el[data-type="character"]').length).toBe(
+      demoScript().blocks.filter((b) => b.type === 'character').length,
+    );
+  });
+
+  it('a guest’s menu says when the demo ends, and Members can’t invite anyone', async () => {
+    await fetch('/api/auth/guest', { method: 'POST' }); // signed in as a guest (the cookie)
+    open();
+    await until(() => onHomeAs('GU'));
+    await commands.clickAt('button[aria-label="Account"]', 10, 10);
+    await until(() => button('Create an account'));
+    expect($('[role="menu"][aria-label="Account"] .mh small')?.textContent).toBe(
+      'Demo · ends in 24 h',
+    );
+    expect(button('Sign out')).toBeUndefined();
+    await userEvent.keyboard('{Escape}');
+    // Their own script, where a showrunner would invite people.
+    await clickAction('+ New script');
+    await until(() => location.pathname.startsWith('/e/'));
+    navigate('/');
+    await until(() => button('Members'));
+    await clickAction('Members');
+    await until(() => $('.demo-note'));
+    expect($('.demo-note')!.textContent).toBe(
+      'The demo can’t invite anyone. Create an account to write with others.',
+    );
+    expect($('#invite-email')).toBeNull();
+  });
+
+  it('isn’t offered from an invitation link', async () => {
+    open('/i/fogline-abcdefghijklmnopqrstuvwxyz');
+    await until(() => heading() === 'Join Fogline');
+    expect(button('Try a demo script')).toBeUndefined();
   });
 });

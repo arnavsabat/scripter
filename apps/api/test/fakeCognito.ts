@@ -13,7 +13,12 @@ interface EmailUser {
   sub: string;
   confirmed: boolean;
   code?: string;
+  /** Set by the admin calls only (guests, D-108). */
+  password?: string;
 }
+
+/** The server-only guest client (D-108): admin password sign-in, nothing else. */
+const GUEST_CLIENT = 'test-guests';
 
 export async function fakeCognito(issuer: TestIssuer) {
   const users = new Map<string, EmailUser>();
@@ -23,8 +28,10 @@ export async function fakeCognito(issuer: TestIssuer) {
   >();
   const refreshTokens = new Map<
     string,
-    { sub: string; email: string; name?: string; google?: boolean }
+    { sub: string; email: string; name?: string; google?: boolean; client?: string }
   >();
+  /** Admin calls the guest path made, in order, for the tests to check. */
+  const adminCalls: { op: string; username: string; messageAction?: unknown }[] = [];
   const googleCodes = new Map<
     string,
     { sub: string; email: string; name: string; verified: boolean }
@@ -40,13 +47,18 @@ export async function fakeCognito(issuer: TestIssuer) {
   async function issue(
     sub: string,
     email: string,
-    extra: { name?: string; google?: boolean } = {},
+    extra: { name?: string; google?: boolean; client?: string } = {},
   ) {
     const refresh = randomBytes(24).toString('base64url');
     refreshTokens.set(refresh, { sub, email, ...extra });
+    const { client, ...claims } = extra;
     return {
-      AccessToken: await issuer.sign(sub),
-      IdToken: await issuer.signId(sub, { email, ...extra }),
+      AccessToken: await issuer.sign(sub, client ? { clientId: client } : {}),
+      IdToken: await issuer.signId(sub, {
+        email,
+        ...claims,
+        ...(client ? { clientId: client } : {}),
+      }),
       RefreshToken: refresh,
       ExpiresIn: 3600,
     };
@@ -80,6 +92,41 @@ export async function fakeCognito(issuer: TestIssuer) {
         body: { Username: u.sub, UserStatus: u.confirmed ? 'CONFIRMED' : 'UNCONFIRMED' },
       };
     },
+    // Guests (D-108): created confirmed and silent, given a password, signed in on the guest client.
+    AdminCreateUser(b) {
+      const email = String(b.Username);
+      adminCalls.push({ op: 'AdminCreateUser', username: email, messageAction: b.MessageAction });
+      if (users.has(email)) return fail('UsernameExistsException');
+      users.set(email, { sub: `guest-${randomUUID()}`, confirmed: true });
+      return { status: 200, body: { User: { Username: email } } };
+    },
+    AdminSetUserPassword(b) {
+      const u = users.get(String(b.Username));
+      adminCalls.push({ op: 'AdminSetUserPassword', username: String(b.Username) });
+      if (!u) return fail('UserNotFoundException');
+      u.password = String(b.Password);
+      return { status: 200, body: {} };
+    },
+    async AdminInitiateAuth(b) {
+      const p = (b.AuthParameters ?? {}) as Record<string, string>;
+      const email = String(p.USERNAME);
+      const u = users.get(email);
+      adminCalls.push({ op: 'AdminInitiateAuth', username: email });
+      if (b.ClientId !== GUEST_CLIENT || b.AuthFlow !== 'ADMIN_USER_PASSWORD_AUTH')
+        return fail('InvalidParameterException');
+      if (!u?.password || u.password !== p.PASSWORD) return fail('NotAuthorizedException');
+      return {
+        status: 200,
+        body: { AuthenticationResult: await issue(u.sub, email, { client: GUEST_CLIENT }) },
+      };
+    },
+    AdminDeleteUser(b) {
+      const email = String(b.Username);
+      adminCalls.push({ op: 'AdminDeleteUser', username: email });
+      if (!users.delete(email)) return fail('UserNotFoundException');
+      for (const [t, r] of refreshTokens) if (r.email === email) refreshTokens.delete(t);
+      return { status: 200, body: {} };
+    },
     ConfirmSignUp(b) {
       const email = String(b.Username);
       const u = users.get(email);
@@ -94,10 +141,13 @@ export async function fakeCognito(issuer: TestIssuer) {
       const p = (b.AuthParameters ?? {}) as Record<string, string>;
       if (b.AuthFlow === 'REFRESH_TOKEN_AUTH') {
         const r = refreshTokens.get(p.REFRESH_TOKEN ?? '');
-        if (!r) return fail('NotAuthorizedException');
+        // A refresh token works only on the client that issued it, as in Cognito.
+        if (!r || (b.ClientId === GUEST_CLIENT) !== (r.client === GUEST_CLIENT))
+          return fail('NotAuthorizedException');
         const t = await issue(r.sub, r.email, {
           ...(r.name ? { name: r.name } : {}),
           google: !!r.google,
+          ...(r.client ? { client: r.client } : {}),
         });
         return { status: 200, body: { AuthenticationResult: { ...t, RefreshToken: undefined } } };
       }
@@ -197,6 +247,8 @@ export async function fakeCognito(issuer: TestIssuer) {
       return c.code;
     },
     codesSent: (email: string) => codes.filter((c) => c.email === email).length,
+    adminCalls,
+    hasUser: (email: string) => users.has(email),
     /** What Google would hand back after the writer picks an account: an authorization code. */
     googleSignIn(email: string, name: string, opts: { verified?: boolean; sub?: string } = {}) {
       const code = randomBytes(12).toString('base64url');

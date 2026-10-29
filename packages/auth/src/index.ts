@@ -1,13 +1,17 @@
 // Sign-in token checks for the API and the sync servers (SPEC 5.6, D-030, D-031). Both verify the
 // same thing the same way: a Cognito *access* token, signed by a key from the issuer's published
-// key set, for our app client, and not expired. Anything else is refused.
+// key set, for one of our app clients (the web client, and the server-only guest client, D-108),
+// and not expired. Anything else is refused.
 import { createRemoteJWKSet, decodeJwt, jwtVerify, type JWTVerifyGetKey } from 'jose';
 
 export interface TrustedIssuer {
   /** The token's `iss` claim must equal this exactly. */
   issuer: string;
-  /** Cognito puts the app client in `client_id` (access tokens carry no `aud`). */
-  clientId: string;
+  /**
+   * Our app clients: Cognito puts the client in `client_id` (access tokens carry no `aud`). The
+   * first is the web client, the one ID tokens are addressed to; the guest client follows (D-108).
+   */
+  clientIds: readonly [string, ...string[]];
   /** Where the issuer's public signing keys come from (fetched once, then cached by jose). */
   keys: JWTVerifyGetKey;
 }
@@ -21,11 +25,15 @@ export interface VerifiedToken {
 export type TokenVerifier = (token: string) => Promise<VerifiedToken | null>;
 
 /** The issuer for a Cognito user pool, with its keys fetched from the pool's JWKS URL. */
-export function cognitoIssuer(region: string, userPoolId: string, clientId: string): TrustedIssuer {
+export function cognitoIssuer(
+  region: string,
+  userPoolId: string,
+  ...clientIds: [string, ...string[]]
+): TrustedIssuer {
   const issuer = `https://cognito-idp.${region}.amazonaws.com/${userPoolId}`;
   return {
     issuer,
-    clientId,
+    clientIds,
     keys: createRemoteJWKSet(new URL(`${issuer}/.well-known/jwks.json`)),
   };
 }
@@ -48,7 +56,7 @@ export function tokenVerifier(issuers: readonly TrustedIssuer[]): TokenVerifier 
         clockTolerance: 5,
       });
       if (payload.token_use !== 'access') return null; // an ID or refresh token isn't a pass
-      if (payload.client_id !== trusted.clientId) return null; // issued to some other app
+      if (!trusted.clientIds.includes(payload.client_id as string)) return null; // some other app
       if (typeof payload.sub !== 'string' || !payload.sub) return null;
       return { sub: payload.sub, issuer: trusted.issuer };
     } catch {
@@ -78,7 +86,7 @@ export function idTokenVerifier(issuer: TrustedIssuer): IdTokenVerifier {
     try {
       const { payload } = await jwtVerify(token, issuer.keys, {
         issuer: issuer.issuer,
-        audience: issuer.clientId,
+        audience: [...issuer.clientIds],
         algorithms: ['RS256'],
         clockTolerance: 5,
       });

@@ -23,6 +23,7 @@ describe.skipIf(!servicesEnabled)('migrations', () => {
       '002_recent',
       '003_whatifs',
       '004_usage',
+      '005_guests',
     ]);
     expect(await migrate(c)).toEqual([]);
     const { rows } = await c.query<{ version: string }>('select version from schema_migrations');
@@ -31,6 +32,7 @@ describe.skipIf(!servicesEnabled)('migrations', () => {
       '002_recent',
       '003_whatifs',
       '004_usage',
+      '005_guests',
     ]);
   });
 
@@ -42,6 +44,7 @@ describe.skipIf(!servicesEnabled)('migrations', () => {
       '002_recent',
       '003_whatifs',
       '004_usage',
+      '005_guests',
     ]);
   });
 

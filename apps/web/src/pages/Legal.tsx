@@ -82,6 +82,10 @@ export function Privacy() {
         To delete your account, email {CONTACT} and we’ll delete it and your email address within 30
         days. Series you share with others stay with them.
       </p>
+      <p>
+        If you try the demo without an account, it lasts 24 hours. After that, everything you wrote
+        in it is erased for good, usually within a day.
+      </p>
       <h2>Changes</h2>
       <p>If this policy changes, we’ll email you before it takes effect.</p>
     </Page>

@@ -47,13 +47,23 @@ const db = new pg.Pool({
 // An idle connection dropped by Postgres (a restart, a failover) is discarded and replaced on the
 // next query; without a listener, Node would treat the error as fatal and stop the API (D-066).
 db.on('error', (err) => console.error(`[db] idle connection lost: ${err.message}`));
-const pool = cognitoIssuer(env.COGNITO_REGION!, env.COGNITO_USER_POOL_ID!, env.COGNITO_CLIENT_ID!);
+// The web client, and the server-only guest client when there is one (D-108).
+const pool = cognitoIssuer(
+  env.COGNITO_REGION!,
+  env.COGNITO_USER_POOL_ID!,
+  env.COGNITO_CLIENT_ID!,
+  ...(env.COGNITO_GUEST_CLIENT_ID ? [env.COGNITO_GUEST_CLIENT_ID] : []),
+);
 const app = await buildApp({
+  // Behind CloudFront and the load balancer (D-091): the visitor's address is two hops back in
+  // X-Forwarded-For, which per-address limits need (D-108). Unset locally.
+  ...(env.WR_TRUST_PROXY_HOPS ? { trustProxy: Number(env.WR_TRUST_PROXY_HOPS) } : {}),
   db,
   verify: tokenVerifier([pool]),
   auth: {
     cognito: cognitoClient({
       clientId: env.COGNITO_CLIENT_ID!,
+      ...(env.COGNITO_GUEST_CLIENT_ID ? { guestClientId: env.COGNITO_GUEST_CLIENT_ID } : {}),
       apiUrl: `https://cognito-idp.${env.COGNITO_REGION}.amazonaws.com/`,
       oauthUrl: env.COGNITO_DOMAIN!,
       region: env.COGNITO_REGION!,

@@ -126,6 +126,18 @@ describe('Cognito (D-030, D-031, D-044)', () => {
     });
   });
 
+  it('a server-only guest client: the admin password flow only, no OAuth, a day of refresh (D-108)', () => {
+    t.hasResourceProperties('AWS::Cognito::UserPoolClient', {
+      ClientName: 'scripter-guests',
+      GenerateSecret: false,
+      ExplicitAuthFlows: ['ALLOW_ADMIN_USER_PASSWORD_AUTH', 'ALLOW_REFRESH_TOKEN_AUTH'],
+      RefreshTokenValidity: 1440,
+      EnableTokenRevocation: true,
+      AllowedOAuthFlowsUserPoolClient: false,
+    });
+    t.resourceCountIs('AWS::Cognito::UserPoolClient', 2);
+  });
+
   it('keeps the user pool if the stack is ever deleted', () => {
     t.hasResource('AWS::Cognito::UserPool', { DeletionPolicy: 'Retain' });
   });
@@ -293,6 +305,37 @@ describe('the beta (D-082, D-091)', () => {
       ScheduleExpression: 'cron(0 9 * * ? *)',
       State: 'ENABLED',
     });
+  });
+
+  it('guests (D-108): the servers know the guest client, the API sees visitors, each task gets only its Cognito calls', () => {
+    const defs = Object.values(beta.findResources('AWS::ECS::TaskDefinition')).flatMap(
+      (d) =>
+        (
+          d as {
+            Properties: {
+              ContainerDefinitions: {
+                Name: string;
+                Environment: { Name: string; Value: unknown }[];
+              }[];
+            };
+          }
+        ).Properties.ContainerDefinitions,
+    );
+    for (const name of ['api', 'sync', 'purge'])
+      expect(
+        defs
+          .find((c) => c.Name === name)!
+          .Environment.some((e) => e.Name === 'COGNITO_GUEST_CLIENT_ID'),
+      ).toBe(true);
+    const api = defs.find((c) => c.Name === 'api')!;
+    expect(api.Environment.find((e) => e.Name === 'WR_TRUST_PROXY_HOPS')?.Value).toBe('2');
+    const policies = Object.values(beta.findResources('AWS::IAM::Policy')).map((p) =>
+      JSON.stringify(p),
+    );
+    const withAction = (a: string) => policies.filter((p) => p.includes(a)).length;
+    expect(withAction('cognito-idp:AdminCreateUser')).toBe(1); // the servers' role only
+    expect(withAction('cognito-idp:AdminInitiateAuth')).toBe(1);
+    expect(withAction('cognito-idp:AdminDeleteUser')).toBe(1); // the purge's role only
   });
 
   it('alarms email Arnav: servers down, 5xx, edit-log trouble, crash bursts, a failed purge, the database', () => {

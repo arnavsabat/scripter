@@ -165,6 +165,7 @@ export class BetaStack extends Stack {
       COGNITO_REGION: config.region,
       COGNITO_USER_POOL_ID: auth.pool.userPoolId,
       COGNITO_CLIENT_ID: auth.client.userPoolClientId,
+      COGNITO_GUEST_CLIENT_ID: auth.guestClient.userPoolClientId, // D-108
       PGHOST: data.db.instanceEndpoint.hostname,
       PGPORT: String(data.db.instanceEndpoint.port),
       PGDATABASE: 'scripter',
@@ -197,6 +198,8 @@ export class BetaStack extends Stack {
         COGNITO_DOMAIN: cognitoDomain,
         WR_SENDER_EMAIL: config.fromEmail,
         WR_MIGRATE_ON_START: '1',
+        // CloudFront, then the load balancer: the visitor's address for per-address limits (D-108).
+        WR_TRUST_PROXY_HOPS: '2',
       },
       secrets,
       portMappings: [{ containerPort: 4100 }],
@@ -215,6 +218,17 @@ export class BetaStack extends Stack {
       stopTimeout: Duration.seconds(30),
     });
     grantStorage(task, data, auth, config);
+    // "Try a demo script" (D-108): the API creates a silent guest and signs it in.
+    task.taskRole.addToPrincipalPolicy(
+      new PolicyStatement({
+        actions: [
+          'cognito-idp:AdminCreateUser',
+          'cognito-idp:AdminSetUserPassword',
+          'cognito-idp:AdminInitiateAuth',
+        ],
+        resources: [auth.pool.userPoolArn],
+      }),
+    );
 
     const servers = on ? this.addServers(cluster, task, data) : undefined;
 
@@ -326,6 +340,13 @@ export class BetaStack extends Stack {
       logging: new AwsLogDriver({ logGroup: logs, streamPrefix: 'purge' }),
     });
     grantStorage(purge, data, auth, config);
+    // Expired guests' Cognito users go with them (D-108).
+    purge.taskRole.addToPrincipalPolicy(
+      new PolicyStatement({
+        actions: ['cognito-idp:AdminDeleteUser'],
+        resources: [auth.pool.userPoolArn],
+      }),
+    );
     new Rule(this, 'PurgeDaily', {
       schedule: Schedule.cron({ hour: '9', minute: '0' }), // 09:00 UTC, early morning in Toronto
       enabled: on, // it needs Postgres, which is stopped while the servers are down

@@ -7,13 +7,13 @@ import type { AppDeps } from '../app';
 import { ApiError } from '../errors';
 import { BROWSER_EVENTS, countUsage } from '../usage';
 
-/** At most `limit` calls a minute per key, kept in memory (one API process for the beta). */
-export function perMinute(limit: number) {
+/** At most `limit` calls a window per key, kept in memory (one API process for the beta). */
+export function perWindow(limit: number, windowMs: number) {
   const seen = new Map<string, { start: number; n: number }>();
   return (key: string) => {
     const now = Date.now();
     const s = seen.get(key);
-    if (!s || now - s.start >= 60_000) {
+    if (!s || now - s.start >= windowMs) {
       if (seen.size > 10_000) seen.clear();
       seen.set(key, { start: now, n: 1 });
       return true;
@@ -22,6 +22,7 @@ export function perMinute(limit: number) {
     return s.n <= limit;
   };
 }
+export const perMinute = (limit: number) => perWindow(limit, 60_000);
 
 const tooMany = () => new ApiError(429, 'too_many', 'Too many requests. Try again in a minute.');
 

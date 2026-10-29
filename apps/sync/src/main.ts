@@ -69,7 +69,13 @@ const server = await startSyncServer({
   port: Number(env.PORT ?? 4000),
   storage: await storageFromEnv(),
   verify: tokenVerifier([
-    cognitoIssuer(env.COGNITO_REGION!, env.COGNITO_USER_POOL_ID!, env.COGNITO_CLIENT_ID!),
+    // The web client, and the server-only guest client when there is one (D-108).
+    cognitoIssuer(
+      env.COGNITO_REGION!,
+      env.COGNITO_USER_POOL_ID!,
+      env.COGNITO_CLIENT_ID!,
+      ...(env.COGNITO_GUEST_CLIENT_ID ? [env.COGNITO_GUEST_CLIENT_ID] : []),
+    ),
   ]),
   access,
   clusterSecret: env.WR_CLUSTER_SECRET!,

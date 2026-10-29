@@ -86,6 +86,7 @@ The first `deploy:app` takes longer (often 15-30 minutes): CloudFront, and Cogni
 3. **Sign in** with an email code (it comes from `no-reply@scripter.ca`), then with Google (the address bar passes through `auth.scripter.ca`).
 4. **Write:** open a script, type, and reload. The toolbar must not stay on "Reconnecting…", and your typing must still be there. This proves the WebSocket works through CloudFront's VPC origin (D-091), the one thing synth can't check. Proven on the first deploy (D-100). If it ever fails, look at the sync logs (step 7). A 504 after 30 s with no requests at the load balancer means CloudFront can't reach it; check that `WrData`'s load-balancer group still allows CloudFront's origin-facing prefix list on port 80.
 5. **Two writers:** in a second browser (or Incognito), open the same script and watch each other's typing and cursors.
+   - **The demo (D-108):** signed out, click "Try a demo script". You should land in "The Avengers (excerpt)" with the credit toast. The API logs `guest started`. If it says "The demo didn't start", the API log has `guest sign-in failed` with Cognito's reason. The usual cause is that `WrAuth` wasn't deployed before `WrApp`, so the guest client doesn't exist yet.
 6. **A failover drill** (D-096: the two tasks are a cluster). While both windows type, stop one task: ECS console → the service → Tasks → pick one → Stop. Writing pauses for about 6-8 s ("Reconnecting…") and carries on, with nothing lost, while ECS starts a replacement. The sync logs show the other task taking the script's lease.
 7. **The logs:**
    ```sh
@@ -112,6 +113,7 @@ Not needed while you're the only tester (you're on both allow-lists). Do both be
      - **Authorized domain:** `scripter.ca`.
    - **Audience:** Publish app. We ask only for name and email, so Google needs no security review, though it may take a few days to verify the branding.
 3. **Invite:** create the series on Home, then Members → invite by email. The invitation link signs them up and joins them.
+4. **The demo needs neither (D-108).** "Try a demo script" signs a visitor in as a guest without email or Google, so a recruiter can try Scripter before steps 1 and 2 are approved. Guests can't invite anyone. Limits: 5 demos an hour per address, 200 a day.
 
 ## Part 5. Everyday operations
 
@@ -152,7 +154,7 @@ Postgres is in an isolated subnet, so reach it from **CloudShell in the VPC**:
 
 ### The daily purge
 
-At 09:00 UTC a short task erases what was deleted more than 30 days ago (D-090). It logs `purge finished` with counts, and a failure raises the `PurgeFailed` alarm. For a dry run by hand:
+At 09:00 UTC a short task erases what was deleted more than 30 days ago (D-090). It also removes guests whose day has ended: their scripts, the person and the Cognito user (D-108; counted as `guests`). It logs `purge finished` with counts, and a failure raises the `PurgeFailed` alarm. The purge runs only while the servers are up, so a guest's leftovers wait for the next day the servers are on. Expired guests can't sign in either way. For a dry run by hand:
 
 ```sh
 aws ecs run-task --cluster <WrApp.ClusterName> --task-definition <WrApp.PurgeTaskDefinition> \

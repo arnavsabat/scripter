@@ -110,6 +110,11 @@ afterAll(() => {
  */
 const KNOWN: { selector: RegExp; props: RegExp; why: string }[] = [
   {
+    selector: /^\.si$/,
+    props: /^height$/,
+    why: 'the sign-in column holds the "Try a demo script" line under the legal line (D-108)',
+  },
+  {
     selector: /^\.page$|^\.desk$/,
     props: /./,
     why: 'true screenplay page geometry (D-003); the desk holds the taller page',

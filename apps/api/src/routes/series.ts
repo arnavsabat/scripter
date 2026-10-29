@@ -2,7 +2,8 @@
 import { createHash, randomBytes } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';
-import { seriesFor } from '../access';
+import { canInvite } from '@wr/shared';
+import { accountOf, guestRefused, seriesFor } from '../access';
 import type { AppDeps } from '../app';
 import { notifyAccess, withTx } from '../db/tx';
 import { ApiError, notFound } from '../errors';
@@ -277,6 +278,7 @@ export function seriesRoutes(app: FastifyInstance, { db, mailer, appUrl }: AppDe
       },
     },
     async (req) => {
+      if (!canInvite(accountOf(req.user))) throw guestRefused();
       const email = req.body.email.trim();
       const token = randomBytes(32).toString('base64url');
       const result = await withTx(db, async (c) => {

@@ -120,7 +120,13 @@ describe.skipIf(!servicesEnabled)('the 30-day purge', () => {
   });
 
   it('a dry run counts what is due and changes nothing', async () => {
-    expect(await run(true)).toEqual({ series: 1, episodes: 2, drafts: 3, restorePoints: 1 });
+    expect(await run(true)).toEqual({
+      series: 1,
+      episodes: 2,
+      drafts: 3,
+      restorePoints: 1,
+      guests: 0,
+    });
     expect(has(drafts.old[0]!)).toBe(true);
     expect(deleted).toEqual([]);
   });
@@ -131,7 +137,7 @@ describe.skipIf(!servicesEnabled)('the 30-day purge', () => {
         drafts.oldWhatIf,
       ])
     ).rows.map((r) => r.s3_key);
-    expect(await run()).toEqual({ series: 1, episodes: 2, drafts: 3, restorePoints: 1 });
+    expect(await run()).toEqual({ series: 1, episodes: 2, drafts: 3, restorePoints: 1, guests: 0 });
     // Postgres: the old series, its episodes and drafts, and the old what-if are gone.
     const count = async (sql: string, args: unknown[]) =>
       Number((await h.admin.query<{ n: string }>(sql, args)).rows[0]!.n);
@@ -161,6 +167,66 @@ describe.skipIf(!servicesEnabled)('the 30-day purge', () => {
   });
 
   it('a second run finds nothing more to do', async () => {
-    expect(await run()).toEqual({ series: 0, episodes: 0, drafts: 0, restorePoints: 0 });
+    expect(await run()).toEqual({ series: 0, episodes: 0, drafts: 0, restorePoints: 0, guests: 0 });
+  });
+});
+
+describe.skipIf(!servicesEnabled)('expired guests (D-108)', () => {
+  let h: Awaited<ReturnType<typeof apiHarness>>;
+  const storage = memoryStorage();
+  const removed: string[] = [];
+  beforeAll(async () => {
+    h = await apiHarness();
+  });
+  afterAll(async () => {
+    await h?.close();
+  });
+
+  /** A guest who has written a script; `ended` puts their day behind them. */
+  async function guestWithScript(ended: boolean) {
+    const res = await h.app.inject({ method: 'POST', url: '/api/auth/guest' });
+    const g = res.json<{ accessToken: string; user: { id: string; email: string } }>();
+    const script = await h.app.inject({
+      method: 'POST',
+      url: '/api/series',
+      headers: { authorization: `Bearer ${g.accessToken}` },
+      payload: { kind: 'script', name: 'The Avengers (excerpt)' },
+    });
+    const { seriesId, episodeId } = script.json<{ seriesId: string; episodeId: string }>();
+    const { rows } = await h.admin.query<{ id: string }>(
+      `select id from drafts where episode_id = $1`,
+      [episodeId],
+    );
+    storage.log.entries.set(rows[0]!.id, new Map([[0, new Uint8Array([1])]]));
+    if (ended)
+      await h.admin.query(
+        `update users set guest_until = now() - interval '1 minute' where id = $1`,
+        [g.user.id],
+      );
+    return { ...g.user, seriesId, draft: rows[0]!.id };
+  }
+
+  it('removes an expired guest’s scripts at once, then the person and their Cognito user', async () => {
+    const gone = await guestWithScript(true);
+    const staying = await guestWithScript(false);
+    const result = await purge({
+      db: h.db,
+      storage,
+      deleteBlob: () => Promise.resolve(),
+      deleteCognitoUser: (username) => {
+        removed.push(username);
+        return Promise.resolve();
+      },
+    });
+    expect(result).toMatchObject({ series: 1, episodes: 1, drafts: 1, guests: 1 });
+    const n = async (sql: string, id: string) => (await h.admin.query(sql, [id])).rowCount;
+    expect(await n(`select 1 from series where id = $1`, gone.seriesId)).toBe(0);
+    expect(await n(`select 1 from users where id = $1`, gone.id)).toBe(0);
+    expect(storage.log.entries.has(gone.draft)).toBe(false);
+    expect(removed).toEqual([gone.email]);
+    // A guest still inside their day keeps everything.
+    expect(await n(`select 1 from series where id = $1`, staying.seriesId)).toBe(1);
+    expect(await n(`select 1 from users where id = $1`, staying.id)).toBe(1);
+    expect(storage.log.entries.has(staying.draft)).toBe(true);
   });
 });

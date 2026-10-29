@@ -24,7 +24,14 @@ export interface TestIssuer {
   /** A signed ID token, shaped like Cognito's (Google sign-ins carry an `identities` claim). */
   signId(
     sub: string,
-    claims: { email: string; emailVerified?: boolean; name?: string; google?: boolean },
+    claims: {
+      email: string;
+      emailVerified?: boolean;
+      name?: string;
+      google?: boolean;
+      /** The app client it's addressed to (`aud`); the issuer's own by default. */
+      clientId?: string;
+    },
   ): Promise<string>;
 }
 
@@ -59,7 +66,7 @@ function issuerFor(privateKey: CryptoKey, publicJwk: JWK, clientId: string): Tes
   const jwk = { ...publicJwk, kid, alg: 'RS256', use: 'sig' };
   const issuer = 'https://issuer.test.scripter.invalid';
   return {
-    trusted: { issuer, clientId, keys: createLocalJWKSet({ keys: [jwk] }) },
+    trusted: { issuer, clientIds: [clientId], keys: createLocalJWKSet({ keys: [jwk] }) },
     publicJwk: jwk,
     sign: (sub, o = {}) =>
       new SignJWT({ token_use: o.tokenUse ?? 'access', client_id: o.clientId ?? clientId })
@@ -79,7 +86,7 @@ function issuerFor(privateKey: CryptoKey, publicJwk: JWK, clientId: string): Tes
       })
         .setProtectedHeader({ alg: 'RS256', kid })
         .setIssuer(issuer)
-        .setAudience(clientId)
+        .setAudience(c.clientId ?? clientId)
         .setSubject(sub)
         .setIssuedAt()
         .setExpirationTime('1h')
@@ -91,7 +98,7 @@ function issuerFor(privateKey: CryptoKey, publicJwk: JWK, clientId: string): Tes
 export function trustedTestKey(jwk: JWK, clientId = 'test-client'): TrustedIssuer {
   return {
     issuer: 'https://issuer.test.scripter.invalid',
-    clientId,
+    clientIds: [clientId],
     keys: createLocalJWKSet({ keys: [jwk] }),
   };
 }

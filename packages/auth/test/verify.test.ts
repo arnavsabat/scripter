@@ -26,6 +26,16 @@ describe('token check', () => {
     expect(await verify(await issuer.sign('user-1', { clientId: 'someone-else' }))).toBeNull();
   });
 
+  it('accepts each of our app clients, and only those (the guest client, D-108)', async () => {
+    const both = tokenVerifier([{ ...issuer.trusted, clientIds: ['test-client', 'guests'] }]);
+    expect(await both(await issuer.sign('guest-1', { clientId: 'guests' }))).toEqual({
+      sub: 'guest-1',
+      issuer: issuer.trusted.issuer,
+    });
+    expect(await both(await issuer.sign('user-1'))).not.toBeNull();
+    expect(await both(await issuer.sign('x', { clientId: 'someone-else' }))).toBeNull();
+  });
+
   it('refuses an expired token', async () => {
     const past = Math.floor(Date.now() / 1000) - 60;
     expect(await verify(await issuer.sign('user-1', { expiresIn: past }))).toBeNull();

@@ -384,6 +384,40 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-108 · 2026-10-29 · "Try the demo": a guest sign-in into a private copy of a scene from The Avengers
+
+- **Arnav's calls** (from D-107's options): option **A**, a private copy per visitor. Then three choices:
+  - **How a guest signs in: a Cognito guest user.** Rejected: our own guest tokens (a second trust path beside Cognito) and Cognito custom auth (Lambda triggers for the same result).
+  - **The excerpt: scene 80**, the team at the helicarrier conference table (pages 53-57 of the PDF Arnav supplied), ending on "This way, sir." Rejected: scenes 91-95 (dual dialogue, which Scripter flattens) and 80-95 (a much longer quotation). Arnav has checked that the excerpt is fair use for a personal portfolio project. The script opens with a credit toast: Marvel's The Avengers (2012), written by Joss Whedon.
+  - **What a guest can do: write only, no email.** Guests can edit, make what-ifs, snapshots and comparisons, export a PDF and import. They can't invite anyone or join by invitation, so nobody can use Scripter to send email to strangers. Rejected: "everything, short-lived" (anyone could send email from no-reply@scripter.ca, which risks SES suspending the account) and "read and type only" (hides what-ifs).
+- **How it works:**
+  - "Try a demo script" on the sign-in page calls `POST /api/auth/guest`.
+  - The API creates a Cognito user `guest-<id>@guest.scripter.ca`. The subdomain is ours and receives no mail, and Cognito sends nothing.
+  - It sets a random password nobody sees and signs the user in with `ADMIN_USER_PASSWORD_AUTH` on a second, server-only app client, `scripter-guests`. Admin calls need the server's AWS credentials, so the public can't use that client.
+  - The result is an ordinary Cognito access token. The API and the sync servers now trust a list of our own two client IDs: still Cognito only.
+  - The person row has `guest_until` set to 24 hours ahead. The browser creates the script and writes the excerpt into it the way an import does (D-077).
+- **Limits:**
+  - at most 5 guest sign-ins per address per hour and 200 a day in total;
+  - after 24 hours the guest is refused by the API and the sync servers;
+  - the daily purge (D-090) then deletes the guest's scripts, their storage, the person and the Cognito user.
+- **For writers:** recruiters can try the real editor in one click, with no email or Google account. Nothing a guest does reaches anyone else.
+- **For the system:** one more app client, five more Cognito admin permissions, a `guest_until` column, and a guest step in the purge. The API now reads the visitor's address from CloudFront's forwarding header (two trusted proxy hops), so per-address limits apply per visitor, not per load balancer.
+- **Built:**
+  - API: `routes/auth.ts`, `auth/cognito.ts`, `user.ts`, migration `005_guests`, and the `canInvite` rule in `packages/shared/src/permissions.ts`;
+  - sync: `pgAccess.ts` and the purge's guest step;
+  - infra: the `scripter-guests` client and its permissions;
+  - web: `src/demo/`, the sign-in line, the guest account menu, and the Members note;
+  - privacy policy: a sentence on the demo's 24 hours;
+  - prototype parity: the taller sign-in column listed as known.
+- **Wording changes from the option text:**
+  - The menu item reads "Create an account", not "Sign up to keep writing", because demo work isn't carried into a new account and the old wording promised it was.
+  - The menu says "Demo · ends in 23 h".
+- **Light edits to the excerpt:** three transcription typos fixed ("lead them against", "smell crazy", "He'd have to"). Continuation cues ("TONY (CONT'D)") were added where action interrupts a speech, so nothing imports as orphan dialogue.
+- **Tests:** 6 API tests (silent creation, the guest cookie and refresh, no invites or joins, expiry, both limits), a sync test (expired guests are nobody), a purge test, 4 browser tests and 2 infra tests.
+- **Noticed:** the D-087 perf test ("live comparison… within a frame") failed once under the full suite (2 keys at 51-56 ms against a 50 ms limit) and passed alone. Timing noise on a busy laptop, not this change; logged in Known risks if it recurs.
+- **Deploy order:** `WrAuth` first (the new client), then `beta:up`.
+- **Status:** built; awaits Arnav's deploy and approval.
+
 ### D-107 · 2026-10-29 · Ready for recruiters: the servers up, an honest outage message, phones get a notice; guest demo designed next
 
 - **Arnav's calls:**

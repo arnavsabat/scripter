@@ -21,8 +21,9 @@ export function pgAccess(databaseUrl: string | undefined, logger: Logger): Acces
   return {
     async identify(sub) {
       const { rows } = await db.query<{ id: string; name: string }>(
+        // A guest past their day is nobody (D-108).
         `select u.id, u.name from user_identities i join users u on u.id = i.user_id
-          where i.cognito_sub = $1`,
+          where i.cognito_sub = $1 and (u.guest_until is null or u.guest_until > now())`,
         [sub],
       );
       const u = rows[0];

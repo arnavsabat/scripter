@@ -14,12 +14,15 @@ import { episodeRoutes } from './routes/episodes';
 import { homeRoutes } from './routes/home';
 import { invitationRoutes } from './routes/invitations';
 import { reportRoutes } from './routes/reports';
+import { NOT_EXPIRED, USER } from './user';
 import { seriesRoutes } from './routes/series';
 
 export interface User {
   id: string;
   name: string;
   email: string;
+  /** Set for a guest (D-108): when the demo ends. Null for everyone else. */
+  guestUntil: Date | null;
 }
 
 declare module 'fastify' {
@@ -43,10 +46,17 @@ export interface AppDeps {
   /** Where the web app lives, for links in emails (e.g. https://…/i/<token>). */
   appUrl: string;
   logger?: boolean;
+  /** How many proxies sit in front (CloudFront and the load balancer: 2), so req.ip is the visitor. */
+  trustProxy?: number;
 }
 
 export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
-  const app = Fastify({ logger: deps.logger ?? false });
+  const hops = deps.trustProxy ?? 0;
+  const app = Fastify({
+    logger: deps.logger ?? false,
+    // Trust the nearest `hops` proxies' X-Forwarded-For entries, so req.ip is the one before them.
+    trustProxy: (_addr: string, i: number) => i < hops,
+  });
   app.decorateRequest('user', null as unknown as User);
   await app.register(cookie);
 
@@ -57,8 +67,8 @@ export async function buildApp(deps: AppDeps): Promise<FastifyInstance> {
     const verified = token ? await deps.verify(token) : null;
     if (!verified) throw new ApiError(401, 'signed_out', 'Please sign in again.');
     const { rows } = await deps.db.query<User>(
-      `select u.id, u.name, u.email from user_identities i join users u on u.id = i.user_id
-        where i.cognito_sub = $1`,
+      `select ${USER} from user_identities i join users u on u.id = i.user_id
+        where i.cognito_sub = $1 and ${NOT_EXPIRED}`,
       [verified.sub],
     );
     if (!rows[0]) throw new ApiError(401, 'signed_out', 'Please sign in again.');

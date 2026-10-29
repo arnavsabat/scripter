@@ -5,6 +5,7 @@ import { useRef, useState, type FormEvent } from 'react';
 import { ApiFailure, publicApi } from '../api';
 import { auth, type Me, type SignedIn } from '../auth';
 import { useToast } from '../components/Toast';
+import { DEMO_CREDIT, startDemo } from '../demo/demo';
 import { navigate } from '../router';
 import './signin.css';
 
@@ -107,6 +108,12 @@ export function SignIn({ invite }: { invite?: InvitePreview | null }) {
     });
   };
 
+  const tryDemo = () =>
+    void once(async () => {
+      await startDemo();
+      toast.show(DEMO_CREDIT);
+    });
+
   const saveName = (e: FormEvent) => {
     e.preventDefault();
     if (step.name !== 'name' || !name.trim()) return;
@@ -174,6 +181,15 @@ export function SignIn({ invite }: { invite?: InvitePreview | null }) {
               </button>
               .
             </p>
+            {!invite && (
+              // D-108: one click into a real script, no account. Not offered from an invitation.
+              <p className="si-legal si-demo">
+                Just looking?{' '}
+                <button type="button" onClick={tryDemo}>
+                  Try a demo script
+                </button>
+              </p>
+            )}
           </form>
         )}
 

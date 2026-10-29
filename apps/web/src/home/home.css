@@ -385,3 +385,11 @@ button.role:hover {
   font-size: 12px;
   color: var(--muted);
 }
+
+/* Where a guest would invite (D-108): why they can't, in the metadata style. */
+.demo-note {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+}

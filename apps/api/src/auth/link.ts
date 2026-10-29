@@ -3,6 +3,7 @@
 import type { IdClaims } from '@wr/auth';
 import type pg from 'pg';
 import type { User } from '../app';
+import { USER } from '../user';
 import { withTx } from '../db/tx';
 import { ApiError } from '../errors';
 
@@ -14,7 +15,7 @@ export async function linkSignIn(
     throw new ApiError(403, 'email_unverified', 'That email address isn’t verified.');
   return withTx(db, async (c) => {
     const linked = await c.query<User>(
-      `select u.id, u.name, u.email from user_identities i join users u on u.id = i.user_id
+      `select ${USER} from user_identities i join users u on u.id = i.user_id
         where i.cognito_sub = $1`,
       [claims.sub],
     );
@@ -24,13 +25,13 @@ export async function linkSignIn(
     const created = await c.query<User>(
       `insert into users (email, name) values ($1, $2)
        on conflict ((lower(email))) do nothing
-       returning id, name, email`,
+       returning id, name, email, guest_until as "guestUntil"`,
       [claims.email, claims.name ?? fallback],
     );
     const user =
       created.rows[0] ??
       (
-        await c.query<User>(`select id, name, email from users where lower(email) = lower($1)`, [
+        await c.query<User>(`select ${USER} from users u where lower(u.email) = lower($1)`, [
           claims.email,
         ])
       ).rows[0]!;
