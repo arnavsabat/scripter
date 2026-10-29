@@ -163,6 +163,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **D-100, CloudFront → load balancer (504):** (a) allow AWS's CloudFront "origin-facing" managed prefix list into the load balancer's group on port 80, in `WrData`; (b) allow CloudFront's own `CloudFront-VPCOrigins-Service-SG` group, which CloudFront creates and CDK doesn't know in advance; (c) the runbook's fallback, an internet-facing load balancer locked to CloudFront by a secret header. Claude recommends (a).
 - **Waiting on Arnav to finish the beta-readiness phase** (D-089 onwards):
   1. ~~The domain name~~: `scripter.ca`, and the product is Scripter (D-096).
   2. ~~The go-ahead to deploy~~: yes, with the servers on demand to save the credits (D-096). The deploy itself follows the runbook, step by step with Arnav.
@@ -376,6 +377,20 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-100 · 2026-10-29 · The first deploy is up, but CloudFront can't reach the load balancer (open)
+
+- **Up and checked (2026-10-29, 04:3x UTC):** `WrApp` CREATE_COMPLETE.
+  - `https://scripter.ca` serves the web app from S3 (200).
+  - `https://auth.scripter.ca` answers (302).
+  - Two tasks are running and healthy behind the load balancer. The first applied migrations 001-004 on the new database, and the two sync servers see each other (membership of 2): a two-node cluster in production.
+- **The problem:** `/api/*` (and so `/doc/*`) returns 504 after 30 s, and the load balancer counts zero requests. CloudFront's VPC-origin connections never arrive.
+  - CloudFront's network interfaces sit in our private subnets (group `CloudFront-VPCOrigins-Service-SG`, all outbound allowed).
+  - The load balancer's group allows port 80 from the VPC's range (10.0.0.0/16), which evidently doesn't match how that traffic arrives.
+  - This is the risk the runbook named (D-091, Known risks): the one part synth can't check.
+- **What Claude tried:** a narrow, reversible test rule (CloudFront's own group allowed into the load balancer on port 80) and a documentation search. Claude Code's safety check refused both as weakening security, so Claude stopped and brought it to Arnav.
+- **Options proposed, awaiting Arnav:** see Proposed.
+- **Status:** open; the servers are up (about $1.50 a day) until it's fixed or `beta:down`.
 
 ### D-099 · 2026-10-28 · The free plan forbids stacks in us-east-1: the certificate comes from a script
 
