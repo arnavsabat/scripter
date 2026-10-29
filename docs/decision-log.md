@@ -213,6 +213,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 - ~~D-020: storage-backed tests not yet run~~: resolved in D-021. All 6 pass against DynamoDB Local and SeaweedFS, three runs in a row, including the SIGKILL crash of a real server process.
 - ~~D-020: no client heartbeat~~: decided in D-022 (ping every 5 s, give up after 10 s).
+- **D-101: a lease renewal can collide with a snapshot's fenced transaction** (both touch the lease item), giving `TransactionConflictException`. Harmless at one miss (renewals every 2 s, expiry 6 s), but three in a row would lose the lease mid-write. Options to bring Arnav: retry a conflicted renewal at once with jitter, or skip renewing while a snapshot transaction is in flight.
 - **D-080: Changes shows removed text inline,** so page view's breaks (computed from the script itself) don't account for it while Changes is on.
 - ~~D-080: a viewer opening a never-opened what-if sees it empty~~: it now says so, and the script appears when a writer opens it (D-094).
 - ~~D-080: usage counting isn't built~~: built in D-083.
@@ -377,6 +378,28 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-101 · 2026-10-29 · The runbook's checks pass on scripter.ca, and the first failover drill on the live cluster
+
+- **Runbook Part 3, steps 1-4, by Arnav:** all good.
+  - sign-in with an email code (from `no-reply@scripter.ca`);
+  - Google through `auth.scripter.ca`;
+  - writing that survives a reload;
+  - two writers seeing each other's typing and cursors.
+- **Step 6, the failover drill** (Claude stopped the script's home task with `aws ecs stop-task` while Arnav typed). The timeline from the logs (UTC):
+  - **05:01:09** — stop requested for `sync-05ef41`, the home, lease epoch 2.
+  - **05:01:34** — ECS's replacement `sync-70d4b4` was up; the membership showed three servers.
+  - **05:01:09 to 05:02:43** — the old server kept serving while the load balancer drained it (the new task's health checks, then the 35 s deregistration delay). About 190 edits were appended meanwhile (snapshot seq 49 → 240).
+  - **05:02:43.5** — SIGTERM.
+  - **05:02:45.9** — final snapshot (seq 241), "room handed off" to `sync-70d4b4`.
+  - **05:02:46.9** — the new home loaded the room at epoch 3, from snapshot 241 with an empty log tail.
+- **Results:**
+  - **Graceful handover:** 3.4 s from SIGTERM to the new home's room loaded.
+  - **Zero lost edits:** everything typed appeared in both windows, and the new home started exactly at the last appended update.
+  - **No "Reconnecting…" seen:** Arnav had likely stopped typing before 05:02:43, and the writer on the other server is forwarded throughout.
+  - **Two numbers, labelled:** this is the *graceful* path (ECS always stops with SIGTERM). The *crash* path (the lease must expire: about 6-8 s locally, D-023 and D-092) is measured by the AWS load test's crash switch, or by killing the process through ECS Exec, which needs AWS's Session Manager plugin installed locally.
+- **Found:** at 05:01:31 a lease renewal hit `TransactionConflictException`. It collided with a snapshot transaction that condition-checks the same lease item. The lease wasn't lost (the next renewal 2 s later succeeded, inside the 6 s expiry). See Open issues.
+- **Status:** passed; logged for Arnav.
 
 ### D-100 · 2026-10-29 · The first deploy is up; CloudFront couldn't reach the load balancer until its prefix list was allowed
 
