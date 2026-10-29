@@ -37,7 +37,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 - **Local S3-compatible store:** SeaweedFS (D-004).
 - **Plan:** SPEC Part 6. Spike first (2-3 days, gates the stack); Phase 1 with a hard checkpoint at the end of week 6 and a fixed cut order; Phase 2; closed beta; Phase 3; beta hardening. v1 is roughly 8.5-10.5 weeks after the spike.
 - **Where the log lives:** in the repo, alongside SPEC.md and CLAUDE.md (D-001).
-- **Hosting the code:** a public GitHub repo, `arnavsabat/writers-room` (to be renamed `arnavsabat/scripter`, D-096), as `origin`; `main` is pushed (D-008).
+- **Hosting the code:** a public GitHub repo, `arnavsabat/scripter` (renamed from `writers-room` on 2026-10-28, D-096), as `origin`; `main` is pushed (D-008).
 - **Tooling:** the D-006 defaults are confirmed, including TypeScript 6.0.3 instead of 7.0 (D-009).
 - **Revision colors:** all out of v1. That means no page colors, no margin asterisks after sends, and no snapshot color tags. The prototype's "BLUE" snapshot tag is not built (D-009).
 - **Spike binding:** the stable line, `yjs` 13.6.33 with `y-prosemirror` 1.3.7 (D-010).
