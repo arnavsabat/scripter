@@ -30,6 +30,20 @@ import { BlockPublicAccess, Bucket, BucketEncryption } from 'aws-cdk-lib/aws-s3'
 import { Secret } from 'aws-cdk-lib/aws-secretsmanager';
 import type { Construct } from 'constructs';
 
+/**
+ * The AWS-managed prefix list `com.amazonaws.global.cloudfront.origin-facing`, per region (D-100).
+ * Look one up with `aws ec2 describe-managed-prefix-lists --filters
+ * Name=prefix-list-name,Values=com.amazonaws.global.cloudfront.origin-facing`.
+ */
+const CLOUDFRONT_ORIGIN_FACING: Record<string, string> = { 'us-east-2': 'pl-b6a144df' };
+
+function cloudFrontOriginFacing(region: string): string {
+  const id = CLOUDFRONT_ORIGIN_FACING[region];
+  if (!id)
+    throw new Error(`infra: add CloudFront's origin-facing prefix list for ${region} (data.ts)`);
+  return id;
+}
+
 export interface DataStackProps extends StackProps {
   /** Table and secret names get this prefix: '' for the beta, 'lt-' for a load-test cluster. */
   prefix?: string;
@@ -69,7 +83,15 @@ export class DataStack extends Stack {
       description: 'The internal load balancer',
       allowAllOutbound: true,
     });
-    this.lb.addIngressRule(Peer.ipv4(this.vpc.vpcCidrBlock), Port.tcp(80), 'CloudFront VPC origin');
+    this.lb.addIngressRule(Peer.ipv4(this.vpc.vpcCidrBlock), Port.tcp(80), 'from inside the VPC');
+    // CloudFront's VPC-origin connections don't arrive from the VPC's own range: the first deploy
+    // got 504s with zero requests at the load balancer (D-100). AWS's managed list of CloudFront's
+    // origin-facing addresses lets exactly CloudFront in (it weighs about 55 of the group's 60 rules).
+    this.lb.addIngressRule(
+      Peer.prefixList(cloudFrontOriginFacing(this.region)),
+      Port.tcp(80),
+      'CloudFront (origin-facing, D-100)',
+    );
     this.servers = new SecurityGroup(this, 'Servers', {
       vpc: this.vpc,
       description: 'The API, the sync servers and the purge',

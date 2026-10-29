@@ -220,6 +220,18 @@ describe('the beta (D-082, D-091)', () => {
     data.hasOutput('DbInstanceId', {}); // for beta:up and beta:down
   });
 
+  it("the load balancer lets CloudFront's origin-facing addresses in on port 80 (D-100)", () => {
+    data.hasResourceProperties('AWS::EC2::SecurityGroupIngress', {
+      IpProtocol: 'tcp',
+      FromPort: 80,
+      ToPort: 80,
+      SourcePrefixListId: 'pl-b6a144df',
+    });
+    expect(() => new DataStack(new App(), 'X', { env: { region: 'eu-west-1' } })).toThrow(
+      /prefix list for eu-west-1/,
+    );
+  });
+
   it('on the AWS free plan, one day of Postgres backups, its limit (D-098)', () => {
     expect(config.accountPlan).toBe('free');
     expect(loadConfig({ ...settings, WR_ACCOUNT_PLAN: 'paid' }).accountPlan).toBe('paid');

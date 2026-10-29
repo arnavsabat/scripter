@@ -163,7 +163,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **D-100, CloudFront → load balancer (504):** (a) allow AWS's CloudFront "origin-facing" managed prefix list into the load balancer's group on port 80, in `WrData`; (b) allow CloudFront's own `CloudFront-VPCOrigins-Service-SG` group, which CloudFront creates and CDK doesn't know in advance; (c) the runbook's fallback, an internet-facing load balancer locked to CloudFront by a secret header. Claude recommends (a).
+- ~~D-100, CloudFront → load balancer (504)~~: (a), CloudFront's origin-facing prefix list (D-100).
 - **Waiting on Arnav to finish the beta-readiness phase** (D-089 onwards):
   1. ~~The domain name~~: `scripter.ca`, and the product is Scripter (D-096).
   2. ~~The go-ahead to deploy~~: yes, with the servers on demand to save the credits (D-096). The deploy itself follows the runbook, step by step with Arnav.
@@ -389,8 +389,17 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
   - The load balancer's group allows port 80 from the VPC's range (10.0.0.0/16), which evidently doesn't match how that traffic arrives.
   - This is the risk the runbook named (D-091, Known risks): the one part synth can't check.
 - **What Claude tried:** a narrow, reversible test rule (CloudFront's own group allowed into the load balancer on port 80) and a documentation search. Claude Code's safety check refused both as weakening security, so Claude stopped and brought it to Arnav.
-- **Options proposed, awaiting Arnav:** see Proposed.
-- **Status:** open; the servers are up (about $1.50 a day) until it's fixed or `beta:down`.
+- **Decision (Arnav's call, option (a), Claude's recommendation):** the load balancer's group also allows AWS's managed prefix list `com.amazonaws.global.cloudfront.origin-facing` (`pl-b6a144df` in us-east-2) on port 80, in `WrData`.
+  - The ID is kept per region in `data.ts`; another region fails the synth until it's added.
+  - The list weighs about 55 of the group's 60 rules.
+  - The VPC-range rule stays, renamed "from inside the VPC".
+  - `cdk diff` shows one new rule and no replacements.
+- **Rejected (reasons from Arnav's side):**
+  - **(b) CloudFront's own group:** CloudFront creates it when the stack builds, so it would be a rule outside the code.
+  - **(c) a public load balancer with a secret header:** more moving parts.
+- **Arnav's side:** he added `https://auth.scripter.ca/oauth2/idpresponse` to the Google OAuth client.
+- **Not yet confirmed:** Claude couldn't run a test to prove this is the whole cause. If the 504 persists after `deploy:data`, look next at how CloudFront's ENIs reach the load balancer.
+- **Status:** built and tested; Arnav deploys `WrData`.
 
 ### D-099 · 2026-10-28 · The free plan forbids stacks in us-east-1: the certificate comes from a script
 
