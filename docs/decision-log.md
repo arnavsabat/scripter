@@ -351,7 +351,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 - New (D-096): **the free plan ends on 2027-04-26,** or sooner if the credits run out. The account then closes (AWS keeps its data for 90 days) unless Arnav upgrades it to paid. Running the servers on demand keeps the credits lasting until then.
 - New (D-097): **while the servers are down, `scripter.ca` can't be used,** and anyone who visits sees "Can't reach Scripter". Bring them up (`beta:up`, about 10 minutes) before a session, a demo or interview weeks.
 - New (D-097): **Cognito's custom domain and CloudFront** can take up to an hour on the first deploy. That's slow, but only once.
-- New (D-091): **CloudFront's VPC origin carrying the sync WebSocket** is the one part synth can't check. It's step 4 of the runbook's checks, with a fallback ready (an internet-facing load balancer for `/doc/*`, locked to CloudFront by a secret header).
+- ~~D-091: CloudFront's VPC origin carrying the sync WebSocket~~: works (101 through CloudFront), once the load balancer allowed CloudFront's origin-facing prefix list (D-100).
 - New (D-092): **each script's updates are appended strictly one at a time,** so one script takes at most one update per DynamoDB round trip. That's fine at beta scale (about 15 keys a second for a busy room); group commit is the fix if a room ever needs more.
 - New (D-093): **DynamoDB is billed per keystroke** (a transactional append plus its lease check). It's pennies at beta scale; a 1,000-writer load test is about $20-25 an hour of typing.
 - New (D-089): **Firefox wraps a few lines differently** from pagination on screen (about 1% of action paragraphs); the PDF and page breaks are unaffected. Firefox users get a one-time note.
@@ -378,7 +378,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
-### D-100 · 2026-10-29 · The first deploy is up, but CloudFront can't reach the load balancer (open)
+### D-100 · 2026-10-29 · The first deploy is up; CloudFront couldn't reach the load balancer until its prefix list was allowed
 
 - **Up and checked (2026-10-29, 04:3x UTC):** `WrApp` CREATE_COMPLETE.
   - `https://scripter.ca` serves the web app from S3 (200).
@@ -398,8 +398,10 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
   - **(b) CloudFront's own group:** CloudFront creates it when the stack builds, so it would be a rule outside the code.
   - **(c) a public load balancer with a secret header:** more moving parts.
 - **Arnav's side:** he added `https://auth.scripter.ca/oauth2/idpresponse` to the Google OAuth client.
-- **Not yet confirmed:** Claude couldn't run a test to prove this is the whole cause. If the 504 persists after `deploy:data`, look next at how CloudFront's ENIs reach the load balancer.
-- **Status:** built and tested; Arnav deploys `WrData`.
+- **Confirmed (2026-10-29):** `WrData` finished updating at 04:50:05 UTC; `https://scripter.ca/api/health` answered `{"ok":true}` 25 s later.
+  - A WebSocket handshake to `/doc/…` got `101 Switching Protocols` through CloudFront (the Toronto edge). That's the WebSocket-through-VPC-origin check from D-091's Known risks, passed.
+  - So the VPC origin's traffic arrives from CloudFront's origin-facing addresses, not the VPC's range.
+- **Status:** resolved. Next: the runbook's Part 3 checks by hand.
 
 ### D-099 · 2026-10-28 · The free plan forbids stacks in us-east-1: the certificate comes from a script
 
