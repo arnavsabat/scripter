@@ -13,7 +13,16 @@ export class ApiFailure extends Error {
 
 type Method = 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
 
-export const UNREACHABLE = 'Can’t reach Scripter. Check your connection and try again.';
+/**
+ * What "can't reach" says (D-107). The browser knows when it's offline; otherwise the fault is
+ * ours (the servers are down or failing), and the message says so rather than blaming the
+ * writer's connection.
+ */
+export const OFFLINE =
+  'You’re offline. Your work is safe on this device and syncs when you’re back.';
+export const OUR_FAULT =
+  'Scripter isn’t responding. That’s on us, not your connection. Try again in a minute.';
+export const unreachableMessage = () => (navigator.onLine === false ? OFFLINE : OUR_FAULT);
 
 /** No answer, or a 502-504 from whatever sits in front of the API, reads as "can't reach" (D-084). */
 async function send(method: Method, path: string, body: unknown, token: string | null) {
@@ -25,10 +34,10 @@ async function send(method: Method, path: string, body: unknown, token: string |
     },
     ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
   }).catch(() => {
-    throw new ApiFailure(0, 'unreachable', UNREACHABLE);
+    throw new ApiFailure(0, 'unreachable', unreachableMessage());
   });
   if (res.status >= 502 && res.status <= 504)
-    throw new ApiFailure(res.status, 'unreachable', UNREACHABLE);
+    throw new ApiFailure(res.status, 'unreachable', unreachableMessage());
   return res;
 }
 
@@ -45,7 +54,7 @@ async function read<T>(res: Response): Promise<T> {
 
 /** The access token, or "can't reach" when it can't be renewed because the API is away. */
 const unreachable = (err: unknown) => {
-  if (err instanceof Unreachable) throw new ApiFailure(0, 'unreachable', UNREACHABLE);
+  if (err instanceof Unreachable) throw new ApiFailure(0, 'unreachable', unreachableMessage());
   throw err;
 };
 const token = () => auth.token().catch(unreachable);

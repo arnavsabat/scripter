@@ -259,7 +259,7 @@ Spike and Phase 1:
 Phase 2:
 
 17. ~~Spacing before scene headings~~: decided in D-014 (two blank lines).
-18. Mobile and narrow-screen behavior (SPEC 3.8: raise when it comes up).
+18. Mobile and narrow-screen behavior (SPEC 3.8). The minimum is built (D-107): a "needs a bigger screen" notice below 760 px. Real support is still undecided.
 19. ~~The sign-in screen design~~: decided in D-028 and D-029.
 20. ~~Email delivery~~ and ~~the invite link flow~~: SES on our own domain (D-030); one-time links (D-032).
 21. Screens the prototype doesn't mock: ~~Members~~ (D-030), ~~Invite co-writer…~~ and ~~the account avatar menu~~ (D-032). ~~+ New episode~~ (D-033).
@@ -383,6 +383,29 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-107 · 2026-10-29 · Ready for recruiters: the servers up, an honest outage message, phones get a notice; guest demo designed next
+
+- **Arnav's calls:**
+  - bring the beta up for recruiters (`beta:up`);
+  - walk him through SES production access and Google's consent screen;
+  - a "try a demo" guest login that opens an excerpt of a script he chooses (design below, awaiting him);
+  - phones get the minimum;
+  - the outage message takes responsibility;
+  - set up GitHub access for Claude.
+  - Arnav also reports he has done his own end-to-end checks, which the beta-readiness phase was waiting on (the phase prompt).
+- **The outage message** (`apps/web/src/api.ts`, `pages/Notice.tsx`). The browser knows when it's offline; anything else is our fault, and the message says so. Claude's wording, for Arnav to change:
+  - **Notice when online:** "Scripter is down right now" / "That's on us, not your connection, and we're on it. Your scripts on this device are safe. Trying again…"
+  - **Toast when online:** "Scripter isn't responding. That's on us, not your connection. Try again in a minute."
+  - **Offline:** "You're offline" / "Your scripts on this device are safe. Trying again when you're back…" (toast: "You're offline. Your work is safe on this device and syncs when you're back.")
+- **Phones, the minimum.**
+  - Below 760 px wide (no room for an 8.5-inch page beside anything), the app shows a notice in the sign-in layout: "Scripter needs a bigger screen" / "Screenplay pages need the width of a laptop or desktop. Open scripter.ca there to write." It has a Copy link button.
+  - Terms and Privacy stay readable, and widening the window brings the app back.
+  - This is the minimum for open decision 18; real narrow-screen support is still undecided.
+- **Tests:**
+  - the outage notice and toast with their new wording;
+  - three phone tests: the notice, legal pages readable, and widening restores the app.
+- **Status:** built. The guest demo awaits Arnav's design call and his choice of excerpt.
 
 ### D-106 · 2026-10-29 · The final AWS numbers: capacity, the 1,000-writer runs, and an 8-second failover
 

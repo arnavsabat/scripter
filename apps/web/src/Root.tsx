@@ -13,7 +13,7 @@ import { listDrafts, snapshotState, type DraftInfo } from './whatif/drafts';
 import { localCopies } from './localCopies';
 import { HomeLoading, ScriptLoading } from './components/Loading';
 import { PageBoundary } from './components/Boundary';
-import { CantReach } from './pages/Notice';
+import { CantReach, TooNarrow, useNarrow } from './pages/Notice';
 import { Privacy, Terms } from './pages/Legal';
 import { SignIn, type InvitePreview } from './pages/SignIn';
 import { navigate, useRoute, type Route } from './router';
@@ -33,6 +33,7 @@ function Pages({ syncUrls }: { syncUrls: string | readonly string[] }) {
   const route = useRoute();
   const state = useAuth();
   const toast = useToast();
+  const narrow = useNarrow();
 
   useEffect(() => {
     auth.start();
@@ -45,6 +46,7 @@ function Pages({ syncUrls }: { syncUrls: string | readonly string[] }) {
 
   if (route.name === 'terms') return <Terms />;
   if (route.name === 'privacy') return <Privacy />;
+  if (narrow) return <TooNarrow />;
   // Starting: if this browser was signed in last time, the skeleton of what's coming (D-084).
   if (state.status === 'loading')
     return auth.wasSignedIn() ? (

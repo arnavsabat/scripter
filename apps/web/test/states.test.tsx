@@ -3,7 +3,7 @@
 // an outage after signing in that keeps you in, crashed panels and pages, and the empty notes.
 import { createRoot, type Root as ReactRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { commands } from 'vitest/browser';
+import { commands, page } from 'vitest/browser';
 import '@wr/shared/tokens.css';
 import 'prosemirror-view/style/prosemirror.css';
 import '../src/base.css';
@@ -110,7 +110,9 @@ describe('can’t reach the server (D-084)', () => {
     await signIn();
     await fake('down', { down: true });
     render(<Root syncUrls="ws://127.0.0.1:4787" />);
-    await until(() => text($('.si h1')) === 'Can’t reach Scripter');
+    // The browser is online, so the fault is ours, and the page says so (D-107).
+    await until(() => text($('.si h1')) === 'Scripter is down right now');
+    expect(text($('.si-sub'))).toContain('That’s on us, not your connection');
     expect($('input[type="email"]')).toBeNull(); // no sign-in form
     expect(text($('.si-c'))).toBe('Try again');
     await fake('down', { down: false });
@@ -124,8 +126,40 @@ describe('can’t reach the server (D-084)', () => {
     await until(() => $$('.home .ep .nm').length === 3);
     await fake('down', { down: true });
     await clickText('.home-tb .ta', '+ New script');
-    await until(() => toast() === 'Can’t reach Scripter. Check your connection and try again.');
+    await until(
+      () =>
+        toast() ===
+        'Scripter isn’t responding. That’s on us, not your connection. Try again in a minute.',
+    );
     expect(text($('.home-tb .title'))).toBe('Home');
+  });
+});
+
+describe('a phone (the minimum, D-107)', () => {
+  afterEach(() => page.viewport(1440, 900));
+
+  it('a narrow screen gets the notice, with a link to copy, and no sign-in form', async () => {
+    await page.viewport(390, 844);
+    render(<Root syncUrls="ws://127.0.0.1:4787" />);
+    await until(() => text($('.si h1')) === 'Scripter needs a bigger screen');
+    expect($('input[type="email"]')).toBeNull();
+    expect(text($('.si-c'))).toBe('Copy link');
+  });
+
+  it('the Terms and Privacy pages stay readable on a phone', async () => {
+    await page.viewport(390, 844);
+    navigate('/privacy', { replace: true });
+    render(<Root syncUrls="ws://127.0.0.1:4787" />);
+    await until(() => text($('h1')) === 'Privacy Policy');
+    navigate('/', { replace: true });
+  });
+
+  it('widening the window brings the app back', async () => {
+    await page.viewport(390, 844);
+    render(<Root syncUrls="ws://127.0.0.1:4787" />);
+    await until(() => text($('.si h1')) === 'Scripter needs a bigger screen');
+    await page.viewport(1440, 900);
+    await until(() => text($('.si h1')) !== 'Scripter needs a bigger screen');
   });
 });
 
