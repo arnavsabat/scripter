@@ -407,6 +407,9 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
   - the missing `WR_DOMAIN` line;
   - a `deploy:data` that never started in the terminal;
   - the 1-day backup limit and the retained leftovers it left behind.
+- **Two more deploy hurdles (2026-10-29):**
+  - **`deploy:app` stopped at its first AWS call.** Arnav's terminal had `AWS_REGION=us-east-1` set, and `beta.sh` only defaulted the region when none was set, so it looked for `WrData` in us-east-1 and hit the free plan's deny. `beta.sh` now always uses `WR_AWS_REGION` from `infra/.env.local` (us-east-2).
+  - **Claude tried to run the deploy itself and was stopped.** Claude Code's safety check blocks a production deploy with CDK's confirmation switched off (`--require-approval never`). Claude reviewed the security changes first (all as designed) and handed the command back to Arnav.
 - **Tests:**
   - the distribution and the sign-in domain use the certificate's ARN;
   - no cross-region plumbing;

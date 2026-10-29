@@ -7,7 +7,10 @@
 # CloudFront, the web app and the domain stay up either way. Both build and ship the web app.
 set -euo pipefail
 cd "$(dirname "$0")/.."
-export AWS_REGION="${AWS_REGION:-us-east-2}"
+# The stacks' region, whatever the shell says: a stray AWS_REGION=us-east-1 sent the first run to
+# a region the free plan forbids (D-099).
+region=$(grep -E '^WR_AWS_REGION=' .env.local 2>/dev/null | tail -1 | cut -d= -f2-)
+export AWS_REGION="${region:-us-east-2}" AWS_DEFAULT_REGION="${region:-us-east-2}"
 mode="${1:-}"
 
 db=$(aws cloudformation describe-stacks --stack-name WrData \
