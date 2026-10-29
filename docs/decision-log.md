@@ -414,6 +414,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
   - Every stack synthesizes with the domain set, servers up and down.
 - **For writers:** while the servers are down, `scripter.ca` loads and says it can't reach Scripter, with Try again. Deletions older than 30 days wait for the next time the servers are up to be erased (the Privacy Policy promises 30 days, then erasure, without a stated hour).
 - **Found on the way:** `infra/.env.local.example` had never been committed: `.gitignore`'s `.env.*` hid it, though the README and runbook point to it. It holds only placeholders, and is now tracked.
+- **First run (2026-10-28):** `deploy:dns` failed with "No stacks match the name(s) WrDns": the `WR_DOMAIN` line hadn't reached `infra/.env.local`. Claude added it (not a secret), `cdk list` then showed `WrDns`, and the runbook now names that error.
 - **Claude's choices, standing unless changed:**
   - the nightly stop at 10:00 UTC;
   - `no-reply@` as the sender;

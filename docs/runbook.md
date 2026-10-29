@@ -21,6 +21,7 @@ Credentials and secrets stay on your machine: Claude never handles them (D-061).
       pnpm --filter @wr/infra deploy:dns
       ```
       It prints `WrDns.HostedZoneId` and `WrDns.NameServers` (four `ns-….awsdns-…` names).
+      If it says `No stacks match the name(s) WrDns`, the `WR_DOMAIN` line isn't in `infra/.env.local` (saved, uncommented). `cd infra && npx cdk list` must show `WrDns`.
    2. At Porkbun: Domain Management → `scripter.ca` → **Authoritative Nameservers** → Edit. Replace Porkbun's with the four from `NameServers`, and save. If the domain shows **DNSSEC** records, delete them first, or the domain stops resolving.
    3. Wait until the world sees the switch (minutes, sometimes a few hours for `.ca`):
       ```sh
