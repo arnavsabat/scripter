@@ -163,6 +163,8 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
+- **D-104, 1,000-writer latency:** (1) ramp one server to find its capacity, then rerun `rooms` on servers sized for it (about $5-7 more); (2) ramp only; (3) optimize the servers' CPU (for example, coalescing presence updates) first. Claude recommends (1), with (3) later.
+- **D-104, the failover pause behind the load balancer:** a faster health check (5 s × 2), and/or a reconnect backoff that doesn't grow on a load-balancer 502 during a failover. Claude recommends both, measured with a failover rerun.
 - ~~D-102, the load-test failure~~: all four fixes built (D-103); the AWS rerun is next.
 - ~~D-100, CloudFront → load balancer (504)~~: (a), CloudFront's origin-facing prefix list (D-100).
 - **Waiting on Arnav to finish the beta-readiness phase** (D-089 onwards):
@@ -380,6 +382,32 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-104 · 2026-10-29 · The AWS rerun: zero lost edits everywhere; the servers' CPU and the load balancer's health check are now the limits
+
+- **Setup:** `WrLoad` redeployed with D-103's fixes. The edit log was provisioned at 10,000 write units; 3 servers at the beta's size (0.5 vCPU, 1 GB).
+- **Results** (`tools/loadtest/results/aws-*.json`):
+
+  | Scenario | Writers | Keystrokes | p50 / p95 / p99 | Acknowledged lost | Pending | Unacked |
+  |---|---|---|---|---|---|---|
+  | `rooms` (run 2, 05:50 UTC) | 1,000 in 200 scripts | 417,660 | 1,155 / 2,740 / 3,682 ms | **0** | 0 | 0 |
+  | `room15` (05:55) | 15 in 1 script | 4,189 | **24 / 39 / 47 ms** | **0** | 0 | 0 |
+  | `failover` (05:58, a live server crashed at 50 s) | 300 in 60 scripts | 83,651 | 167 / 793 / 9,201 ms; pause up to 29.8 s | **0** | 0 | 0 |
+
+- **What changed from D-102:**
+  - no lease conflicts, appends refused or connections closed;
+  - 346 throttled writes in total, against 20,000-30,000 a minute before.
+- **`rooms` latency is server CPU:** all three servers sat at 100% CPU for the run. 1,000 writers make about 2,300 keystrokes a second, each an edit plus a presence update fanned out to 4 others, which is more than 1.5 vCPU in all can serve within 150 ms.
+- **The failover pause is the load balancer, not the cluster:**
+  - Server side, on schedule: crash at 05:59:30.5; membership saw it at 05:59:36.8 (6.3 s); the new homes had the scripts loaded by 05:59:38.4 (8 s), matching the local 6.6-8 s.
+  - Writer side: 109 load-balancer 502s in that minute. Reconnects were routed to the dead server until its health checks failed: a 10 s interval × 2 failures in `WrLoad`, 15 s in the beta. Each failure grew the writers' full-jitter backoff toward its 10 s cap, so the slowest waited about 30 s.
+  - Every keystroke still arrived.
+- **Cost so far:** about $10-12 of credits for the day's load testing (D-102 and D-104).
+- **Afterwards:**
+  - `WrLoad` was destroyed (its full-size table costs about $6.50 an hour idle).
+  - Arnav ran `beta:down` (2026-10-29 15:44 UTC). Claude verified it: no service, no load balancer, Postgres stopped, the nightly stop schedule enabled; `scripter.ca` loads, and `/api/health` answers 503 `{"error":"servers down"}`.
+  - Two full checks during the night failed only because the Mac slept mid-run (the power log's sleeps match each stall to the second). The new harness test gets a 15 s timeout, which it needs on a busy machine.
+- **Status:** results recorded. Arnav's decisions are pending: how to meet the 1,000-writer latency target (Proposed), and the failover pause.
 
 ### D-103 · 2026-10-29 · The four fixes from the load test, built; and a durability bug found on the way
 

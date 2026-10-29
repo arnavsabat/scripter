@@ -107,5 +107,5 @@ describe('a room', () => {
     } finally {
       await server.close();
     }
-  });
+  }, 15_000);
 });
