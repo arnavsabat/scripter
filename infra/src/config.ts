@@ -6,6 +6,8 @@ import { fileURLToPath } from 'node:url';
 export interface InfraConfig {
   /** us-east-2 (D-058; the free plan's organization policy forbids ca-central-1). */
   region: string;
+  /** The AWS account's plan (WR_ACCOUNT_PLAN, D-098): the free plan caps Postgres backups at 1 day. */
+  accountPlan: 'free' | 'paid';
   /** Budget alerts go here (D-038). */
   alertEmail: string;
   /** A verified SES address (D-038): the sender until the domain exists, and an SES identity after. */
@@ -46,8 +48,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): InfraConfig {
       : undefined;
   const appUrls = list(env.WR_APP_URLS ?? 'http://localhost:5173');
   if (domain && !appUrls.includes(`https://${domain.name}`)) appUrls.push(`https://${domain.name}`);
+  const plan = env.WR_ACCOUNT_PLAN ?? 'free';
+  if (plan !== 'free' && plan !== 'paid') throw new Error('infra: WR_ACCOUNT_PLAN is free or paid');
   return {
     region: env.WR_AWS_REGION ?? 'us-east-2',
+    accountPlan: plan,
     alertEmail: need('WR_ALERT_EMAIL'),
     senderEmail: need('WR_SENDER_EMAIL'),
     fromEmail: domain ? `no-reply@${domain.name}` : need('WR_SENDER_EMAIL'),

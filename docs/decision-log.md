@@ -30,6 +30,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - **The deploy stacks:** `WrData`, `WrApp`, `WrCert` (D-091).
   - **Load tests:** the harness (D-092) and the load-test cluster `WrLoad` (D-093).
   - **The Privacy Policy** brought up to date, and 7-day recovery (D-094).
+- **Postgres backups (D-098):** 1 day while the AWS account is on the free plan (its limit), 7 after the upgrade (`WR_ACCOUNT_PLAN=paid`). The writing keeps DynamoDB's 7-day recovery throughout.
 - **Name, domain and hosting (D-096, built in D-097):** the product is Scripter, at `scripter.ca`, with DNS in Route 53. The beta's servers run on demand (`beta:up` / `beta:down`), as two Fargate Spot tasks while up; CloudFront and the web app stay up throughout.
 - **Browsers (D-089):** Chrome, Edge and Safari supported; Firefox works, with a one-time note that a few lines may wrap differently on screen.
 - **Beta-readiness phase (D-082):** RDS `db.t4g.micro` Postgres with 7-day backups; a domain bought now; CloudWatch logs, alarms and browser crash reports; load tests proven locally, then run once on a temporary AWS cluster against the rooms + capacity targets; usage events recorded where they happen, with a user and an episode ID; the beta metrics as SQL in `docs/metrics.md`; esbuild bundles for the production servers.
@@ -344,6 +345,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ## Known risks
 
 - ~~D-091: one sync server on Fargate Spot~~: two tasks (D-096, D-097). Spot can still reclaim both at once; then writers wait a minute or two for replacements, typing on their devices and losing nothing.
+- New (D-098): **free-plan limits show up only at deploy.** Postgres backups were the first (1 day). If another appears, the choice is the same: a smaller setting, or upgrading to paid.
 - New (D-096): **the free plan ends on 2027-04-26,** or sooner if the credits run out. The account then closes (AWS keeps its data for 90 days) unless Arnav upgrades it to paid. Running the servers on demand keeps the credits lasting until then.
 - New (D-097): **while the servers are down, `scripter.ca` can't be used,** and anyone who visits sees "Can't reach Scripter". Bring them up (`beta:up`, about 10 minutes) before a session, a demo or interview weeks.
 - New (D-097): **Cognito's custom domain and CloudFront** can take up to an hour on the first deploy. That's slow, but only once.
@@ -373,6 +375,23 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-098 · 2026-10-28 · The AWS free plan allows one day of Postgres backups: one day until the upgrade
+
+- **What happened:** the first `deploy:data` failed at the database. RDS said: "The specified backup retention period exceeds the maximum available to free tier customers."
+  - Free-plan accounts can keep at most 1 day of automated backups (several projects report the same error, and 1 day works). We asked for 7 (D-082).
+  - The rest of the stack rolled back. The three DynamoDB tables and the snapshot bucket are marked "retain", so the rollback left them behind, all empty (checked: 0 items, 0 objects, created minutes earlier). They'd have blocked the retry with "already exists".
+- **Decisions (Arnav's calls, each Claude's recommendation):**
+  1. **One day of Postgres backups while on the free plan, seven after the upgrade.**
+     - A setting, `WR_ACCOUNT_PLAN` (free or paid, default free), picks it.
+     - Flipping it to `paid` and running `deploy:data` restores 7 days once the account is upgraded. Detecting the plan by itself would mean calling AWS during every synth, including in tests without credentials.
+     - The Privacy Policy's "Backups of the database are kept for 7 days" becomes "Backups are kept for up to 7 days". That's still true: the writing's DynamoDB recovery keeps 7, and Postgres keeps 1 for now.
+  2. **Claude deleted the four empty leftovers** with Arnav's profile and confirmed they were gone. The runbook now says what to do if this happens again.
+- **What changes for writers:** nothing they see. Their writing lives in the DynamoDB edit log and S3 snapshots, still recoverable for 7 days. Only the account records in Postgres (accounts, series, roles, what-ifs) can be restored no further back than a day until the upgrade. Before a risky migration, take a manual snapshot (runbook Part 5).
+- **Rejected (reasons from Arnav's side):**
+  - **Upgrading to the paid plan now:** 7-day backups, but the account could then bill once the credits run out; the budget alarms only warn.
+  - **No Postgres backups:** an RDS failure or a bad migration could lose every account.
+- **Status:** Arnav's calls; built in this entry's commit. Then `deploy:data` again.
 
 ### D-097 · 2026-10-28 · Built: the domain's zone, sign-in at auth.scripter.ca, two tasks, and the servers on demand
 

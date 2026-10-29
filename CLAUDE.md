@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-097) · `docs/runbook.md` (deploying and operating the beta) · `docs/metrics.md` (beta metrics SQL and measured numbers) · `docs/interview-notes.md` · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-098) · `docs/runbook.md` (deploying and operating the beta) · `docs/metrics.md` (beta metrics SQL and measured numbers) · `docs/interview-notes.md` · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Scripter", a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -74,7 +74,7 @@ PARTS 2-5, CONDENSED (full text: docs/SPEC.md)
 - **PDF and import:** browser-side PDF from the pagination output (Courier Prime embedded). Import .fdx and Fountain.
 - **Pagination:** a pure function of blocks; wrapping by character count (never measure the DOM); about 54-55 lines per page; rules for headings, cues, (MORE)/(CONT'D), parentheticals, transitions and action splits; incremental from the first changed block; viewports anchored to block IDs.
 - **Usage:** count events only, never content. Each row is an event, a user, an episode ID and a time; the sync server and API record what they see, the browser only browser-side events (D-082). The beta metrics are SQL in `docs/metrics.md`.
-- **Beta hosting (D-082):** RDS `db.t4g.micro` Postgres (7-day backups); CloudWatch logs, alarms and browser crash reports (no third-party monitoring); production servers are esbuild bundles. Load tests run locally first, then once on a temporary AWS cluster.
+- **Beta hosting (D-082):** RDS `db.t4g.micro` Postgres (7-day backups; 1 day while the AWS account is on the free plan, `WR_ACCOUNT_PLAN`, D-098); CloudWatch logs, alarms and browser crash reports (no third-party monitoring); production servers are esbuild bundles. Load tests run locally first, then once on a temporary AWS cluster.
 
 =====================================================
 REPO WORKING NOTES

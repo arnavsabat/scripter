@@ -33,6 +33,8 @@ import type { Construct } from 'constructs';
 export interface DataStackProps extends StackProps {
   /** Table and secret names get this prefix: '' for the beta, 'lt-' for a load-test cluster. */
   prefix?: string;
+  /** Days of Postgres backups: 7, but the AWS free plan allows at most 1 (D-098). */
+  backupDays?: number;
 }
 
 export class DataStack extends Stack {
@@ -76,7 +78,8 @@ export class DataStack extends Stack {
     this.servers.addIngressRule(this.lb, Port.tcp(4100), 'the load balancer to the API');
     this.servers.addIngressRule(this.lb, Port.tcp(4000), 'the load balancer to sync');
     this.servers.addIngressRule(this.servers, Port.tcp(4000), 'sync servers forwarding (D-022)');
-    // Postgres (D-082): RDS db.t4g.micro, single-AZ, 7 days of automatic backups. 18.6, the newest
+    // Postgres (D-082): RDS db.t4g.micro, single-AZ, 7 days of automatic backups (1 on the AWS free
+    // plan, its limit, D-098). 18.6, the newest
     // RDS offered on the first deploy and the local compose version; newer than CDK's named list.
     const dbGroup = new SecurityGroup(this, 'Db', {
       vpc: this.vpc,
@@ -98,7 +101,7 @@ export class DataStack extends Stack {
       storageEncrypted: true,
       multiAz: false,
       publiclyAccessible: false,
-      backupRetention: Duration.days(7),
+      backupRetention: Duration.days(props.backupDays ?? 7),
       deletionProtection: true,
       removalPolicy: RemovalPolicy.SNAPSHOT,
       cloudwatchLogsExports: ['postgresql'],
@@ -117,7 +120,7 @@ export class DataStack extends Stack {
         partitionKey: { name: pk, type: AttributeType.STRING },
         ...(sk ? { sortKey: { name: sk, type: AttributeType.STRING } } : {}),
         billing: Billing.onDemand(),
-        // 7 days, like Postgres's backups, so "kept for 7 days" in the Privacy Policy holds.
+        // 7 days, Postgres's at most, so "kept for up to 7 days" in the Privacy Policy holds.
         pointInTimeRecoverySpecification: pitr
           ? { pointInTimeRecoveryEnabled: true, recoveryPeriodInDays: 7 }
           : { pointInTimeRecoveryEnabled: false },

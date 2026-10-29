@@ -76,7 +76,7 @@ export function Privacy() {
       <h2>Deleting</h2>
       <p>
         A script or series you delete waits 30 days under Recently deleted, in case it was a
-        mistake, and is then erased for good. Backups of the database are kept for 7 days.
+        mistake, and is then erased for good. Backups are kept for up to 7 days.
       </p>
       <p>
         To delete your account, email {CONTACT} and we’ll delete it and your email address within 30

@@ -227,6 +227,16 @@ describe('the beta (D-082, D-091)', () => {
     data.hasOutput('DbInstanceId', {}); // for beta:up and beta:down
   });
 
+  it('on the AWS free plan, one day of Postgres backups, its limit (D-098)', () => {
+    expect(config.accountPlan).toBe('free');
+    expect(loadConfig({ ...settings, WR_ACCOUNT_PLAN: 'paid' }).accountPlan).toBe('paid');
+    expect(() => loadConfig({ ...settings, WR_ACCOUNT_PLAN: 'pro' })).toThrow();
+    const free = new DataStack(new App(), 'F', { env, backupDays: 1 });
+    Template.fromStack(free).hasResourceProperties('AWS::RDS::DBInstance', {
+      BackupRetentionPeriod: 1,
+    });
+  });
+
   it('two ARM Fargate Spot tasks, each the API and a sync server, migrating on start', () => {
     beta.hasResourceProperties('AWS::ECS::TaskDefinition', {
       RuntimePlatform: { CpuArchitecture: 'ARM64', OperatingSystemFamily: 'LINUX' },

@@ -35,6 +35,7 @@ Credentials and secrets stay on your machine: Claude never handles them (D-061).
    - AWS pays $20 more each for trying EC2, RDS, Lambda and Bedrock from the console home's **Explore AWS** panel. Launch something tiny and delete it.
    - Don't turn on AWS Organizations, IAM Identity Center or Control Tower: any of them converts the account to paid.
    - Before 2027-04-26, decide whether to upgrade to paid (then it bills, at the same small amounts) or let the account close.
+   - **The free plan's limit we hit:** Postgres backups at most 1 day (D-098). `WR_ACCOUNT_PLAN=free` in `infra/.env.local` sets 1. After upgrading, set `WR_ACCOUNT_PLAN=paid` and run `deploy:data` for 7.
 4. **Postgres version.** `infra/src/data.ts` asks for Postgres 18.6 (the newest on 2026-10-28). Check what RDS offers in us-east-2 that day, and use the newest 18.x:
    ```sh
    aws rds describe-db-engine-versions --engine postgres --region us-east-2 \
@@ -63,6 +64,8 @@ pnpm --filter @wr/infra deploy:data    # the network, Postgres, DynamoDB, the sn
 pnpm --filter @wr/infra deploy:cert    # the certificate for scripter.ca and auth.scripter.ca, in us-east-1
 pnpm --filter @wr/infra deploy:app     # = beta:up: builds the web app; CloudFront, sign-in domain, load balancer, two tasks
 ```
+
+**If `deploy:data` fails on its first run,** CloudFormation rolls back but keeps the tables and the bucket (they're set to be retained), so the retry fails with "already exists". Check they're empty (`aws dynamodb scan --table-name wr-edit-log --select COUNT`, `aws s3 ls s3://<bucket>`), delete them (`aws dynamodb delete-table`, `aws s3api delete-bucket`), fix the cause, and run it again (D-098).
 
 The first `deploy:app` takes longer (often 15-30 minutes): CloudFront, and Cognito's `auth.scripter.ca`, which runs its own CloudFront distribution. It prints:
 

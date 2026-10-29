@@ -29,7 +29,10 @@ const email = new EmailStack(app, 'WrEmail', {
 const auth = new AuthStack(app, 'WrAuth', { env, config });
 auth.addStackDependency(email);
 
-const data = new DataStack(app, 'WrData', { env });
+const data = new DataStack(app, 'WrData', {
+  env,
+  backupDays: config.accountPlan === 'free' ? 1 : 7, // the free plan's limit (D-098)
+});
 const cert =
   config.domain &&
   new CertStack(app, 'WrCert', { env: { region: 'us-east-1' }, domain: config.domain });
