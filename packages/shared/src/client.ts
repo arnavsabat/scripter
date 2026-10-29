@@ -123,7 +123,9 @@ export class SyncClient {
       syncingCueAfterMs: 1500,
       heartbeat: { everyMs: 5_000, deadAfterMs: 10_000 },
       connectTimeoutMs: 5_000,
-      backoff: { baseMs: 250, capMs: 10_000 },
+      // Capped at 3 s (D-105): behind a load balancer, a failover means a few refused reconnects
+      // to the dead server, and a 10 s cap turned those into waits of up to 30 s.
+      backoff: { baseMs: 250, capMs: 3_000 },
       random: Math.random,
       ...options,
     };

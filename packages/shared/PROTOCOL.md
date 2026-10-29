@@ -87,4 +87,4 @@ A server forwarding a writer to the episode's home opens its own WebSocket to th
 | 4410 | Deleted (restorable for 30 days)                        | Stop; leave the episode                                                                  |
 | 4500 | Storage failed                                          | Reconnect with backoff (the handshake resends)                                           |
 
-Reconnects use exponential backoff with full jitter (SPEC 5.4): `delay = random(0, min(10 s, 250 ms × 2^attempt))`.
+Reconnects use exponential backoff with full jitter (SPEC 5.4): `delay = random(0, min(3 s, 250 ms × 2^attempt))`. The cap was 10 s until D-105: behind a load balancer, the reconnects refused while it still routed to a dead server grew writers' waits to about 30 s.

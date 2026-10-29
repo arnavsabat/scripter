@@ -409,6 +409,16 @@ describe('the beta (D-082, D-091)', () => {
     t.resourceCountIs('AWS::Cognito::UserPoolDomain', 0);
   });
 
+  it('the load balancer drops a dead server within about 10 s: checks every 5 s, 2 failures (D-105)', () => {
+    for (const path of ['/api/health', '/healthz'])
+      beta.hasResourceProperties('AWS::ElasticLoadBalancingV2::TargetGroup', {
+        HealthCheckPath: path,
+        HealthCheckIntervalSeconds: 5,
+        HealthCheckTimeoutSeconds: 2,
+        UnhealthyThresholdCount: 2,
+      });
+  });
+
   it('servers up: no schedule stopping Postgres', () => {
     beta.resourceCountIs('AWS::Scheduler::Schedule', 0);
   });
@@ -465,6 +475,34 @@ describe('the load-test cluster (D-093)', () => {
       TableName: 'wr-lt-coordination',
       BillingMode: 'PAY_PER_REQUEST',
     });
+  });
+
+  it('servers at the beta size by default, 1 vCPU on request, with the fast health check (D-105)', () => {
+    t.hasResourceProperties('AWS::ECS::TaskDefinition', {
+      Cpu: '512',
+      Memory: '1024',
+      ContainerDefinitions: [Match.objectLike({ Name: 'sync' })],
+    });
+    t.hasResourceProperties('AWS::ElasticLoadBalancingV2::TargetGroup', {
+      HealthCheckIntervalSeconds: 5,
+      UnhealthyThresholdCount: 2,
+    });
+    const app2 = new App();
+    const big = Template.fromStack(
+      new LoadStack(app2, 'L', {
+        env: env2,
+        data: new DataStack(app2, 'D', { env: env2 }),
+        servers: 4,
+        serverCpu: 1024,
+        image: ContainerImage.fromRegistry('public.ecr.aws/docker/library/node:24-alpine'),
+      }),
+    );
+    big.hasResourceProperties('AWS::ECS::TaskDefinition', {
+      Cpu: '1024',
+      Memory: '2048',
+      ContainerDefinitions: [Match.objectLike({ Name: 'sync' })],
+    });
+    big.hasResourceProperties('AWS::ECS::Service', { DesiredCount: 4 });
   });
 
   it('never touches the beta: no Cognito, no Postgres, none of its tables', () => {

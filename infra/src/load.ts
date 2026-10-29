@@ -32,6 +32,7 @@ import { Bucket } from 'aws-cdk-lib/aws-s3';
 import type { Construct } from 'constructs';
 import { generateKeyPairSync, randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
+import { FAST_HEALTH } from './beta';
 import type { DataStack } from './data';
 
 const REPO = fileURLToPath(new URL('../..', import.meta.url));
@@ -43,6 +44,11 @@ export interface LoadStackProps extends StackProps {
   data: DataStack;
   /** How many sync servers (D-082: 3). */
   servers?: number;
+  /**
+   * Each server's CPU in Fargate units (1024 = 1 vCPU), memory twice that. Default 512, the
+   * beta's size. A Node server works on one core, so past 1024 it barely helps (D-105).
+   */
+  serverCpu?: number;
   /** Tests build the stack without Docker: a placeholder image. */
   image?: ContainerImage;
 }
@@ -135,9 +141,10 @@ export class LoadStack extends Stack {
     };
 
     // The sync servers: the beta's task size each, on demand (not Spot) so a run isn't interrupted.
+    const serverCpu = props.serverCpu ?? 512;
     const serverTask = new FargateTaskDefinition(this, 'ServerTask', {
-      cpu: 512,
-      memoryLimitMiB: 1024,
+      cpu: serverCpu,
+      memoryLimitMiB: serverCpu * 2,
       runtimePlatform: arm,
     });
     serverTask.addContainer('sync', {
@@ -181,7 +188,7 @@ export class LoadStack extends Stack {
       port: 4000,
       protocol: ApplicationProtocol.HTTP,
       targets: [service.loadBalancerTarget({ containerName: 'sync', containerPort: 4000 })],
-      healthCheck: { path: '/healthz', interval: Duration.seconds(10), healthyThresholdCount: 2 },
+      healthCheck: { path: '/healthz', ...FAST_HEALTH },
       deregistrationDelay: Duration.seconds(5),
     });
 

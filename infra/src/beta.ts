@@ -84,6 +84,18 @@ import type { InfraConfig } from './config';
 import type { DataStack } from './data';
 
 const REPO = fileURLToPath(new URL('../..', import.meta.url));
+
+/**
+ * How quickly a load balancer stops sending writers to a dead server (D-105): checks every 5 s
+ * (the minimum), 2 s to answer, 2 failures to drop it. The first AWS failover test, at 10 s × 2,
+ * routed reconnects to a crashed server for up to 20 s.
+ */
+export const FAST_HEALTH = {
+  interval: Duration.seconds(5),
+  timeout: Duration.seconds(2),
+  healthyThresholdCount: 2,
+  unhealthyThresholdCount: 2,
+};
 const WEB_DIST = fileURLToPath(new URL('../../apps/web/dist', import.meta.url));
 
 export interface BetaStackProps extends StackProps {
@@ -505,11 +517,7 @@ export class BetaStack extends Stack {
       port: 4100,
       protocol: ApplicationProtocol.HTTP,
       targets: [service.loadBalancerTarget({ containerName: 'api', containerPort: 4100 })],
-      healthCheck: {
-        path: '/api/health',
-        interval: Duration.seconds(15),
-        healthyThresholdCount: 2,
-      },
+      healthCheck: { path: '/api/health', ...FAST_HEALTH },
       deregistrationDelay: Duration.seconds(15),
     });
     const syncTargets = listener.addTargets('Sync', {
@@ -518,7 +526,7 @@ export class BetaStack extends Stack {
       port: 4000,
       protocol: ApplicationProtocol.HTTP,
       targets: [service.loadBalancerTarget({ containerName: 'sync', containerPort: 4000 })],
-      healthCheck: { path: '/healthz', interval: Duration.seconds(15), healthyThresholdCount: 2 },
+      healthCheck: { path: '/healthz', ...FAST_HEALTH },
       deregistrationDelay: Duration.seconds(35), // the sync container's graceful stop, plus a beat
     });
 

@@ -158,7 +158,7 @@ Why zero lost edits holds:
 
 ## 9. Reconnects
 
-- Exponential backoff with full jitter: `delay = random(0, min(10 s, 250 ms × 2^attempt))`. Randomizing the whole interval spreads a crowd of reconnecting clients out, instead of having them all retry in lockstep.
+- Exponential backoff with full jitter: `delay = random(0, min(3 s, 250 ms × 2^attempt))` (the cap was 10 s until D-105). Randomizing the whole interval spreads a crowd of reconnecting clients out, instead of having them all retry in lockstep.
 - A successful handshake resets the backoff, and so do "moved" (4409) and "going away" (1001), since a new home is ready.
 - A connection that hasn't opened within 5 s is abandoned and retried. A frozen server's operating system still accepts TCP connections, but the WebSocket handshake never finishes.
 

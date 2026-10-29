@@ -163,8 +163,8 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **D-104, 1,000-writer latency:** (1) ramp one server to find its capacity, then rerun `rooms` on servers sized for it (about $5-7 more); (2) ramp only; (3) optimize the servers' CPU (for example, coalescing presence updates) first. Claude recommends (1), with (3) later.
-- **D-104, the failover pause behind the load balancer:** a faster health check (5 s × 2), and/or a reconnect backoff that doesn't grow on a load-balancer 502 during a failover. Claude recommends both, measured with a failover rerun.
+- ~~D-104, 1,000-writer latency~~: measure, then size (D-105). Optimizing the servers' CPU (for example, coalescing presence updates) stays a future option.
+- ~~D-104, the failover pause~~: faster health checks and a 3 s backoff cap (D-105).
 - ~~D-102, the load-test failure~~: all four fixes built (D-103); the AWS rerun is next.
 - ~~D-100, CloudFront → load balancer (504)~~: (a), CloudFront's origin-facing prefix list (D-100).
 - **Waiting on Arnav to finish the beta-readiness phase** (D-089 onwards):
@@ -382,6 +382,27 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-105 · 2026-10-29 · Arnav: yes to both. Faster failover behind the load balancer, and a capacity measurement plus a sized 1,000-writer rerun
+
+- **Decisions (Arnav's calls, Claude's recommendations from D-104):**
+  1. **Spend about $5-7 more:** measure one server's capacity, then rerun `rooms` on enough servers to meet the target.
+  2. **Shorten what writers wait after a crash.**
+- **Built:**
+  - **Health checks:** every 5 s, a 2 s timeout, 2 failures to drop a target (`FAST_HEALTH` in `infra/src/beta.ts`). This applies to the beta's API and sync target groups and to `WrLoad`'s, which were 15 s and 10 s × 2. A dead server now stops receiving reconnects within about 10 s instead of up to 20-30 s.
+  - **The client's reconnect backoff cap:** 10 s → 3 s (`packages/shared/src/client.ts`; PROTOCOL.md and sync-cluster.md updated). Still full jitter.
+    - A test drives a client against a socket that is always refused, with the jitter pinned at its maximum: retries stay at most 3 s apart after many refusals (more than 20 tries a minute, where a 10 s cap would manage about 8).
+    - The cost: a writer whose network is down retries up to every 3 s instead of 10 s, which is cheap. A crowd of reconnecting writers is still spread by the jitter.
+  - **`WrLoad` servers are sizable:** `-c loadCpu=1024` for 1-vCPU servers, memory twice the CPU, with the default unchanged at the beta's 0.5 vCPU.
+    - A Node server works on one core, so capacity grows by adding servers, not by making them bigger than 1 vCPU.
+    - The account's Fargate quota (12 vCPU) with the 8-vCPU generator allows at most 4 such servers.
+- **Plan:**
+  1. Ramp one 1-vCPU server until p95 passes 150 ms;
+  2. rerun `rooms` on enough servers;
+  3. rerun `failover` on the same cluster;
+  4. destroy `WrLoad`.
+  - The beta takes the new health check at its next `beta:up`.
+- **Status:** Arnav's calls; built in this entry's commit.
 
 ### D-104 · 2026-10-29 · The AWS rerun: zero lost edits everywhere; the servers' CPU and the load balancer's health check are now the limits
 
