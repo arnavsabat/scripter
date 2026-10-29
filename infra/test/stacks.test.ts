@@ -400,6 +400,16 @@ describe('the beta (D-082, D-091)', () => {
   it('servers up: no schedule stopping Postgres', () => {
     beta.resourceCountIs('AWS::Scheduler::Schedule', 0);
   });
+
+  it('the "no healthy server" alarms wait for the service, so beta:up doesn\'t email them (D-099)', () => {
+    const [service] = Object.keys(beta.findResources('AWS::ECS::Service'));
+    const healthy = Object.values(beta.findResources('AWS::CloudWatch::Alarm')).filter(
+      (a) =>
+        (a as { Properties: { MetricName?: string } }).Properties.MetricName === 'HealthyHostCount',
+    );
+    expect(healthy).toHaveLength(2);
+    for (const a of healthy) expect((a as { DependsOn?: string[] }).DependsOn).toContain(service);
+  });
 });
 
 describe('the load-test cluster (D-093)', () => {

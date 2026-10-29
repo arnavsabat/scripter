@@ -331,8 +331,14 @@ export class BetaStack extends Stack {
     // ---- Alarms, emailed to Arnav (D-082) ------------------------------------------------
     const topic = new Topic(this, 'Alerts');
     topic.addSubscription(new EmailSubscription(config.alertEmail));
-    const alarm = (name: string, metric: IMetric, threshold: number, below = false, periods = 1) =>
-      new Alarm(this, name, {
+    const alarm = (
+      name: string,
+      metric: IMetric,
+      threshold: number,
+      below = false,
+      periods = 1,
+    ) => {
+      const a = new Alarm(this, name, {
         metric,
         threshold,
         evaluationPeriods: periods,
@@ -340,25 +346,31 @@ export class BetaStack extends Stack {
           ? ComparisonOperator.LESS_THAN_THRESHOLD
           : ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
         treatMissingData: below ? TreatMissingData.BREACHING : TreatMissingData.NOT_BREACHING,
-      }).addAlarmAction(new SnsAction(topic));
+      });
+      a.addAlarmAction(new SnsAction(topic));
+      return a;
+    };
     const minute = Duration.minutes(1);
     // The servers' and the database's alarms exist only while they run (a stopped database's
     // missing metrics would read as "storage low").
     if (servers) {
+      // "No healthy server" alarms wait for the service, which CloudFormation finishes only once
+      // its tasks are healthy: otherwise every beta:up emailed both while the servers were still
+      // being created (D-099).
       alarm(
         'ApiDown',
         servers.apiTargets.metrics.healthyHostCount({ period: minute, statistic: 'Minimum' }),
         1,
         true,
         3,
-      );
+      ).node.addDependency(servers.service);
       alarm(
         'SyncDown',
         servers.syncTargets.metrics.healthyHostCount({ period: minute, statistic: 'Minimum' }),
         1,
         true,
         3,
-      );
+      ).node.addDependency(servers.service);
       alarm(
         'ServerErrors',
         servers.lb.metrics.httpCodeTarget(HttpCodeTarget.TARGET_5XX_COUNT, {
