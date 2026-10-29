@@ -40,7 +40,7 @@ A short brief for talking about the project: the pitch, the four hardest problem
 **Measured:**
 - **The chaos suite** (real server processes, SIGKILL and SIGSTOP): a crash costs writers about 6-8 s, a frozen server about 10-13 s (the client's 10 s heartbeat, then a reconnect), with every word surviving.
 - **The load test** locally: a server SIGKILLed mid-run made keystrokes wait at most 6.6 s, with 0 lost characters and every edit acknowledged.
-- **AWS numbers** come from the load-test cluster (`docs/metrics.md`).
+- **On AWS** (300 writers, a live server crashed): the servers recovered in 8 s, but writers first waited up to 30 s, because the load balancer kept sending their reconnects to the dead server until two 10 s health checks failed, and each refusal grew their backoff toward 10 s. Health checks every 5 s and a 3 s backoff cap brought it to 8.4 s (D-105, D-106).
 
 **Tradeoffs:**
 - **Every keystroke pays a DynamoDB round trip before anyone sees it.** That costs latency (milliseconds in-region) and money (a transactional write per keystroke, which is why the beta's cost is mostly DynamoDB at scale), in exchange for "acknowledged means durable".
@@ -114,13 +114,17 @@ A short brief for talking about the project: the pitch, the four hardest problem
 
 | Claim | Number | Source |
 |---|---|---|
-| Failover pause, crashed server | about 6-8 s, zero lost edits | chaos suite (D-023); load test 6.6 s locally (D-092) |
+| Failover pause, crashed server | about 6-8 s, zero lost edits; 8.4 s on AWS behind the load balancer | chaos suite (D-023); locally 6.6 s (D-092); AWS (D-106) |
 | Failover pause, frozen server | about 10-13 s | chaos suite (D-023) |
 | Editor work per keystroke, 110 pages, three writers, both views | under 2 ms p95 | D-087, `docs/metrics.md` |
 | Remote update cost, 110 pages | 3.5 ms p95 | D-087 |
 | Pagination, 118 pages | about 2 ms; 0.04 ms incremental | D-078 |
 | Three-way comparison, 110 pages | 4.2 ms | D-087 |
-| Sync load: 1,000 writers, 200 scripts, 3 servers | *pending the AWS run* | `docs/metrics.md` |
+| Zero acknowledged edits lost | about 1.48 million keystrokes across every AWS run, including two live-server crashes | `docs/metrics.md`, D-104 to D-106 |
+| One 1-vCPU server's capacity | 200 concurrent writers at p95 36 ms | AWS ramp, D-106 |
+| 1,000 concurrent writers, 200 scripts | p50 29 ms, p95 237 ms on 8 × 1 vCPU (target 150 ms not met within the account's quota) | AWS, D-106 |
+| A 15-writer room | p95 39 ms | AWS, D-104 |
+| A crash under 300 writers | longest wait 8.4 s (was 29.8 s before the health-check and backoff fix) | AWS, D-104, D-106 |
 
 Say where a number came from: the local load numbers prove behavior, not capacity, because DynamoDB Local processes writes one at a time (about 100-150 appends a second on a laptop).
 

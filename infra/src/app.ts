@@ -43,10 +43,11 @@ new BetaStack(app, 'WrApp', {
   servers: app.node.tryGetContext('servers') !== 'off',
 });
 // 3 servers (D-082); `-c loadServers=1` for the ramp, which measures one server alone, and
-// `-c loadCpu=1024` for 1-vCPU servers (D-105).
+// `-c loadCpu=1024` for 1-vCPU servers, and `-c loadGenCpu=4096` for a smaller generator (D-105).
 new LoadStack(app, 'WrLoad', {
   env,
   data,
   servers: Number(app.node.tryGetContext('loadServers') ?? 3),
   serverCpu: Number(app.node.tryGetContext('loadCpu') ?? 512),
+  generatorCpu: Number(app.node.tryGetContext('loadGenCpu') ?? 8192),
 });

@@ -291,6 +291,7 @@ Phase 3:
 - **From the beta-readiness phase:**
   - ~~Group commit~~: built (D-103).
   - **Appends that renew the lease:** a busy script would then need no separate renewals at all.
+  - **Evening out hot servers** (D-106): spread scripts more evenly across homes, or route writers to the home directly; coalesce per-keystroke presence updates; rerun 1,000 writers with a raised Fargate quota.
   - **Making Firefox exact:** per-browser break tables (D-089).
   - **Changes drawn outside the text,** so removed text doesn't shift page view's breaks (D-080).
   - **The leave prompt on Home too** (D-069).
@@ -382,6 +383,32 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-106 · 2026-10-29 · The final AWS numbers: capacity, the 1,000-writer runs, and an 8-second failover
+
+- **Runs** (`tools/loadtest/results/aws-ramp-1vcpu.json`, `aws-rooms-3.json`, `aws-rooms-4.json`, `aws-failover-2.json`; all in `docs/metrics.md`):
+
+  | Run | Servers | Writers | p50 | p95 | p99 | Notes |
+  |---|---|---|---|---|---|---|
+  | Ramp, one server (steps of 45 s) | 1 × 1 vCPU | 50 / 100 / 200 / 400 | 20 / 19 / 19 / 22 ms | 34 / 35 / **36** / 209 ms | | the first step over 150 ms is 400 |
+  | `rooms` | 4 × 1 vCPU | 1,000 | 59 ms | 392 ms | 808 ms | 417,263 keystrokes |
+  | `rooms`, 4-vCPU generator | 8 × 1 vCPU | 1,000 | 29 ms | 237 ms | 532 ms | 412,274 keystrokes |
+  | `failover`, a server crashed at 50 s | 4 × 1 vCPU | 300 | 20 ms | 52 ms | 2,845 ms | longest wait **8.4 s** (D-104: 29.8 s); normal 9 s after the crash |
+
+  **Zero acknowledged characters lost, nothing pending, every writer acknowledged,** in every run.
+- **The 1,000-writer target** (p95 under 150 ms) was **not met** within the account's 12-vCPU Fargate quota, generator included.
+  - On 8 servers the cluster averaged 42% CPU while its busiest hit 94%, so the tail is hot servers. Two likely causes:
+    - 200 scripts don't spread evenly across 8 homes;
+    - writers who land on a non-home server cost two servers' CPU, through forwarding.
+  - The 4-vCPU generator (2 worker threads) may add to the tail too; this run can't separate the two.
+  - Levers for later (Future versions):
+    - spread scripts more evenly, or route writers to the home directly;
+    - coalesce the per-keystroke presence updates;
+    - raise the Fargate quota to rerun with a full-size generator.
+- **The D-105 failover fix is proven:** 29.8 s → 8.4 s, in line with the servers' own recovery (lease expiry at 6 s, the new home serving at about 8 s).
+- **Also:** `WrLoad` takes `-c loadGenCpu` (the generator's size), so 8 one-vCPU servers fit the quota. `WrLoad` was destroyed after the last run.
+- **Cost:** Cost Explorer shows $1.54 so far (mostly DynamoDB), but it lags up to a day; Claude's estimate for all the load testing (D-102 to D-106) is $15-18. Credits remaining: $158.43 (up from $119.98: Arnav earned more of the console's Explore AWS extras). Billed after credits: $0.
+- **Status:** the load-test phase of the beta-readiness checklist is done; the numbers are in `docs/metrics.md` and `docs/interview-notes.md`.
 
 ### D-105 · 2026-10-29 · Arnav: yes to both. Faster failover behind the load balancer, and a capacity measurement plus a sized 1,000-writer rerun
 

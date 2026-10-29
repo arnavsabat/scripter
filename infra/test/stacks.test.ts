@@ -494,6 +494,7 @@ describe('the load-test cluster (D-093)', () => {
         data: new DataStack(app2, 'D', { env: env2 }),
         servers: 4,
         serverCpu: 1024,
+        generatorCpu: 4096,
         image: ContainerImage.fromRegistry('public.ecr.aws/docker/library/node:24-alpine'),
       }),
     );
@@ -503,6 +504,11 @@ describe('the load-test cluster (D-093)', () => {
       ContainerDefinitions: [Match.objectLike({ Name: 'sync' })],
     });
     big.hasResourceProperties('AWS::ECS::Service', { DesiredCount: 4 });
+    big.hasResourceProperties('AWS::ECS::TaskDefinition', {
+      Cpu: '4096',
+      Memory: '8192',
+      ContainerDefinitions: [Match.objectLike({ Name: 'generator' })],
+    });
   });
 
   it('never touches the beta: no Cognito, no Postgres, none of its tables', () => {

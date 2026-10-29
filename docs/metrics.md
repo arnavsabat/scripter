@@ -175,7 +175,33 @@ What this means: with three writers in one 110-page episode, no update costs mor
 
 Measured with the load-test harness (`tools/loadtest`, D-092). "Latency" is one writer's keystroke reaching another writer's screen, through the durable append to the edit log that comes before any broadcast (SPEC 5.4). Every run ends by reading each script back with a fresh client: "lost" counts characters missing or wrong against what was typed, and "unacked" counts writers whose edits weren't all acknowledged. Writers type about five keys a second in bursts, with pauses, and send a presence update with every key. Raw results, with a per-second timeline, are in `tools/loadtest/results/`.
 
-**On AWS** (D-082's quotable numbers): *to be run once the beta stacks are deployed (`docs/runbook.md`, "Load tests on AWS").* Targets: 1,000 writers in 200 scripts on 3 servers at p95 under 150 ms; one 15-writer room; a server killed mid-run with zero lost edits; and a ramp on one server to where p95 crosses 150 ms.
+**On AWS** (2026-10-29, `us-east-2`; D-102 to D-106). This is the `WrLoad` cluster:
+- ARM Fargate servers on demand, behind an internal load balancer;
+- real DynamoDB (its edit log provisioned at 10,000 write units from D-103 on) and S3;
+- the load generator as a Fargate task in the same VPC.
+
+"Acknowledged lost" is the durability claim: characters the server had acknowledged that were missing from the read-back. It must be 0, and it was 0 in every run below. "Pending" counts characters still unacknowledged when the run stopped (D-103).
+
+| Run | Servers | Writers | p50 | p95 | p99 | Max | Keystrokes | Acknowledged lost | Pending |
+|---|---|---|---|---|---|---|---|---|---|
+| `room15` (one 15-writer script) | 3 × 0.5 vCPU | 15 | 24 ms | **39 ms** | 47 ms | 125 ms | 4,189 | **0** | 0 |
+| Ramp, step 3 (one server, 45 s a step) | 1 × 1 vCPU | 200 | 19 ms | **36 ms** | 126 ms | 373 ms | 20,918 | **0** | 0 |
+| Ramp, step 4 (first step over 150 ms) | 1 × 1 vCPU | 400 | 22 ms | 209 ms | 305 ms | 866 ms | 41,967 | **0** | 0 |
+| `rooms`, 200 scripts of 5, 3 minutes | 3 × 0.5 vCPU | 1,000 | 1,155 ms | 2,740 ms | 3,682 ms | 5,974 ms | 417,660 | **0** | 0 |
+| `rooms` | 4 × 1 vCPU | 1,000 | 59 ms | 392 ms | 808 ms | 2,865 ms | 417,263 | **0** | 0 |
+| `rooms` (4-vCPU generator) | 8 × 1 vCPU | 1,000 | 29 ms | 237 ms | 532 ms | 2,141 ms | 412,274 | **0** | 0 |
+| `failover`, a live server crashed at 50 s (before D-105) | 3 × 0.5 vCPU | 300 | 167 ms | 793 ms | 9,201 ms | 29,760 ms | 83,651 | **0** | 0 |
+| `failover`, the same (after D-105) | 4 × 1 vCPU | 300 | 20 ms | **52 ms** | 2,845 ms | **8,363 ms** | 83,650 | **0** | 0 |
+
+What the numbers say:
+
+- **Zero acknowledged edits lost, in every run:** about 1.48 million keystrokes, including two crashes of a live server under load.
+- **One 1-vCPU server holds 200 concurrent writers at p95 36 ms,** and passes 150 ms somewhere before 400. A Node server works on one core, so capacity grows by adding servers.
+- **1,000 writers didn't meet p95 under 150 ms** within the account's Fargate quota (12 vCPU, the generator included). On 8 one-vCPU servers it reached p95 237 ms.
+  - The cluster averaged 42% CPU while its busiest server hit 94%, so the tail is hot servers: scripts aren't spread evenly across homes, and writers who land on a non-home server cost two servers' CPU (forwarding).
+  - Evening that out, and coalescing the per-keystroke presence updates, are the next levers (D-106).
+- **A crash costs writers about 8 s,** in line with the servers' own recovery: the lease expires at 6 s, and the new home serves at about 8 s (D-104). Before D-105, the load balancer kept sending reconnects to the dead server for up to 20 s, and writers' 10 s backoff cap stretched that to about 30 s.
+- **The first run (D-102) failed, and taught the most.** A cold on-demand table was throttled 20-30k times a minute, and lease renewals fought the fenced appends on the same item. On the way to the fix, a durability bug in the snapshot pointer turned up and was fixed (D-103).
 
 **Locally** (2026-10-27, Apple M2 MacBook, 8 GB; the servers as real processes on DynamoDB Local and SeaweedFS in OrbStack; commit `50e0a45` plus D-092). These prove the harness and the failure behavior; they are not capacity numbers. DynamoDB Local processes transactional writes one at a time, and on this laptop it saturates at about 100-150 appends a second, while the sync server process sits near 20% CPU (D-023's warning, now measured).
 

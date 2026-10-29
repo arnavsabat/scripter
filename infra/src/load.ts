@@ -49,6 +49,11 @@ export interface LoadStackProps extends StackProps {
    * beta's size. A Node server works on one core, so past 1024 it barely helps (D-105).
    */
   serverCpu?: number;
+  /**
+   * The load generator's CPU (default 8192 = 8 vCPU, memory twice that). The account's Fargate
+   * quota is 12 vCPU, so 4 vCPU here leaves room for 8 one-vCPU servers (D-105).
+   */
+  generatorCpu?: number;
   /** Tests build the stack without Docker: a placeholder image. */
   image?: ContainerImage;
 }
@@ -194,8 +199,8 @@ export class LoadStack extends Stack {
 
     // The load generator: started by hand for each scenario (docs/runbook.md), in the same VPC.
     const generator = new FargateTaskDefinition(this, 'GeneratorTask', {
-      cpu: 8192,
-      memoryLimitMiB: 16384,
+      cpu: props.generatorCpu ?? 8192,
+      memoryLimitMiB: (props.generatorCpu ?? 8192) * 2,
       runtimePlatform: arm,
     });
     generator.addContainer('generator', {
