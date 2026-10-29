@@ -375,7 +375,13 @@ describe('what-ifs in the app (prototype v2)', () => {
     // open the what-if; the rest of the row would.
     await clickEl($$('.layer:not(.off) .left .row.big')[0]!, 20, 10);
     await until(onMain);
-    await clickEl($('.layer:not(.off) .left .row.big .iname.can')!, 5, 5);
+    // Only the name's own text renames (D-110): it's no wider than its words, and a click in the
+    // empty space beside it opens the what-if instead.
+    const nameEl = $('.layer:not(.off) .left .row.big .iname.can')!;
+    expect(nameEl.getBoundingClientRect().width).toBeLessThan(
+      nameEl.closest('.row')!.getBoundingClientRect().width / 2,
+    );
+    await clickEl(nameEl, 5, 5);
     await until(() => $('.layer:not(.off) .left input.iname'));
     await userEvent.fill(
       $<HTMLInputElement>('.layer:not(.off) .left input.iname')!,

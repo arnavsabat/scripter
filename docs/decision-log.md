@@ -384,6 +384,23 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-110 · 2026-10-29 · Icon buttons for Empty and Restore, the cue nudged, name-only rename target, self-sizing rename fields; the PDF keeps the standard margins
+
+All Arnav's calls:
+1. **Empty and Restore are icon buttons,** like the toolbar's Changes and Review all: 32 x 28 slots, 18 px line icons (stroke 1.6, round), the hover background, a hover label and an aria-label.
+   - Empty is a trash can on the RECENTLY DELETED label, with the same inline confirm as before (D-109).
+   - Restore is a counter-clockwise circular arrow on each row, named for its item ("Restore Ep 2 · Undertow").
+   - The label row keeps its height; the icons line up with the rows' right ends.
+2. **"Offline / Reconnecting… / Syncing…" and "View only"** sit 6 px further from the title.
+3. **A what-if's name renames only from its text** (D-109's inline name): the name is no wider than its words, so the empty space beside it opens the what-if, and the text cursor shows only over the words.
+4. **Rename fields size to their text** (the episode and series titles, and what-if names). The field opens as wide as the current name and grows or shrinks with each keystroke. It's measured with a canvas in the field's own font (`components/fitToText.ts`), not `size` characters, which never matched a proportional font. It's capped at the space available.
+5. **The PDF's "offset to the right":** measured, it's the screenplay standard, not a bug. The left margin is 1.5 in for the brads and the right is 1 in (D-003), and the title page is centered between those margins (4.5 in), as Final Draft does. That puts everything 0.25 in right of the paper's center. Options: keep the standard, center only the title page, or center everything (1.25 in each side, in the PDF and page view). **Arnav: keep the standard.** Nothing changes. Readers, agents and productions expect it, and the PDF still matches page view exactly.
+- **Tests:**
+  - Home clicks Restore and Empty by their labels;
+  - a new test checks the field's width against its text as it opens, grows and shrinks;
+  - the what-if test checks the name is narrower than its row.
+- **Status:** built; awaits Arnav's review.
+
 ### D-109 · 2026-10-29 · Smaller UI changes: "+ Import", the account circle, Empty, no draft switcher, inline what-if names, the title dot, hidden scrollbars, × on Recent
 
 All Arnav's calls (his request, and his answers where there were options):

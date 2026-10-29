@@ -136,6 +136,8 @@
   background: var(--hover);
 }
 .ren {
+  box-sizing: border-box; /* its width is set to the text's, padding included (D-110) */
+  max-width: 100%;
   font: inherit;
   font-size: 15px;
   font-weight: 600;
@@ -153,6 +155,7 @@
   margin-left: 6px;
 }
 .vo {
+  margin-left: 6px; /* a little clear of the title, like the sync cue (D-110) */
   font-size: 12px;
   color: var(--muted);
   white-space: nowrap;
@@ -407,4 +410,16 @@ button.role:hover {
 .ib.acct[aria-expanded='true'] .av {
   background-image:
     linear-gradient(var(--hover), var(--hover)), linear-gradient(var(--hover), var(--hover));
+}
+
+/* RECENTLY DELETED's icon buttons (D-110): the toolbar's 32 x 28 slots and 18 px line icons,
+   pulled in at the right so the icon lines up with the rows' ends, and kept from making the label
+   row taller. */
+.ib.side-ib {
+  flex-shrink: 0;
+  margin-right: -8px;
+}
+.ib.side-ib.lab-ib {
+  margin-top: -9px;
+  margin-bottom: -9px;
 }

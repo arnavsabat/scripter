@@ -152,6 +152,36 @@ describe('creating, opening and renaming (D-033, D-037)', () => {
     await until(() => !scriptLayer()); // the script layer goes once it has faded
   });
 
+  it('the rename field fits the name, then follows what’s typed (D-110)', async () => {
+    await openAsArnav();
+    await until(() => episodeRows().includes('Ep 1 · Pilot'));
+    await clickText('.home .ep .nm', 'Ep 1 · Pilot');
+    await until(() => text($('.layer:not(.off) .toolbar .title.rn')) === 'Ep 1 · Pilot');
+    await click('.layer:not(.off) .toolbar .title.rn', 60, 8);
+    await until(() => $('.layer:not(.off) .toolbar input.ren'));
+    const field = $<HTMLInputElement>('.layer:not(.off) .toolbar input.ren')!;
+    const fits = () => {
+      // The text, measured in a span with the field's font, plus the field's 6 + 6 px padding.
+      const probe = document.createElement('span');
+      probe.style.font = getComputedStyle(field).font;
+      probe.style.whiteSpace = 'pre';
+      probe.textContent = field.value;
+      document.body.append(probe);
+      const want = probe.getBoundingClientRect().width + 12;
+      probe.remove();
+      return Math.abs(field.getBoundingClientRect().width - want) <= 4;
+    };
+    expect(fits()).toBe(true);
+    const start = field.getBoundingClientRect().width;
+    await userEvent.keyboard('{End} and the Long Goodbye');
+    await until(() => field.getBoundingClientRect().width > start + 100);
+    expect(fits()).toBe(true);
+    await userEvent.fill(field, 'X');
+    await until(() => field.getBoundingClientRect().width < start);
+    expect(fits()).toBe(true);
+    await userEvent.keyboard('{Escape}');
+  });
+
   it('renaming an episode hides the " · " after "Ep 1" (D-109)', async () => {
     await openAsArnav();
     await until(() => episodeRows().includes('Ep 1 · Pilot'));
@@ -215,7 +245,9 @@ describe('deleting and restoring (D-037)', () => {
       '“Ep 2 · Undertow” deleted · restore it from Recently deleted for 30 days',
     );
     expect(sidebarRows('RECENTLY DELETED')).toHaveLength(1);
-    await clickText('.left .ta', 'Restore');
+    // Restore is an icon button (D-110), named for what it brings back.
+    await until(() => $('.left button[aria-label="Restore Ep 2 · Undertow"]'));
+    await click('.left button[aria-label="Restore Ep 2 · Undertow"]', 10, 10);
     await until(() => episodeRows().length === 3);
     expect(episodeRows()[1]).toBe('Ep 2 · Undertow');
   });
@@ -226,7 +258,7 @@ describe('deleting and restoring (D-037)', () => {
     await click(`${tag($$('.home .ep')[1]!)} .rx`, 6, 6);
     await clickText('.home .ep.cf .ta', 'Delete');
     await until(() => sidebarRows('RECENTLY DELETED').length === 1);
-    await clickText('.left .lab .ta', 'Empty');
+    await click('.left .lab button[aria-label="Empty Recently deleted"]', 10, 10);
     await until(() =>
       text($('.left .cf .cfq')).startsWith('Erase 1 item for good? This can’t be undone.'),
     );
@@ -234,7 +266,7 @@ describe('deleting and restoring (D-037)', () => {
     await clickText('.left .cf .ta', 'Cancel');
     await until(() => !$('.left .cf'));
     expect(sidebarRows('RECENTLY DELETED')).toHaveLength(1);
-    await clickText('.left .lab .ta', 'Empty');
+    await click('.left .lab button[aria-label="Empty Recently deleted"]', 10, 10);
     await until(() => $('.left .cf'));
     await clickText('.left .cf .ta', 'Empty');
     await until(() => toast() === '1 item erased · they can’t be restored');

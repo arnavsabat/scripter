@@ -11,6 +11,9 @@ const paths = {
   chg: <path d="M12 4v8M8 8h8M8 18h8" />,
   rev: <path d="M4 6h12M4 12h12M4 18h7M15 17l2 2 4-4" />,
   x: <path d="M6 6l12 12M18 6L6 18" />,
+  // RECENTLY DELETED (D-110): empty it, and bring one back.
+  trash: <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v5M14 11v5" />,
+  restore: <path d="M4 4v5h5M4.6 15a8 8 0 1 0 1.3-8.6L4 9" />,
   sun: (
     <>
       <circle cx="12" cy="12" r="4" />

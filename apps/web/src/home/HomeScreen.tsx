@@ -651,12 +651,31 @@ function Sidebar({
                     {sub} · {days} day{days === 1 ? '' : 's'} left
                   </small>
                 </span>
-                <TextAction label="Restore" onClick={() => onRestore(t)} />
+                {/* Icon buttons like the toolbar's Changes and Review all (D-110). */}
+                <button
+                  type="button"
+                  className="ib side-ib"
+                  title="Restore"
+                  aria-label={`Restore ${t.kind === 'episode' ? `Ep ${t.number} · ${t.name}` : t.name}`}
+                  onClick={() => onRestore(t)}
+                >
+                  <Icon name="restore" />
+                </button>
               </div>
             );
           }),
         ],
-        !emptying && <TextAction label="Empty" onClick={() => setEmptying(true)} />,
+        !emptying && (
+          <button
+            type="button"
+            className="ib side-ib lab-ib"
+            title="Empty Recently deleted"
+            aria-label="Empty Recently deleted"
+            onClick={() => setEmptying(true)}
+          >
+            <Icon name="trash" />
+          </button>
+        ),
       )}
     </>
   );

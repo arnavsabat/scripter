@@ -2,6 +2,7 @@
 // field in the same type, in the same place; Enter or leaving saves, Esc keeps the old name. The
 // click stays on the name, so the row around it still opens on a click anywhere else.
 import { useState } from 'react';
+import { fitToText } from './fitToText';
 
 export function InlineName({
   name,
@@ -51,10 +52,12 @@ export function InlineName({
       maxLength={120}
       ref={(el) => {
         if (el && document.activeElement !== el) {
+          fitToText(el);
           el.focus();
           el.select();
         }
       }}
+      onInput={(e) => fitToText(e.currentTarget)}
       onClick={(e) => e.stopPropagation()}
       onKeyDown={(e) => {
         e.stopPropagation();

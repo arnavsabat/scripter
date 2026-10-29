@@ -1,6 +1,7 @@
 // A title you rename by clicking it (D-033): the toolbar's episode title and Home's series title.
 // Enter saves, Esc keeps the old name, clicking away saves. New scripts open already renaming.
 import { useState } from 'react';
+import { fitToText } from './fitToText';
 
 interface Props {
   /** What's shown, e.g. "Ep 2 · Undertow". */
@@ -49,13 +50,14 @@ export function RenameTitle({ text, value, prefix = '', canRename, onSave, start
         aria-label="Rename"
         defaultValue={value}
         maxLength={120}
-        size={Math.max(12, value.length + 2)}
         ref={(el) => {
           if (el && document.activeElement !== el) {
+            fitToText(el); // as wide as the name, then as wide as what's typed (D-110)
             el.focus();
             el.select();
           }
         }}
+        onInput={(e) => fitToText(e.currentTarget)}
         onKeyDown={(e) => {
           if (e.key === 'Enter') finish(e.currentTarget, true);
           else if (e.key === 'Escape') {
