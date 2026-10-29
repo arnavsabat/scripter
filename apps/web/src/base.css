@@ -38,3 +38,12 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* Nothing shows a scrollbar (D-109): everything that scrolls still scrolls by wheel, trackpad,
+   keyboard and touch, with no bar drawn. The second rule is for Safari before 18.2. */
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}

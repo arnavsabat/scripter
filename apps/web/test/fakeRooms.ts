@@ -255,7 +255,7 @@ export function fakeRooms(users: Map<string, FakeUser>) {
           .filter((s) => !s.deletedAt && s.members.get(me.id) === 'showrunner')
           .flatMap((s) =>
             s.episodes
-              .filter((e) => e.deletedAt)
+              .filter((e) => e.deletedAt && Date.now() - Date.parse(e.deletedAt) < month)
               .map((e) => ({
                 kind: 'episode',
                 id: e.id,
@@ -283,6 +283,36 @@ export function fakeRooms(users: Map<string, FakeUser>) {
     me: FakeUser,
   ): Promise<Reply> {
     if (m === 'GET' && path === '/api/home') return { status: 200, body: home(me) };
+    // D-109: × on RECENT (your list only), and emptying RECENTLY DELETED (dated past 30 days).
+    {
+      const r = /^\/api\/recent\/([^/]+)$/.exec(path);
+      if (m === 'DELETE' && r) {
+        opened.set(
+          me.id,
+          (opened.get(me.id) ?? []).filter((x) => x !== r[1]),
+        );
+        return { status: 200, body: { ok: true } };
+      }
+    }
+    if (m === 'POST' && path === '/api/home/trash/empty') {
+      const gone = new Date(Date.now() - 31 * 86_400_000).toISOString();
+      const month = 30 * 86_400_000;
+      const fresh = (at?: string | null) => !!at && Date.now() - Date.parse(at) < month;
+      let emptied = 0;
+      for (const s of all) {
+        if (s.members.get(me.id) !== 'showrunner') continue;
+        if (fresh(s.deletedAt)) {
+          s.deletedAt = gone;
+          emptied++;
+        } else if (!s.deletedAt)
+          for (const e of s.episodes)
+            if (fresh(e.deletedAt)) {
+              e.deletedAt = gone;
+              emptied++;
+            }
+      }
+      return { status: 200, body: { emptied } };
+    }
     {
       const ed = /^\/api\/episodes\/([0-9a-f-]{36})\/(drafts|whatifs)$/.exec(path);
       const found = ed && findEpisode(ed[1]!);

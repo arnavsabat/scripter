@@ -30,7 +30,8 @@ const homeLayer = () => $('.layers > .layer')!;
 const scriptLayer = () => $$('.layers > .layer')[1];
 const labels = () => $$('.home-tb ~ .body .left .lab').map(text);
 const sidebarRows = (label: string) => {
-  const lab = $$('.left .lab').find((l) => text(l) === label);
+  // A label with an action beside it ("RECENTLY DELETED  Empty") keeps its name in the first span.
+  const lab = $$('.left .lab').find((l) => text(l.firstElementChild ?? l) === label);
   return lab
     ? [...lab.nextElementSibling!.children].map((r) => text(r.querySelector('.nm') ?? r))
     : [];
@@ -151,6 +152,18 @@ describe('creating, opening and renaming (D-033, D-037)', () => {
     await until(() => !scriptLayer()); // the script layer goes once it has faded
   });
 
+  it('renaming an episode hides the " · " after "Ep 1" (D-109)', async () => {
+    await openAsArnav();
+    await until(() => episodeRows().includes('Ep 1 · Pilot'));
+    await clickText('.home .ep .nm', 'Ep 1 · Pilot');
+    await until(() => text($('.layer:not(.off) .toolbar .title.rn')) === 'Ep 1 · Pilot');
+    await click('.layer:not(.off) .toolbar .title.rn', 60, 8);
+    await until(() => $('.layer:not(.off) .toolbar input.ren'));
+    expect(text($('.layer:not(.off) .toolbar .title .pre'))).toBe('Ep 1');
+    expect(text($('.layer:not(.off) .toolbar .title'))).not.toContain('·');
+    expect($<HTMLInputElement>('.layer:not(.off) .toolbar input.ren')!.value).toBe('Pilot');
+  });
+
   it('+ New episode turns a plain script into a series', async () => {
     await openAsArnav();
     await clickText('.left .row', 'Night Shift');
@@ -205,6 +218,48 @@ describe('deleting and restoring (D-037)', () => {
     await clickText('.left .ta', 'Restore');
     await until(() => episodeRows().length === 3);
     expect(episodeRows()[1]).toBe('Ep 2 · Undertow');
+  });
+
+  it('Empty (D-109): an inline confirm, then everything in Recently deleted is gone for good', async () => {
+    await openAsArnav();
+    await until(() => episodeRows().length === 3);
+    await click(`${tag($$('.home .ep')[1]!)} .rx`, 6, 6);
+    await clickText('.home .ep.cf .ta', 'Delete');
+    await until(() => sidebarRows('RECENTLY DELETED').length === 1);
+    await clickText('.left .lab .ta', 'Empty');
+    await until(() =>
+      text($('.left .cf .cfq')).startsWith('Erase 1 item for good? This can’t be undone.'),
+    );
+    // Cancel keeps it; Empty erases it.
+    await clickText('.left .cf .ta', 'Cancel');
+    await until(() => !$('.left .cf'));
+    expect(sidebarRows('RECENTLY DELETED')).toHaveLength(1);
+    await clickText('.left .lab .ta', 'Empty');
+    await until(() => $('.left .cf'));
+    await clickText('.left .cf .ta', 'Empty');
+    await until(() => toast() === '1 item erased · they can’t be restored');
+    await until(() => sidebarRows('RECENTLY DELETED').length === 0);
+    expect(episodeRows()).toHaveLength(2); // not restored, either
+  });
+
+  it('× on a RECENT row (D-109) takes it off Recent only; the script stays', async () => {
+    await openAsArnav();
+    await clickText('.home-tb .ta', '+ New script');
+    await until(() => $<HTMLInputElement>('.toolbar input.ren'));
+    await userEvent.keyboard('Night Bus{Enter}');
+    await until(() => text($$('.toolbar .title')[1]) === 'Night Bus');
+    await click('.layer:not(.off) button[aria-label="Back to home"]', 10, 10);
+    await until(() => sidebarRows('RECENT').includes('Night Bus'));
+    const lab = $$('.left .lab').find((l) => text(l) === 'RECENT')!;
+    const row = [...lab.nextElementSibling!.children].find(
+      (r) => text(r.querySelector('.nm')) === 'Night Bus',
+    )!;
+    expect(row.querySelector('.rx')?.getAttribute('aria-label')).toBe(
+      'Remove Night Bus from Recent',
+    );
+    await click(`${tag(row)} .rx`, 6, 6);
+    await until(() => !sidebarRows('RECENT').includes('Night Bus'));
+    expect(sidebarRows('SCRIPTS')).toContain('Night Bus');
   });
 
   it('a series needs its name typed before Delete works', async () => {

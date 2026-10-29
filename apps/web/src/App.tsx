@@ -38,7 +38,6 @@ import './home/home.css';
 /** The one menu or popover open at a time; Esc closes it first (SPEC 3.9). */
 export type Overlay =
   | null
-  | { kind: 'draft' }
   | { kind: 'share' }
   | { kind: 'cowriter' }
   | { kind: 'element'; top: number; highlighted: number }
@@ -329,10 +328,10 @@ export function ScriptScreen({
     }
   };
 
-  // Renaming and deleting what-ifs (D-080): whoever started one, or the showrunner.
-  const renameWhatIf = (name: string) => {
-    if (!current || current.kind !== 'whatif') return;
-    renameDraft(current.id, name).then(
+  // Renaming and deleting what-ifs (D-080): whoever started one, or the showrunner. Renamed from
+  // the Drafts tab, by clicking the name (D-109).
+  const renameWhatIf = (d: DraftInfo, name: string) => {
+    renameDraft(d.id, name).then(
       () => drafts?.reload(),
       (err: unknown) => toast.show(err instanceof ApiFailure ? err.message : 'Couldn’t rename it.'),
     );
@@ -410,26 +409,6 @@ export function ScriptScreen({
         others={handle.others}
         cue={handle.cue}
         onExport={() => void exportScript()}
-        {...(drafts && current
-          ? {
-              drafts: {
-                label: current.kind === 'main' ? 'Main' : `Main › ${current.name}`,
-                ...(current.kind === 'whatif'
-                  ? {
-                      whatIf: {
-                        name: current.name,
-                        onRename: drafts.canManage(current) ? renameWhatIf : null,
-                      },
-                    }
-                  : {}),
-                items: drafts.list.map((d) => ({
-                  label: d.kind === 'main' ? 'Main' : d.name,
-                  current: d.id === current.id,
-                  onSelect: () => drafts.open(d.kind === 'main' ? null : d.id),
-                })),
-              },
-            }
-          : {})}
         {...(whatIfInfo
           ? {
               whatIf: {
@@ -474,6 +453,7 @@ export function ScriptScreen({
                 onSnapshot={() => void takeSnapshot()}
                 onRestore={(snap) => void restore(snap)}
                 onDelete={(d) => void removeWhatIf(d)}
+                onRename={renameWhatIf}
               />
             ) : (
               // No episode around it (the tests' bare editor): just main, and who's in it.

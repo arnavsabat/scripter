@@ -3,6 +3,7 @@
 import { canEdit, isRole, type Access } from '@wr/shared';
 import type { FastifyInstance } from 'fastify';
 import type { AppDeps } from '../app';
+import { withTx } from '../db/tx';
 
 interface Person {
   id: string;
@@ -181,4 +182,50 @@ export function homeRoutes(app: FastifyInstance, { db }: AppDeps): void {
       trash,
     };
   });
+
+  // × on a RECENT row (D-109): off the caller's own list only; opening the script again brings it back.
+  app.delete<{ Params: { episodeId: string } }>(
+    '/api/recent/:episodeId',
+    {
+      schema: {
+        params: {
+          type: 'object',
+          required: ['episodeId'],
+          properties: { episodeId: { type: 'string', format: 'uuid' } },
+        },
+      },
+    },
+    async (req) => {
+      await db.query(`delete from episode_opens where user_id = $1 and episode_id = $2`, [
+        req.user.id,
+        req.params.episodeId,
+      ]);
+      return { ok: true };
+    },
+  );
+
+  // Empty RECENTLY DELETED (D-109): everything the caller could still restore, as a showrunner,
+  // is dated past the 30 days at once. It leaves the list, can't be restored, and the nightly
+  // purge erases it with its storage (D-090).
+  app.post('/api/home/trash/empty', async (req) =>
+    withTx(db, async (c) => {
+      const me = req.user.id;
+      const series = await c.query(
+        `update series s set deleted_at = now() - interval '31 days'
+           from series_members m
+          where m.series_id = s.id and m.user_id = $1 and m.role = 'showrunner'
+            and s.deleted_at > now() - interval '30 days'`,
+        [me],
+      );
+      const episodes = await c.query(
+        `update episodes e set deleted_at = now() - interval '31 days'
+           from series s join series_members m on m.series_id = s.id
+          where e.series_id = s.id and s.deleted_at is null
+            and m.user_id = $1 and m.role = 'showrunner'
+            and e.deleted_at > now() - interval '30 days'`,
+        [me],
+      );
+      return { emptied: (series.rowCount ?? 0) + (episodes.rowCount ?? 0) };
+    }),
+  );
 }

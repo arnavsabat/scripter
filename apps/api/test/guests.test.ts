@@ -42,7 +42,7 @@ describe.skipIf(!servicesEnabled)('guests', () => {
     expect(g.body.user.email).toMatch(/^guest-[0-9a-f-]{36}@guest\.app\.test$/);
     const hours = (Date.parse(g.body.user.guestUntil) - Date.now()) / 3600_000;
     expect(hours).toBeGreaterThan(23.9);
-    expect(hours).toBeLessThanOrEqual(24);
+    expect(hours).toBeLessThan(24.01); // Postgres's clock can run a little ahead of Node's
     // Created confirmed and silent: Cognito sends nothing, and neither do we.
     const calls = h.cognito.adminCalls.filter((c) => c.username === g.body.user.email);
     expect(calls.map((c) => c.op)).toEqual([

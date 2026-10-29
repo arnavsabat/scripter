@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Icon } from '../components/Icons';
 import { RowsSkeleton } from '../components/Skeleton';
 import { TextAction } from '../components/TextAction';
+import { InlineName } from '../components/InlineName';
 import { when, type DraftInfo, type SnapshotInfo } from './drafts';
 import './whatif.css';
 import type { SceneEdit } from './sceneEdits';
@@ -264,6 +265,7 @@ export function DraftsTab({
   onSnapshot,
   onRestore,
   onDelete,
+  onRename,
 }: {
   drafts: DraftsContext;
   /** Who's in main right now. */
@@ -277,6 +279,7 @@ export function DraftsTab({
   onSnapshot: () => void;
   onRestore: (s: SnapshotInfo) => void;
   onDelete: (d: DraftInfo) => void;
+  onRename: (d: DraftInfo, name: string) => void;
 }) {
   const [confirming, setConfirming] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
@@ -346,7 +349,12 @@ export function DraftsTab({
               }}
             >
               <span>
-                {d.name}
+                {/* Click the name to rename it; anywhere else on the row opens it (D-109). */}
+                <InlineName
+                  name={d.name}
+                  label="Rename what-if"
+                  onRename={drafts.canManage(d) ? (name) => onRename(d, name) : null}
+                />
                 <small>{meta(d)}</small>
               </span>
               {drafts.canManage(d) && (

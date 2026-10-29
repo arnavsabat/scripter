@@ -149,6 +149,17 @@ export function HomeScreen({ me, data, reload, select }: Props) {
       toast.show(`“${t.kind === 'episode' ? `Ep ${t.number} · ${t.name}` : t.name}” restored`);
     });
 
+  // D-109: × on a RECENT row takes it off your list only; Empty erases RECENTLY DELETED tonight.
+  const forgetRecent = (episodeId: string) =>
+    void run(async () => {
+      await api('DELETE', `/api/recent/${episodeId}`);
+    });
+  const emptyTrash = () =>
+    void run(async () => {
+      const r = await api<{ emptied: number }>('POST', '/api/home/trash/empty');
+      toast.show(`${r.emptied} item${r.emptied === 1 ? '' : 's'} erased · they can’t be restored`);
+    });
+
   // "Accept" turns into "Accepted ✓", and the series moves into SERIES a moment later (prototype v2).
   const accept = (id: string, name: string) =>
     void run(async () => {
@@ -178,6 +189,8 @@ export function HomeScreen({ me, data, reload, select }: Props) {
                 onDelete={remove}
                 onAccept={accept}
                 onRestore={restore}
+                onForgetRecent={forgetRecent}
+                onEmptyTrash={emptyTrash}
               />
             </PanelBoundary>
           </div>
@@ -275,7 +288,7 @@ function HomeToolbar({
       <div className="grp slide" style={{ gap: 14 }}>
         <TextAction label="+ New series" className="hv tbh" onClick={onNewSeries} />
         <TextAction label="+ New script" className="hv tbh" onClick={onNewScript} />
-        <TextAction label="Import" className="hv tbh" onClick={() => picker.current?.click()} />
+        <TextAction label="+ Import" className="hv tbh" onClick={() => picker.current?.click()} />
         <input
           ref={picker}
           type="file"
@@ -294,7 +307,7 @@ function HomeToolbar({
         <span className="anchor">
           <button
             type="button"
-            className="ib"
+            className="ib acct"
             title="Account"
             aria-label="Account"
             aria-haspopup="menu"
@@ -430,6 +443,8 @@ function Sidebar({
   onDelete,
   onAccept,
   onRestore,
+  onForgetRecent,
+  onEmptyTrash,
 }: {
   data: HomeData | null;
   current: HomeSeries | null;
@@ -440,8 +455,11 @@ function Sidebar({
   onDelete: (c: Confirming) => void;
   onAccept: (id: string, name: string) => void;
   onRestore: (t: TrashItem) => void;
+  onForgetRecent: (episodeId: string) => void;
+  onEmptyTrash: () => void;
 }) {
   const [typed, setTyped] = useState('');
+  const [emptying, setEmptying] = useState(false);
   const [accepted, setAccepted] = useState<string[]>([]);
   if (!data) return <RowsSkeleton widths={['58%', '44%', '64%', '50%']} />;
   const series = data.series;
@@ -518,10 +536,17 @@ function Sidebar({
     );
   };
 
-  const section = (label: string, rows: React.ReactNode[]) =>
+  const section = (label: string, rows: React.ReactNode[], action?: React.ReactNode) =>
     rows.length ? (
       <>
-        <div className="lab">{label}</div>
+        {action ? (
+          <div className="lab r">
+            <span>{label}</span>
+            {action}
+          </div>
+        ) : (
+          <div className="lab">{label}</div>
+        )}
         <div className="list" style={{ paddingTop: 0 }}>
           {rows}
         </div>
@@ -533,9 +558,34 @@ function Sidebar({
       {section(
         'RECENT',
         recent.map(({ s, e }) => (
-          <button key={e.id} type="button" className="row" onClick={() => navigate(`/e/${e.id}`)}>
+          <div
+            key={e.id}
+            className="row hasx"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/e/${e.id}`)}
+            onKeyDown={(k) => {
+              if ((k.key === 'Enter' || k.key === ' ') && k.target === k.currentTarget) {
+                k.preventDefault();
+                navigate(`/e/${e.id}`);
+              }
+            }}
+          >
             <span className="nm">{episodeLabel(s, e)}</span>
-          </button>
+            {/* Off your Recent list only (D-109); the script itself stays. */}
+            <button
+              type="button"
+              className="rx"
+              title="Remove from Recent"
+              aria-label={`Remove ${episodeLabel(s, e)} from Recent`}
+              onClick={(ev) => {
+                ev.stopPropagation();
+                onForgetRecent(e.id);
+              }}
+            >
+              <X />
+            </button>
+          </div>
         )),
       )}
       {section('SCRIPTS', series.filter((s) => !s.isSeries).map(row))}
@@ -563,29 +613,50 @@ function Sidebar({
       )}
       {section(
         'RECENTLY DELETED',
-        data.trash.map((t) => {
-          const days = Math.max(
-            1,
-            30 - Math.floor((data.fetchedAt - Date.parse(t.deletedAt)) / 86_400_000),
-          );
-          const sub =
-            t.kind === 'episode'
-              ? t.seriesName
-              : t.kind === 'series'
-                ? `Series · ${t.episodes} episode${t.episodes === 1 ? '' : 's'}`
-                : 'Script';
-          return (
-            <div key={`${t.kind}-${t.id}`} className="row" style={{ cursor: 'default' }}>
-              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-                {t.kind === 'episode' ? `Ep ${t.number} · ${t.name}` : t.name}
-                <small>
-                  {sub} · {days} day{days === 1 ? '' : 's'} left
-                </small>
-              </span>
-              <TextAction label="Restore" onClick={() => onRestore(t)} />
-            </div>
-          );
-        }),
+        [
+          ...(emptying
+            ? [
+                <div key="empty" className="row cf cfs">
+                  <span className="cfq">
+                    Erase {data.trash.length} item{data.trash.length === 1 ? '' : 's'} for good?
+                    This can’t be undone.
+                  </span>
+                  <ConfirmActions
+                    verb="Empty"
+                    onCancel={() => setEmptying(false)}
+                    onDelete={() => {
+                      setEmptying(false);
+                      onEmptyTrash();
+                    }}
+                  />
+                </div>,
+              ]
+            : []),
+          ...data.trash.map((t) => {
+            const days = Math.max(
+              1,
+              30 - Math.floor((data.fetchedAt - Date.parse(t.deletedAt)) / 86_400_000),
+            );
+            const sub =
+              t.kind === 'episode'
+                ? t.seriesName
+                : t.kind === 'series'
+                  ? `Series · ${t.episodes} episode${t.episodes === 1 ? '' : 's'}`
+                  : 'Script';
+            return (
+              <div key={`${t.kind}-${t.id}`} className="row" style={{ cursor: 'default' }}>
+                <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                  {t.kind === 'episode' ? `Ep ${t.number} · ${t.name}` : t.name}
+                  <small>
+                    {sub} · {days} day{days === 1 ? '' : 's'} left
+                  </small>
+                </span>
+                <TextAction label="Restore" onClick={() => onRestore(t)} />
+              </div>
+            );
+          }),
+        ],
+        !emptying && <TextAction label="Empty" onClick={() => setEmptying(true)} />,
       )}
     </>
   );

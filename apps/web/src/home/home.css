@@ -148,6 +148,10 @@
   outline: none;
   box-shadow: 0 0 0 2px var(--blue-ring);
 }
+/* After "Ep 2": the field keeps clear of the prefix instead of tucking under it (D-109). */
+.ren.after-pre {
+  margin-left: 6px;
+}
 .vo {
   font-size: 12px;
   color: var(--muted);
@@ -392,4 +396,15 @@ button.role:hover {
   font-size: 12px;
   line-height: 1.5;
   color: var(--muted);
+}
+
+/* The account avatar (D-109): no slot background; the circle itself takes the hover shade, twice
+   over so it reads (darker in light, lighter in dark, from the same --hover token). */
+.ib.acct:hover {
+  background: none;
+}
+.ib.acct:hover .av,
+.ib.acct[aria-expanded='true'] .av {
+  background-image:
+    linear-gradient(var(--hover), var(--hover)), linear-gradient(var(--hover), var(--hover));
 }

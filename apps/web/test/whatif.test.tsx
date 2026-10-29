@@ -203,7 +203,10 @@ async function openEpisode(series: string, episode: string) {
   return { episodeId: ep.id, mainDraftId: draftId };
 }
 const paras = () => $$('.layer:not(.off) .script > p.el');
-const switcher = () => text($('.layer:not(.off) .toolbar .sw'));
+/** Which draft is open (D-109: no toolbar switcher; the URL and the Drafts tab say). */
+const onMain = () => !/\/w\//.test(location.pathname);
+/** The selected what-if's name in the Drafts tab (while that tab is showing). */
+const selectedWhatIf = () => text($('.layer:not(.off) .left .row.big.sel .iname'));
 const sceneRows = () => $$('.layer:not(.off) .left .list .row').map(text);
 /** Clicks at the end of a line of the script. */
 async function clickEnd(i: number) {
@@ -223,13 +226,14 @@ async function clickEnd(i: number) {
 describe('what-ifs in the app (prototype v2)', () => {
   it('fork, edit, the dot, ⌘↵ to send, Sent ✓, Undo; amber opens Compare; Review all; Changes', async () => {
     const { mainDraftId } = await openEpisode('Harbor Lights', 'Pilot');
-    expect(switcher()).toBe('Main ▾');
+    expect(onMain()).toBe(true);
+    expect($('.layer:not(.off) .toolbar .sw')).toBeNull(); // no draft switcher (D-109)
 
     // + New what-if from the Drafts tab: a copy of main, as "Main › Untitled what-if".
     await clickText('.layer:not(.off) .tabs .ta', 'Drafts');
     await clickText('.layer:not(.off) .left .ta', '+ New what-if');
     await until(() => /\/w\/[0-9a-f-]{36}$/.test(location.pathname));
-    await until(() => switcher() === 'Main › Untitled what-if ▾');
+    await until(() => selectedWhatIf() === 'Untitled what-if');
     await until(() => paras().length === SCRIPT.length);
     expect(paras().map((p) => p.textContent)).toEqual(SCRIPT.map((b) => b.text));
     await clickText('.layer:not(.off) .tabs .ta', 'Scenes');
@@ -311,11 +315,10 @@ describe('what-ifs in the app (prototype v2)', () => {
     await commands.clickAt('.layer:not(.off) button[aria-label="Review all changes"]', 10, 10);
     await until(() => text($('.layer:not(.off) .menu.rv .mi')) === 'Everything’s in main');
 
-    // The switcher lists both drafts, with ✓ on this one; main is one click away.
-    await commands.clickAt('.layer:not(.off) .toolbar .sw', 10, 10);
-    await until(() => $$('.layer:not(.off) .menu[aria-label="Drafts"] .mi').length === 2);
-    await clickText('.layer:not(.off) .menu[aria-label="Drafts"] .mi', 'Main');
-    await until(() => switcher() === 'Main ▾');
+    // Main is one click away in the Drafts tab.
+    await clickText('.layer:not(.off) .tabs .ta', 'Drafts');
+    await clickEl($$('.layer:not(.off) .left .row.big')[0]!, 20, 10);
+    await until(onMain);
     await until(() =>
       paras().some((p) => p.textContent === 'Mara stares at the sink. Then she smashes a plate.'),
     );
@@ -326,7 +329,7 @@ describe('what-ifs in the app (prototype v2)', () => {
     const { mainDraftId } = await openEpisode('Harbor Lights', 'Pilot');
     await clickText('.layer:not(.off) .tabs .ta', 'Drafts');
     await clickText('.layer:not(.off) .left .ta', '+ New what-if');
-    await until(() => switcher() === 'Main › Untitled what-if ▾');
+    await until(() => selectedWhatIf() === 'Untitled what-if');
     await until(() => paras().length === SCRIPT.length);
     await clickEnd(1);
     await userEvent.keyboard(' Then she smashes a plate.');
@@ -367,27 +370,28 @@ describe('what-ifs in the app (prototype v2)', () => {
     await openEpisode('Harbor Lights', 'Pilot');
     await clickText('.layer:not(.off) .tabs .ta', 'Drafts');
     await clickText('.layer:not(.off) .left .ta', '+ New what-if');
-    await until(() => switcher() === 'Main › Untitled what-if ▾');
-    // Click the name (not "Main ›" or ▾): an inline field.
-    await clickEl($('.layer:not(.off) .toolbar .sw .wn')!, 5, 5);
-    await until(() => $('.layer:not(.off) .toolbar input.wn'));
+    await until(() => selectedWhatIf() === 'Untitled what-if');
+    // Back on main, click the what-if's name in its row (D-109): an inline field, and it doesn't
+    // open the what-if; the rest of the row would.
+    await clickEl($$('.layer:not(.off) .left .row.big')[0]!, 20, 10);
+    await until(onMain);
+    await clickEl($('.layer:not(.off) .left .row.big .iname.can')!, 5, 5);
+    await until(() => $('.layer:not(.off) .left input.iname'));
     await userEvent.fill(
-      $<HTMLInputElement>('.layer:not(.off) .toolbar input.wn')!,
+      $<HTMLInputElement>('.layer:not(.off) .left input.iname')!,
       'Darker ending',
     );
     await userEvent.keyboard('{Enter}');
-    await until(() => switcher() === 'Main › Darker ending ▾');
     await until(() =>
       $$('.layer:not(.off) .left .row.big').some((r) => text(r).startsWith('Darker ending')),
     );
-    // Clicking "Main ›" still opens the menu.
-    await commands.clickAt('.layer:not(.off) .toolbar .sw', 4, 8);
-    await until(
-      () =>
-        $$('.layer:not(.off) .menu[aria-label="Drafts"] .mi').map(text).join('|') ===
-        'Main|Darker ending✓',
-    );
-    await userEvent.keyboard('{Escape}');
+    expect(onMain()).toBe(true);
+    // Esc while renaming keeps the name.
+    await clickEl($('.layer:not(.off) .left .row.big .iname.can')!, 5, 5);
+    await until(() => $('.layer:not(.off) .left input.iname'));
+    await userEvent.keyboard('Nope{Escape}');
+    await until(() => !$('.layer:not(.off) .left input.iname'));
+    expect(text($('.layer:not(.off) .left .row.big .iname'))).toBe('Darker ending');
     // Delete it from its row: back on main, and gone from the list.
     await clickEl($('.layer:not(.off) .left .row.big.hasx .rx')!, 6, 6);
     await until(
@@ -395,7 +399,7 @@ describe('what-ifs in the app (prototype v2)', () => {
     );
     await clickText('.layer:not(.off) .left .cfa .ta', 'Delete');
     await until(() => toast() === '“Darker ending” deleted');
-    await until(() => switcher() === 'Main ▾');
+    await until(onMain);
     await until(
       () => !$$('.layer:not(.off) .left .row.big').some((r) => text(r).startsWith('Darker ending')),
     );

@@ -182,6 +182,7 @@ const KNOWN: { selector: RegExp; props: RegExp; why: string }[] = [
   },
 ];
 const KNOWN_MISSING = [
+  '.toolbar .sw · not in app', // no draft switcher: what-ifs are entered and renamed in the Drafts tab (D-109)
   '.rp .lab · not in app', // the prototype's sample has a pending invitation (INVITED); the app shows it when there is one
   '.toolbar .av · not in prototype', // presence avatars: the app's test room has co-writers connected
   '.menu .mi span · not in prototype', // Export PDF's row (D-076)

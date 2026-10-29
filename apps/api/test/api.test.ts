@@ -385,6 +385,45 @@ describe.skipIf(!servicesEnabled)('API', () => {
       await maya.call('POST', `/api/series/${body.seriesId}/restore`);
       expect((await series(maya, body.seriesId))!.episodes).toHaveLength(1);
     });
+    it('× on RECENT (D-109) takes a script off your list only, until you open it again', async () => {
+      await arnav.call('GET', `/api/episodes/${ep[0]}`);
+      await maya.call('GET', `/api/episodes/${ep[0]}`);
+      const ids = async (p: Person) =>
+        (await p.call<{ recent: string[] }>('GET', '/api/home')).body.recent;
+      expect(await ids(arnav)).toContain(ep[0]);
+      expect((await arnav.call('DELETE', `/api/recent/${ep[0]}`)).status).toBe(200);
+      expect(await ids(arnav)).not.toContain(ep[0]);
+      expect(await ids(maya)).toContain(ep[0]); // Maya's list is hers
+      expect((await arnav.call('GET', `/api/episodes/${ep[0]}`)).status).toBe(200); // not deleted
+      expect(await ids(arnav)).toContain(ep[0]); // opening it brings it back
+    });
+    it('emptying the trash (D-109): gone from the list, can’t be restored, due for the purge; nobody else’s', async () => {
+      const mine = await priya.call<{ seriesId: string }>('POST', '/api/series', {
+        kind: 'series',
+        name: 'Scrap',
+      });
+      await priya.call('DELETE', `/api/series/${mine.body.seriesId}`);
+      const kept = await maya.call<{ seriesId: string }>('POST', '/api/series', {
+        kind: 'series',
+        name: 'Not Priya’s',
+      });
+      await maya.call('DELETE', `/api/series/${kept.body.seriesId}`);
+      expect((await home(priya)).trash.map((t) => t.name)).toContain('Scrap');
+      const r = await priya.call<{ emptied: number }>('POST', '/api/home/trash/empty');
+      expect(r.status).toBe(200);
+      expect(r.body.emptied).toBeGreaterThanOrEqual(1);
+      expect((await home(priya)).trash).toEqual([]);
+      expect((await priya.call('POST', `/api/series/${mine.body.seriesId}/restore`)).status).toBe(
+        404,
+      );
+      const due = await h.admin.query(
+        `select 1 from series where id = $1 and deleted_at < now() - interval '30 days'`,
+        [mine.body.seriesId],
+      );
+      expect(due.rowCount).toBe(1);
+      // Maya's trash is hers.
+      expect((await home(maya)).trash.map((t) => t.name)).toContain('Not Priya’s');
+    });
     it('deleting a plain script’s episode deletes the script', async () => {
       const { body } = await priya.call<{ seriesId: string; episodeId: string }>(
         'POST',

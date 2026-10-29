@@ -1,2342 +1,2342 @@
 {
- "fdx": [
-  {
-   "type": "action",
-   "text": "ACT ONE"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. DINER - NIGHT"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PARKING LOT - LATER"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten. Who else knows?"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "I said I'd try. That's not the same thing. You said you'd be here at ten. Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PIER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(re: the envelope)"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MOTEL ROOM - LATER"
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Who else knows?"
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. ROOFTOP - CONTINUOUS"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. You said you'd be here at ten. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. GAS STATION - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight. Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "shot",
-   "text": "ANGLE ON THE ENVELOPE"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. DINER - NIGHT"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. Nobody. Not yet. But that won't last, and you know it won't. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Tell that to the people looking for him. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. PARKING LOT - LATER"
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "action",
-   "text": "THE END OF THE BEGINNING"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. PIER - NIGHT"
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(re: the envelope)"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MOTEL ROOM - LATER"
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten. It is tonight. He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows?"
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "Drive all night, drive all night"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. ROOFTOP - CONTINUOUS"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. GAS STATION - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. DINER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. He's not my brother anymore."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PARKING LOT - LATER"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "ACT TWO"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. You said you'd be here at ten."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Who else knows? Tell that to the people looking for him."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PIER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(beat)"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. You said you'd be here at ten."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "We go now."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "We wait."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. MOTEL ROOM - LATER"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. ROOFTOP - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight. Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. GAS STATION - DAWN"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? I said I'd try. That's not the same thing. You said you'd be here at ten."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. DINER - NIGHT"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(beat)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PARKING LOT - LATER"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PIER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MOTEL ROOM - LATER"
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. The waitress drifts past, refills nothing, and keeps going. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. It is tonight. Who else knows?"
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. ROOFTOP - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. He's not my brother anymore. Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. GAS STATION - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. DINER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. PARKING LOT - LATER"
-  },
-  {
-   "type": "action",
-   "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(beat)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  }
- ],
- "fountain": [
-  {
-   "type": "action",
-   "text": "ACT ONE"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. DINER - NIGHT"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PARKING LOT - LATER"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten. Who else knows?"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "I said I'd try. That's not the same thing. You said you'd be here at ten. Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PIER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(re: the envelope)"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MOTEL ROOM - LATER"
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Who else knows?"
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. ROOFTOP - CONTINUOUS"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. You said you'd be here at ten. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. GAS STATION - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight. Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "ANGLE ON THE ENVELOPE"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. DINER - NIGHT"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. Nobody. Not yet. But that won't last, and you know it won't. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Tell that to the people looking for him. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. PARKING LOT - LATER"
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "action",
-   "text": "THE END OF THE BEGINNING"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. PIER - NIGHT"
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(re: the envelope)"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MOTEL ROOM - LATER"
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten. It is tonight. He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows?"
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "Drive all night, drive all night"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. ROOFTOP - CONTINUOUS"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. GAS STATION - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. DINER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. He's not my brother anymore."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PARKING LOT - LATER"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "ACT TWO"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "action",
-   "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. You said you'd be here at ten."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Who else knows? Tell that to the people looking for him."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PIER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(beat)"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. You said you'd be here at ten."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "We go now."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "We wait."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. MOTEL ROOM - LATER"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. ROOFTOP - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight. Nobody. Not yet. But that won't last, and you know it won't."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. GAS STATION - DAWN"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? I said I'd try. That's not the same thing. You said you'd be here at ten."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. DINER - NIGHT"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(beat)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PARKING LOT - LATER"
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows? Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "You said you'd be here at ten."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. PIER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him. Then we don't have long. Finish your coffee."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MOTEL ROOM - LATER"
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. The waitress drifts past, refills nothing, and keeps going. Headlights sweep the room. For a second they're both lit up like suspects."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(quietly)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. It is tonight. Who else knows?"
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. ROOFTOP - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. He's not my brother anymore. Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "dialogue",
-   "text": "Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "It is tonight. Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. GAS STATION - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "action",
-   "text": "She pushes a folded envelope across the table. He doesn't touch it."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Who else knows?"
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "Then we don't have long. Finish your coffee. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Maya slides into the booth across from him. She doesn't take off her coat."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. DINER - NIGHT"
-  },
-  {
-   "type": "action",
-   "text": "The waitress drifts past, refills nothing, and keeps going."
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "character",
-   "text": "DETECTIVE REYES"
-  },
-  {
-   "type": "dialogue",
-   "text": "He's not my brother anymore. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "scene_heading",
-   "text": "EXT. PARKING LOT - LATER"
-  },
-  {
-   "type": "action",
-   "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "action",
-   "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number."
-  },
-  {
-   "type": "character",
-   "text": "JOHN"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Sit down. Eat something. We have to talk about the money, and about your brother."
-  },
-  {
-   "type": "action",
-   "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. John stares at the coffee like it owes him money."
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. MAYA'S CAR - CONTINUOUS"
-  },
-  {
-   "type": "action",
-   "text": "Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "action",
-   "text": "She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
-  },
-  {
-   "type": "transition",
-   "text": "CUT TO:"
-  },
-  {
-   "type": "scene_heading",
-   "text": "INT. POLICE STATION - LOBBY - DAWN"
-  },
-  {
-   "type": "action",
-   "text": "A siren somewhere far off. Neither of them looks up."
-  },
-  {
-   "type": "action",
-   "text": "Maya slides into the booth across from him. She doesn't take off her coat. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(not looking up)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him."
-  },
-  {
-   "type": "character",
-   "text": "JOHN (V.O.)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  },
-  {
-   "type": "character",
-   "text": "MAYA"
-  },
-  {
-   "type": "parenthetical",
-   "text": "(beat)"
-  },
-  {
-   "type": "dialogue",
-   "text": "Tell that to the people looking for him. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
-  }
- ]
+  "fdx": [
+    {
+      "type": "action",
+      "text": "ACT ONE"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. DINER - NIGHT"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PARKING LOT - LATER"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten. Who else knows?"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "I said I'd try. That's not the same thing. You said you'd be here at ten. Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PIER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(re: the envelope)"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MOTEL ROOM - LATER"
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Who else knows?"
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. ROOFTOP - CONTINUOUS"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. You said you'd be here at ten. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. GAS STATION - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight. Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "shot",
+      "text": "ANGLE ON THE ENVELOPE"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. DINER - NIGHT"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. Nobody. Not yet. But that won't last, and you know it won't. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Tell that to the people looking for him. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. PARKING LOT - LATER"
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "action",
+      "text": "THE END OF THE BEGINNING"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. PIER - NIGHT"
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(re: the envelope)"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MOTEL ROOM - LATER"
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten. It is tonight. He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows?"
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "Drive all night, drive all night"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. ROOFTOP - CONTINUOUS"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. GAS STATION - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. DINER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. He's not my brother anymore."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PARKING LOT - LATER"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "ACT TWO"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. You said you'd be here at ten."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Who else knows? Tell that to the people looking for him."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PIER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(beat)"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. You said you'd be here at ten."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "We go now."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "We wait."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. MOTEL ROOM - LATER"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. ROOFTOP - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight. Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. GAS STATION - DAWN"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? I said I'd try. That's not the same thing. You said you'd be here at ten."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. DINER - NIGHT"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(beat)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PARKING LOT - LATER"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PIER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MOTEL ROOM - LATER"
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. The waitress drifts past, refills nothing, and keeps going. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. It is tonight. Who else knows?"
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. ROOFTOP - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. He's not my brother anymore. Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. GAS STATION - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. DINER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. PARKING LOT - LATER"
+    },
+    {
+      "type": "action",
+      "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(beat)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    }
+  ],
+  "fountain": [
+    {
+      "type": "action",
+      "text": "ACT ONE"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. DINER - NIGHT"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PARKING LOT - LATER"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten. Who else knows?"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "I said I'd try. That's not the same thing. You said you'd be here at ten. Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PIER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(re: the envelope)"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MOTEL ROOM - LATER"
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Who else knows?"
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. ROOFTOP - CONTINUOUS"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. You said you'd be here at ten. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. GAS STATION - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight. Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "ANGLE ON THE ENVELOPE"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. DINER - NIGHT"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. Nobody. Not yet. But that won't last, and you know it won't. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again. She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Tell that to the people looking for him. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. PARKING LOT - LATER"
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "action",
+      "text": "THE END OF THE BEGINNING"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. PIER - NIGHT"
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(re: the envelope)"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MOTEL ROOM - LATER"
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten. It is tonight. He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows?"
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "Drive all night, drive all night"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. ROOFTOP - CONTINUOUS"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. She checks her phone. Three missed calls. All the same number. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. GAS STATION - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. DINER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. He's not my brother anymore."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PARKING LOT - LATER"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "ACT TWO"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "action",
+      "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. She pushes a folded envelope across the table. He doesn't touch it. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. You said you'd be here at ten."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Who else knows? Tell that to the people looking for him."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PIER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. Headlights sweep the room. For a second they're both lit up like suspects. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(beat)"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. You said you'd be here at ten."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "We go now."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "We wait."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. MOTEL ROOM - LATER"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Rain hammers the windows. A neon sign buzzes, dies, buzzes again."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. ROOFTOP - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. Maya slides into the booth across from him. She doesn't take off her coat. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight. Nobody. Not yet. But that won't last, and you know it won't."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. GAS STATION - DAWN"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. It is tonight."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? I said I'd try. That's not the same thing. You said you'd be here at ten."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going. Maya slides into the booth across from him. She doesn't take off her coat. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Who else knows? Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. She checks her phone. Three missed calls. All the same number."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. DINER - NIGHT"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(beat)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PARKING LOT - LATER"
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows? Nobody. Not yet. But that won't last, and you know it won't. I said I'd try. That's not the same thing."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. Nobody. Not yet. But that won't last, and you know it won't. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "You said you'd be here at ten."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. PIER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "Headlights sweep the room. For a second they're both lit up like suspects. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. Tell that to the people looking for him. Then we don't have long. Finish your coffee."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MOTEL ROOM - LATER"
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. The waitress drifts past, refills nothing, and keeps going. Headlights sweep the room. For a second they're both lit up like suspects."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(quietly)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. It is tonight. Who else knows?"
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. ROOFTOP - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. He's not my brother anymore. Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "dialogue",
+      "text": "Sit down. Eat something. We have to talk about the money, and about your brother. It is tonight."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "It is tonight. Tell that to the people looking for him. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. GAS STATION - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "action",
+      "text": "She pushes a folded envelope across the table. He doesn't touch it."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Who else knows?"
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "Then we don't have long. Finish your coffee. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up. Outside, a car door slams. Then another. Maya slides into the booth across from him. She doesn't take off her coat."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. DINER - NIGHT"
+    },
+    {
+      "type": "action",
+      "text": "The waitress drifts past, refills nothing, and keeps going."
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "character",
+      "text": "DETECTIVE REYES"
+    },
+    {
+      "type": "dialogue",
+      "text": "He's not my brother anymore. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "scene_heading",
+      "text": "EXT. PARKING LOT - LATER"
+    },
+    {
+      "type": "action",
+      "text": "He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "action",
+      "text": "John stares at the coffee like it owes him money. She checks her phone. Three missed calls. All the same number."
+    },
+    {
+      "type": "character",
+      "text": "JOHN"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen. Sit down. Eat something. We have to talk about the money, and about your brother."
+    },
+    {
+      "type": "action",
+      "text": "Rain hammers the windows. A neon sign buzzes, dies, buzzes again. John stares at the coffee like it owes him money."
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. MAYA'S CAR - CONTINUOUS"
+    },
+    {
+      "type": "action",
+      "text": "Outside, a car door slams. Then another. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "action",
+      "text": "She checks her phone. Three missed calls. All the same number. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier."
+    },
+    {
+      "type": "transition",
+      "text": "CUT TO:"
+    },
+    {
+      "type": "scene_heading",
+      "text": "INT. POLICE STATION - LOBBY - DAWN"
+    },
+    {
+      "type": "action",
+      "text": "A siren somewhere far off. Neither of them looks up."
+    },
+    {
+      "type": "action",
+      "text": "Maya slides into the booth across from him. She doesn't take off her coat. He finally opens the envelope. Inside: a photograph, a key, and a ticket stub from the pier. Outside, a car door slams. Then another."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(not looking up)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him."
+    },
+    {
+      "type": "character",
+      "text": "JOHN (V.O.)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Nobody. Not yet. But that won't last, and you know it won't. He's not my brother anymore. I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    },
+    {
+      "type": "character",
+      "text": "MAYA"
+    },
+    {
+      "type": "parenthetical",
+      "text": "(beat)"
+    },
+    {
+      "type": "dialogue",
+      "text": "Tell that to the people looking for him. Who else knows? I told you not to come back here. Not tonight. Not after what happened at the pier. You never listen."
+    }
+  ]
 }

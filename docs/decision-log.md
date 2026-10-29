@@ -384,6 +384,33 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 
 ## Log entries (newest first)
 
+### D-109 · 2026-10-29 · Smaller UI changes: "+ Import", the account circle, Empty, no draft switcher, inline what-if names, the title dot, hidden scrollbars, × on Recent
+
+All Arnav's calls (his request, and his answers where there were options):
+1. **"+ Import".** Measured in Chromium, Import already matched "+ New series" and "+ New script" (13 px, weight 400, a 28 px box, 14 px between labels); it was only narrower. Options were equal widths, "+ Import", or no change. Arnav chose **"+ Import"**, so all three read alike.
+2. **The account avatar:** no hover background on its slot. The circle itself changes shade on hover.
+3. **Empty RECENTLY DELETED,** after an inline confirm. Chosen: **hidden now, erased tonight.** Everything the caller could restore, as a showrunner, is dated past the 30 days: it leaves the list, can't be restored (restores already refuse anything older than 30 days), and the nightly purge (D-090) erases it with its storage. `POST /api/home/trash/empty`. Rejected: erasing immediately (the API would need write access to the sync service's DynamoDB and S3 storage, duplicating the purge).
+4. **No draft switcher.** The toolbar's "Main ▾" / "Main › Name ▾" and its menu are removed (this supersedes SPEC 3.5's draft switcher and D-080's switcher menu). Arnav first chose plain text over a breadcrumb back to Main, then asked to remove the element entirely. What-ifs are entered from the Drafts tab, and **each what-if's name there renames on click**: a seamless inline field in the same type. The rest of the row still opens the what-if. Rename rights as before (whoever started it, or the showrunner).
+5. **The episode title's dot** ("Ep 1 · Pilot") no longer peeks out from behind the rename field.
+6. **No scrollbars:** everything that scrolls still scrolls (wheel, trackpad, keyboard), with no bar drawn.
+7. **× on each RECENT row,** at the far right, as on other rows: it removes the script from *your* Recent list only, without deleting anything. Opening it again brings it back. `DELETE /api/recent/:episodeId`.
+- **For writers:** fewer controls in the toolbar, renaming where the what-ifs are listed, and a way to clear the trash and Recent.
+- **Prototype parity:** the removed switcher and the "+ Import" label are listed as known differences.
+- **Built:**
+  - `apps/web/src/home/HomeScreen.tsx` (+ Import, the account circle, Empty and its confirm, × on Recent);
+  - `components/InlineName.tsx` on the Drafts rows;
+  - the switcher removed from `components/Toolbar.tsx` and `App.tsx`;
+  - the title's prefix in `components/RenameTitle.tsx`;
+  - the scrollbar rule in `base.css`;
+  - API: `POST /api/home/trash/empty` and `DELETE /api/recent/:episodeId` in `routes/home.ts`.
+- **Tests:**
+  - 2 API tests (Empty only touches your own trash and makes it unrestorable and due; Recent removal is per person and undone by opening);
+  - 3 Home browser tests (Empty with its confirm, × on Recent, no dot while renaming);
+  - the what-if tests now enter and rename from the Drafts tab;
+  - parity lists `.toolbar .sw` as removed.
+- **Also fixed:** D-108's guest test compared Postgres's clock with Node's to the millisecond and failed once on a few milliseconds of drift. Its bound now allows for that.
+- **Status:** built; awaits Arnav's review.
+
 ### D-108 · 2026-10-29 · "Try the demo": a guest sign-in into a private copy of a scene from The Avengers
 
 - **Arnav's calls** (from D-107's options): option **A**, a private copy per visitor. Then three choices:

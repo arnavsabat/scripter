@@ -41,9 +41,11 @@ export function RenameTitle({ text, value, prefix = '', canRename, onSave, start
   };
   return (
     <span className="title">
-      {prefix}
+      {/* "Ep 2" without its " · " while the field is open: the field's box would cover the dot
+          and leave a sliver of it showing (D-109). */}
+      {prefix && <span className="pre">{prefix.replace(/\s*·\s*$/, '')}</span>}
       <input
-        className="ren"
+        className={`ren${prefix ? ' after-pre' : ''}`}
         aria-label="Rename"
         defaultValue={value}
         maxLength={120}

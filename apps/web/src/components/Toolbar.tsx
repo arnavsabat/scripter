@@ -1,10 +1,11 @@
-// The script-screen toolbar (SPEC 3.5): back, sidebar toggle, title, draft switcher on the left;
-// presence, divider and Share on the right. Every icon has a hover label and an aria-label.
+// The script-screen toolbar (SPEC 3.5): back, sidebar toggle and title on the left (no draft
+// switcher since D-109: what-ifs are entered and renamed in the Drafts tab); presence, divider and
+// Share on the right. Every icon has a hover label and an aria-label.
 import type { Cue } from '@wr/shared';
 import type { Overlay } from '../App';
 import type { PresenceUser } from '../editor/presence';
 import { initials } from '../session';
-import { useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { PanelBoundary } from './Boundary';
 import { CoWriterMenu, type ShareContext } from './CoWriterMenu';
 import { Icon } from './Icons';
@@ -35,13 +36,6 @@ interface Props {
   cue: Cue;
   /** Share › Export PDF (D-071): anyone who can open the script, viewers included. */
   onExport?: () => void;
-  /** The draft switcher (D-080): "Main ▾" or "Main › Darker ending ▾", with ✓ on the current one. */
-  drafts?: {
-    label: string;
-    items: { label: string; current: boolean; onSelect: () => void }[];
-    /** In a what-if its creator or the showrunner may rename: click its name (D-080). */
-    whatIf?: { name: string; onRename: ((name: string) => void) | null };
-  };
   /** Inside a what-if only: the Changes toggle and Review all (SPEC 3.9). */
   whatIf?: { changes: boolean; onToggleChanges: () => void; review: ReactNode | null };
 }
@@ -64,14 +58,11 @@ export function Toolbar({
   others,
   cue,
   onExport,
-  drafts,
   whatIf,
 }: Props) {
   const toast = useToast();
-  const [renaming, setRenaming] = useState(false);
   const close = () => setOverlay(null);
-  const toggle = (kind: 'draft' | 'share' | 'review') =>
-    setOverlay(overlay?.kind === kind ? null : { kind });
+  const toggle = (kind: 'share' | 'review') => setOverlay(overlay?.kind === kind ? null : { kind });
 
   return (
     <header className="toolbar">
@@ -107,48 +98,6 @@ export function Toolbar({
             startEditing={!!title.startRenaming}
           />
         )}
-        <span className="anchor">
-          {renaming && drafts?.whatIf ? (
-            // Renaming: plain text with the field (an input can't sit inside a button).
-            <span className="sw">
-              Main ›{' '}
-              <WhatIfName
-                name={drafts.whatIf.name}
-                onRename={drafts.whatIf.onRename}
-                editing
-                setEditing={setRenaming}
-              />
-            </span>
-          ) : (
-            <button
-              type="button"
-              className="sw"
-              title="Switch draft"
-              aria-haspopup="menu"
-              aria-expanded={overlay?.kind === 'draft'}
-              onClick={() => toggle('draft')}
-            >
-              {drafts?.whatIf ? 'Main › ' : (drafts?.label ?? 'Main')}
-              {drafts?.whatIf && (
-                <WhatIfName
-                  name={drafts.whatIf.name}
-                  onRename={drafts.whatIf.onRename}
-                  editing={false}
-                  setEditing={setRenaming}
-                />
-              )}{' '}
-              ▾
-            </button>
-          )}
-          {overlay?.kind === 'draft' && (
-            <Menu
-              label="Drafts"
-              style={{ left: 0 }}
-              onClose={close}
-              items={drafts?.items ?? [{ label: 'Main', current: true, onSelect: () => {} }]}
-            />
-          )}
-        </span>
         {typeof title !== 'string' && !title.canEdit && <span className="vo">View only</span>}
         {cue && (
           <span className="cue" title={CUE_HINT} role="status">
@@ -244,72 +193,5 @@ export function Toolbar({
         )}
       </div>
     </header>
-  );
-}
-
-/**
- * The what-if's name in the switcher: click it to rename, as with titles (D-033, D-080). Clicking
- * "Main ›" or "▾" still opens the menu.
- */
-function WhatIfName({
-  name,
-  onRename,
-  editing,
-  setEditing,
-}: {
-  name: string;
-  onRename: ((name: string) => void) | null;
-  editing: boolean;
-  setEditing: (e: boolean) => void;
-}) {
-  if (!onRename) return <span>{name}</span>;
-  if (!editing)
-    return (
-      <span
-        className="wn"
-        role="button"
-        tabIndex={0}
-        title="Rename"
-        onClick={(e) => {
-          e.stopPropagation();
-          setEditing(true);
-        }}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            e.stopPropagation();
-            setEditing(true);
-          }
-        }}
-      >
-        {name}
-      </span>
-    );
-  const finish = (input: HTMLInputElement, save: boolean) => {
-    setEditing(false);
-    const next = input.value.trim();
-    if (save && next && next !== name) onRename(next);
-  };
-  return (
-    <input
-      className="ren wn"
-      aria-label="Rename what-if"
-      defaultValue={name}
-      maxLength={120}
-      size={Math.max(12, name.length + 2)}
-      ref={(el) => {
-        if (el && document.activeElement !== el) {
-          el.focus();
-          el.select();
-        }
-      }}
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => {
-        e.stopPropagation();
-        if (e.key === 'Enter') finish(e.currentTarget, true);
-        else if (e.key === 'Escape') finish(e.currentTarget, false);
-      }}
-      onBlur={(e) => finish(e.currentTarget, true)}
-    />
   );
 }

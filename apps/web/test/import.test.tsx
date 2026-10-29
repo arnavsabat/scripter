@@ -189,7 +189,7 @@ describe('Home › Import', () => {
     expect([...document.querySelectorAll('.home-tb .grp .ta')].map((b) => text(b))).toEqual([
       '+ New series',
       '+ New script',
-      'Import',
+      '+ Import',
     ]);
 
     const src = await fixture('night-shift.fdx');
