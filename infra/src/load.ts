@@ -8,7 +8,7 @@
 // one. Its private half sits in the generator's task definition: it grants nothing but writing
 // into this throwaway cluster.
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from 'aws-cdk-lib';
-import { AttributeType, Billing, TableV2 } from 'aws-cdk-lib/aws-dynamodb';
+import { AttributeType, Billing, Capacity, TableV2 } from 'aws-cdk-lib/aws-dynamodb';
 import { Peer, Port, SecurityGroup, SubnetType } from 'aws-cdk-lib/aws-ec2';
 import { Platform } from 'aws-cdk-lib/aws-ecr-assets';
 import {
@@ -35,6 +35,9 @@ import { fileURLToPath } from 'node:url';
 import type { DataStack } from './data';
 
 const REPO = fileURLToPath(new URL('../..', import.meta.url));
+/** The load-test edit log's provisioned capacity (D-103). */
+export const LOAD_LOG_WRITES = 10_000;
+export const LOAD_LOG_READS = 500;
 
 export interface LoadStackProps extends StackProps {
   data: DataStack;
@@ -58,17 +61,32 @@ export class LoadStack extends Stack {
     const keys = JSON.stringify({ privateJwk: privateKey.export({ format: 'jwk' }), publicJwk });
     const secret = randomBytes(24).toString('hex'); // the cluster secret and crash-switch key
 
-    const table = (name: string, pk: string, sk?: string) =>
+    const table = (name: string, pk: string, sk?: string, billing = Billing.onDemand()) =>
       new TableV2(this, name, {
         tableName: `wr-lt-${name}`,
         partitionKey: { name: pk, type: AttributeType.STRING },
         ...(sk ? { sortKey: { name: sk, type: AttributeType.STRING } } : {}),
-        billing: Billing.onDemand(),
+        billing,
         removalPolicy: RemovalPolicy.DESTROY,
       });
     const tables = [
-      table('edit-log', 'docId', 'k'),
-      table('coordination', 'pk'),
+      // A brand-new on-demand table has few partitions (each at most 1,000 writes a second), and
+      // the first 1,000-writer run was throttled 20-30k times a minute before DynamoDB could
+      // split it (D-102). This table lives only for a test, so it's created at full size: 10,000
+      // write units, about 10 partitions, roughly twice that run's demand (about $6.50 an hour).
+      table(
+        'edit-log',
+        'docId',
+        'k',
+        Billing.provisioned({
+          readCapacity: Capacity.fixed(LOAD_LOG_READS),
+          writeCapacity: Capacity.autoscaled({
+            minCapacity: LOAD_LOG_WRITES,
+            maxCapacity: LOAD_LOG_WRITES,
+          }),
+        }),
+      ),
+      table('coordination', 'pk'), // peaked at 1,740 writes a second unthrottled: on demand is fine
       table('members', 'id'),
     ];
     const bucket = new Bucket(this, 'Snapshots', {

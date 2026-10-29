@@ -18,6 +18,7 @@ import {
   type AttributeValue,
   type TransactWriteItem,
 } from '@aws-sdk/client-dynamodb';
+import { retryConflicts } from './retry';
 import { ensureTable, leaseCheck } from './coordination';
 import { FencedError, type EditLog, type Fence, type LogEntry, type LogTail } from './types';
 
@@ -76,7 +77,10 @@ export class DynamoEditLog implements EditLog {
       for (let c = first; c < Math.min(chunks, first + CHUNKS_PER_TRANSACTION); c++)
         items.push(item(c));
       try {
-        await this.client.send(new TransactWriteItemsCommand({ TransactItems: items }));
+        // A collision with a renewal of the same lease item is a race, not a refusal (D-102).
+        await retryConflicts(() =>
+          this.client.send(new TransactWriteItemsCommand({ TransactItems: items })),
+        );
       } catch (err) {
         if (
           err instanceof TransactionCanceledException &&

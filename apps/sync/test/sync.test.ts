@@ -150,6 +150,67 @@ describe('server crash', () => {
   });
 });
 
+describe('group commit (D-103)', () => {
+  it('updates that queue behind a slow append go out together as one entry, durable before anyone sees them', async () => {
+    const storage = memoryStorage();
+    const srv = track(await server(storage));
+    const a = track(client(srv, 'Maya'));
+    const b = track(client(srv, 'Sam'));
+    await Promise.all([a.c.whenSynced(), b.c.whenSynced()]);
+    // Hold the first append open, as a slow DynamoDB round trip would.
+    let release!: () => void;
+    let held = true;
+    storage.log.beforeAppend = () =>
+      held ? new Promise<void>((r) => (release = () => ((held = false), r()))) : undefined;
+    const before = storage.log.appends;
+    type(a.doc, 'first ');
+    await sleep(50);
+    // 40 more keystrokes from both writers while it's in flight.
+    for (let i = 0; i < 20; i++) {
+      type(a.doc, `a${i} `);
+      type(b.doc, `b${i} `);
+    }
+    await sleep(150);
+    expect(storage.log.appends).toBe(before); // nothing durable yet…
+    expect(b.text()).not.toContain('first'); // …so nothing broadcast
+    expect(a.c.unsaved).toBeGreaterThan(0); // …and nothing acknowledged
+    release();
+    await until(
+      () => a.text() === b.text() && a.text().includes('a19') && a.text().includes('b19'),
+    );
+    await Promise.all([a.c.whenSynced(), b.c.whenSynced()]);
+    // 41 updates became the held one plus the batch that waited behind it.
+    expect(storage.log.appends - before).toBe(2);
+    expect(await fromStorage(storage)).toBe(a.text());
+  });
+
+  it('a failed batch closes every writer in it, nothing in it is acknowledged, and both resend', async () => {
+    const storage = memoryStorage();
+    const srv = track(await server(storage));
+    const a = track(client(srv, 'Maya'));
+    const b = track(client(srv, 'Sam'));
+    await Promise.all([a.c.whenSynced(), b.c.whenSynced()]);
+    let release!: () => void;
+    let step = 0;
+    storage.log.beforeAppend = () => {
+      step += 1;
+      if (step === 1) return new Promise<void>((r) => (release = r)); // hold the first…
+      if (step === 2) throw new Error('DynamoDB unavailable'); // …and fail the batch behind it
+    };
+    type(a.doc, 'one ');
+    await sleep(50);
+    type(a.doc, 'two ');
+    type(b.doc, 'three ');
+    await sleep(50);
+    release();
+    await until(() =>
+      ['one', 'two', 'three'].every((w) => a.text().includes(w) && b.text().includes(w)),
+    );
+    await Promise.all([a.c.whenSynced(), b.c.whenSynced()]);
+    expect(await fromStorage(storage)).toBe(a.text());
+  });
+});
+
 describe('duplicates', () => {
   it('the same update sent three times, plus a full resend, changes nothing and is acked every time', async () => {
     const storage = memoryStorage();
@@ -190,8 +251,10 @@ describe('duplicates', () => {
     await until(() => acks.length === 4);
     await sleep(50);
     expect(b.text()).toBe('once and only once');
-    // The log holds the duplicates, and replaying it is harmless too.
-    expect(storage.log.appends).toBe(4);
+    // The log holds the duplicates, and replaying it is harmless too. With group commit (D-103),
+    // duplicates that queued behind an append in flight share one entry, so 2-4 entries.
+    expect(storage.log.appends).toBeGreaterThanOrEqual(2);
+    expect(storage.log.appends).toBeLessThanOrEqual(4);
     expect(await fromStorage(storage)).toBe('once and only once');
   });
 });

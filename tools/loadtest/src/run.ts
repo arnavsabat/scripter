@@ -119,6 +119,12 @@ interface RunResult {
   latency: ReturnType<Histogram['summary']> & { over150: number; over1s: number };
   keystrokes: number;
   lostCharacters: number;
+  /** Acknowledged characters missing from the read-back: lost edits (must be 0, D-103). */
+  lostAckedCharacters: number;
+  /** Typed but never acknowledged when the run stopped: still on the writers' devices. */
+  pendingCharacters: number;
+  /** Rooms whose read-back failed outright (their characters all count as lost). */
+  readBackFailures: number;
   unackedWriters: number;
   failedWriters: number;
   connectSeconds: number;
@@ -196,6 +202,9 @@ async function measure(
     latency: { ...histogram.summary(), over150: histogram.over(150), over1s: histogram.over(1000) },
     keystrokes: roomResults.reduce((s, r) => s + r.keystrokes, 0),
     lostCharacters: roomResults.reduce((s, r) => s + r.lost, 0),
+    lostAckedCharacters: roomResults.reduce((s, r) => s + r.lostAcked, 0),
+    pendingCharacters: roomResults.reduce((s, r) => s + r.pending, 0),
+    readBackFailures: roomResults.filter((r) => r.readFailed).length,
     unackedWriters: roomResults.reduce((s, r) => s + r.unacked, 0),
     failedWriters: roomResults.reduce((s, r) => s + r.failed, 0),
     connectSeconds: Math.round(connect / 100) / 10,
@@ -271,7 +280,7 @@ const results: { settings: Settings; machine: typeof machine; runs: RunResult[] 
   runs: [],
 };
 const row = (r: RunResult) =>
-  `${String(r.writers).padStart(5)} writers ${String(r.rooms).padStart(4)} rooms  p50 ${String(r.latency.p50).padStart(4)} ms  p95 ${String(r.latency.p95).padStart(5)} ms  p99 ${String(r.latency.p99).padStart(5)} ms  max ${String(r.latency.max).padStart(5)} ms  samples ${r.latency.samples}  keystrokes ${r.keystrokes}  lost ${r.lostCharacters}  unacked ${r.unackedWriters}  failed ${r.failedWriters}` +
+  `${String(r.writers).padStart(5)} writers ${String(r.rooms).padStart(4)} rooms  p50 ${String(r.latency.p50).padStart(4)} ms  p95 ${String(r.latency.p95).padStart(5)} ms  p99 ${String(r.latency.p99).padStart(5)} ms  max ${String(r.latency.max).padStart(5)} ms  samples ${r.latency.samples}  keystrokes ${r.keystrokes}  lost ${r.lostCharacters} (acknowledged ${r.lostAckedCharacters}, pending ${r.pendingCharacters}, read-back failures ${r.readBackFailures})  unacked ${r.unackedWriters}  failed ${r.failedWriters}` +
   (r.kill
     ? `  pause ${r.kill.pause.maxMs} ms (${r.kill.pause.keystrokesOver1s} keystrokes over 1 s)`
     : '');

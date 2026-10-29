@@ -6,7 +6,7 @@ import { startSyncServer } from '@wr/sync';
 import { memoryAccess } from '@wr/sync/access';
 import { memoryStorage } from '@wr/sync/memory';
 import { describe, expect, it } from 'vitest';
-import { Room } from '../src/room';
+import { Room, type Typing } from '../src/room';
 import { Histogram } from '../src/stats';
 
 describe('Histogram', () => {
@@ -49,12 +49,62 @@ describe('a room', () => {
       expect(await room.drain(5000)).toBe(0);
       const result = await room.verify();
       expect(result.keystrokes).toBeGreaterThan(20);
-      expect(result).toMatchObject({ writers: 3, lost: 0, unacked: 0, failed: 0 });
+      expect(result).toMatchObject({
+        writers: 3,
+        lost: 0,
+        lostAcked: 0,
+        pending: 0,
+        readFailed: false,
+        unacked: 0,
+        failed: 0,
+      });
       // Each keystroke reaches the two other writers.
       expect(latency.total).toBeGreaterThan(result.keystrokes);
       expect(latency.summary().p95).toBeLessThan(500);
     } finally {
       room.close();
+      await server.close();
+    }
+  });
+
+  it('tells an unacknowledged edit from a lost one: devices gone before the ack lose only pending typing (D-103)', async () => {
+    const issuer = await createPortableTestIssuer();
+    const storage = memoryStorage();
+    const server = await startSyncServer({
+      port: 0,
+      storage,
+      verify: tokenVerifier([issuer.trusted]),
+      access: memoryAccess(),
+      clusterSecret: 'test',
+    });
+    const room = new Room(
+      'harness-pending',
+      3,
+      [`ws://127.0.0.1:${server.port}`],
+      (name) => issuer.sign(name),
+      () => {},
+    );
+    const typing: Typing = { burst: [3, 5], keyGapMs: [20, 40], pauseMs: [50, 100] };
+    try {
+      await room.open();
+      room.start(typing, 50);
+      await new Promise((r) => setTimeout(r, 800));
+      room.stop();
+      expect(await room.drain(5000)).toBe(0); // all of this is durable
+      // Now DynamoDB stalls: more typing waits on the writers' devices…
+      let release!: () => void;
+      storage.log.beforeAppend = () => new Promise<void>((r) => (release = r));
+      room.start(typing, 50);
+      await new Promise((r) => setTimeout(r, 600));
+      // …and the devices go away before it's acknowledged.
+      room.close();
+      storage.log.beforeAppend = undefined;
+      release?.();
+      const result = await room.verify();
+      expect(result.pending).toBeGreaterThan(0);
+      expect(result.lostAcked).toBe(0);
+      expect(result.readFailed).toBe(false);
+    } finally {
       await server.close();
     }
   });

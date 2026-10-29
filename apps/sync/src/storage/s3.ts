@@ -27,6 +27,7 @@ import {
   TransactWriteItemsCommand,
   TransactionCanceledException,
 } from '@aws-sdk/client-dynamodb';
+import { retryConflicts } from './retry';
 import { leaseCheck, leaseKey, pointerKey } from './coordination';
 import { FencedError, type Fence, type Snapshot, type SnapshotStore } from './types';
 
@@ -92,25 +93,28 @@ export class S3SnapshotStore implements SnapshotStore {
       }),
     );
     try {
-      await this.dynamo.send(
-        new TransactWriteItemsCommand({
-          TransactItems: [
-            leaseCheck(this.coordinationTable, docId, fence),
-            {
-              Put: {
-                TableName: this.coordinationTable,
-                Item: {
-                  ...pointerKey(docId),
-                  key: { S: key },
-                  seq: { N: String(snapshot.seq) },
-                  epoch: { N: String(fence.epoch) },
+      // A collision with a renewal of the same lease item is a race: retry it (D-102).
+      await retryConflicts(() =>
+        this.dynamo.send(
+          new TransactWriteItemsCommand({
+            TransactItems: [
+              leaseCheck(this.coordinationTable, docId, fence),
+              {
+                Put: {
+                  TableName: this.coordinationTable,
+                  Item: {
+                    ...pointerKey(docId),
+                    key: { S: key },
+                    seq: { N: String(snapshot.seq) },
+                    epoch: { N: String(fence.epoch) },
+                  },
+                  ConditionExpression: 'attribute_not_exists(pk) OR seq < :seq',
+                  ExpressionAttributeValues: { ':seq': { N: String(snapshot.seq) } },
                 },
-                ConditionExpression: 'attribute_not_exists(pk) OR seq < :seq',
-                ExpressionAttributeValues: { ':seq': { N: String(snapshot.seq) } },
               },
-            },
-          ],
-        }),
+            ],
+          }),
+        ),
       );
     } catch (err) {
       // The new object is now an orphan: nothing points at it. Remove it (best effort).
@@ -118,9 +122,12 @@ export class S3SnapshotStore implements SnapshotStore {
         .send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }))
         .catch(() => {});
       if (err instanceof TransactionCanceledException) {
-        if (err.CancellationReasons?.[0]?.Code === 'ConditionalCheckFailed')
-          throw new FencedError(docId, fence);
-        return; // the pointer already moved past this seq: a newer snapshot exists
+        const [lease, pointer] = err.CancellationReasons ?? [];
+        if (lease?.Code === 'ConditionalCheckFailed') throw new FencedError(docId, fence);
+        // Only the pointer's own condition failing means a newer snapshot exists. Anything else
+        // (a conflict that outlasted its retries, throttling) left the pointer where it was, and
+        // reporting success would let the room truncate log entries no snapshot covers (D-102).
+        if (pointer?.Code === 'ConditionalCheckFailed') return;
       }
       throw err;
     }

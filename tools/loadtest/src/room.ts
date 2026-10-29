@@ -6,7 +6,10 @@
 // writer's screen, including the durable append before the server broadcasts it.
 //
 // Zero lost edits is checked at the end: a fresh client reads the script back from the servers,
-// and each line must equal, character for character, everything its writer typed.
+// and each line must equal, character for character, everything its writer typed. Two numbers
+// come out of it (D-103): characters the server had *acknowledged* but that are missing, the
+// durability claim, which must be 0; and characters still waiting on a writer's device when the
+// run stopped, which a real browser would keep and resend (a speed problem, not a loss).
 import { SyncClient, type SocketLike } from '@wr/shared';
 import { Awareness } from 'y-protocols/awareness';
 import * as Y from 'yjs';
@@ -31,6 +34,8 @@ interface Writer {
   client: SyncClient;
   line: Y.XmlText | null;
   typed: string;
+  /** How much of `typed` the server has acknowledged: all of it, as of the last fully synced moment. */
+  durable: number;
   /** When each of this writer's keystrokes left (performance.now()). */
   sent: number[];
   timer: ReturnType<typeof setTimeout> | null;
@@ -40,8 +45,14 @@ export interface RoomResult {
   docId: string;
   writers: number;
   keystrokes: number;
-  /** Characters missing or wrong in the read-back, against what was typed (should be 0). */
+  /** Characters missing or wrong in the read-back, against what was typed. */
   lost: number;
+  /** …of which the server had acknowledged as durable: a lost edit (must be 0). */
+  lostAcked: number;
+  /** Characters typed but not yet acknowledged when the run stopped (still on the writer). */
+  pending: number;
+  /** The read-back itself failed: `lostAcked` then counts every acknowledged character. */
+  readFailed: boolean;
   /** Writers whose edits weren't all acknowledged when the run ended. */
   unacked: number;
   /** Writers that never finished connecting (bad server, refused). */
@@ -86,10 +97,15 @@ export class Room {
         client: this.connect(i, doc, awareness),
         line: null,
         typed: '',
+        durable: 0,
         sent: [],
         timer: null,
       });
     }
+    for (const w of this.writers)
+      w.client.onChange(() => {
+        if (w.client.synced) w.durable = w.typed.length;
+      });
     const first = this.writers[0]!;
     await first.client.whenSynced(30_000);
     const fragment = first.doc.getXmlFragment('script');
@@ -141,6 +157,7 @@ export class Room {
 
   /** Every writer types until stop(), each starting at a random moment within `staggerMs`. */
   start(typing: Typing, staggerMs = 2000) {
+    this.stopped = false; // a room can type again after a stop
     for (const w of this.writers) this.burst(w, typing, Math.random() * staggerMs);
   }
 
@@ -182,6 +199,8 @@ export class Room {
     const doc = new Y.Doc();
     const client = this.connect(999, doc);
     let lost = 0;
+    let lostAcked = 0;
+    let readFailed = false;
     try {
       await client.whenSynced(60_000);
       const lines = doc.getXmlFragment('script').toArray();
@@ -189,10 +208,16 @@ export class Room {
         const block = lines[w.index] as Y.XmlElement | undefined;
         const text = block?.get(0) as Y.XmlText | undefined;
         const got = text ? String(text.toString()) : '';
-        if (got !== w.typed) lost += Math.max(1, w.typed.length - commonPrefix(got, w.typed));
+        if (got === w.typed) continue;
+        const kept = commonPrefix(got, w.typed);
+        lost += Math.max(1, w.typed.length - kept);
+        lostAcked += Math.max(0, w.durable - kept);
       }
     } catch {
-      lost = this.writers.reduce((n, w) => n + w.typed.length, 0); // couldn't read it back at all
+      // Couldn't read it back at all: count everything, and every acknowledged character.
+      readFailed = true;
+      lost = this.writers.reduce((n, w) => n + w.typed.length, 0);
+      lostAcked = this.writers.reduce((n, w) => n + w.durable, 0);
     } finally {
       client.destroy();
       doc.destroy();
@@ -202,6 +227,9 @@ export class Room {
       writers: this.size,
       keystrokes: this.writers.reduce((n, w) => n + w.typed.length, 0),
       lost,
+      lostAcked,
+      pending: this.writers.reduce((n, w) => n + w.typed.length - w.durable, 0),
+      readFailed,
       unacked: this.writers.filter((w) => !w.client.synced).length,
       failed: this.writers.filter((w) => !w.line).length,
     };

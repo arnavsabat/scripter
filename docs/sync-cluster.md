@@ -95,13 +95,16 @@ DynamoDB applies conditional writes to a single item one at a time, so if severa
 
 ## 5. The ordering rule on the home server
 
-For each episode, the home's `Room` handles updates strictly one at a time:
+For each episode, the home's `Room` runs one append at a time. Updates that arrive while an append is in flight wait in a queue, and go out together as the next one: **group commit** (D-103), one merged Yjs update in one fenced log item, up to 256 KB. For each batch:
 
 1. **Append** to the edit log (the fenced transaction), and wait for DynamoDB to confirm.
 2. **Apply** the update to the in-memory Y.Doc. That broadcasts it to the episode's other writers.
-3. **Acknowledge** to the sender: `[3][stored]`, meaning "N of your update messages on this connection are now durable" (D-019).
+2b. Each update is applied separately, with its own sender as the origin, so no writer is sent its own edit back.
+3. **Acknowledge** each message, in order: `[3][stored]`, meaning "N of your update messages on this connection are now durable" (D-019). Still exactly one ack per message.
 
-Nothing is broadcast or acknowledged before it's durable. If the append fails for any other reason, nothing is applied or acknowledged, and the writer is disconnected. Its reconnect handshake resends the edit.
+Nothing is broadcast or acknowledged before it's durable. If the append is fenced, the room steps down. If it fails for any other reason, nothing in the batch is applied or acknowledged, and every writer in it is disconnected. Their reconnect handshakes resend the edits.
+
+**Races on the lease item (D-102, D-103).** Every fenced write (append, snapshot pointer) condition-checks the episode's lease item inside a transaction, and renewals update that same item every 2 s. DynamoDB refuses one of two concurrent writes to an item when either is transactional (`TransactionConflict`). Such a refusal wrote nothing, so every lease-item write retries a conflict up to four times with growing random waits (`storage/retry.ts`); a failed *condition*, the fence saying "not yours", is never retried. And a snapshot is reported saved only if its pointer actually moved: otherwise the room could truncate log entries that no snapshot covers.
 
 ## 6. Failover: the home server dies
 

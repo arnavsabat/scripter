@@ -2,7 +2,9 @@
 //
 // Two rules this file exists to enforce:
 //  1. An update is appended to the durable edit log BEFORE it is applied, broadcast or
-//     acknowledged, one at a time, so log positions have no gaps and acks go out in order.
+//     acknowledged, so log positions have no gaps and acks go out in order. Appends run one at a
+//     time; updates that arrive while one is in flight wait, and go out together as the next
+//     one (group commit, D-103): one merged update, one fenced log item.
 //  2. Only the lease holder writes. The room acquires the episode's lease before loading it,
 //     presents its fencing token (server ID + epoch) with every append and snapshot, renews the
 //     lease every 2 s, and steps down the moment storage says the token is out of date.
@@ -67,6 +69,17 @@ const LOAD = Symbol('load');
 export const isEmptyUpdate = (u: Uint8Array) => u.byteLength === 2 && u[0] === 0 && u[1] === 0;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/**
+ * Group commit's ceiling on one log entry's updates (D-103): typing batches are a few KB at most,
+ * and a big paste or an offline session's resend still goes out on its own (the log chunks it).
+ */
+export const MAX_BATCH_BYTES = 256 * 1024;
+
+interface Queued {
+  peer: Peer;
+  update: Uint8Array;
+}
+
 export class Room {
   readonly doc = new Y.Doc();
   readonly awareness = new awarenessProtocol.Awareness(this.doc);
@@ -82,7 +95,9 @@ export class Room {
   private sinceSnapshot = 0;
   private lastSnapshotAt = Date.now();
   private lastRenewedAt = 0;
-  private chain: Promise<void> = Promise.resolve();
+  /** Updates waiting for the append in flight to finish (group commit, D-103). */
+  private queue: Queued[] = [];
+  private draining: Promise<void> | null = null;
   private snapshotting: Promise<void> | null = null;
   private timers: ReturnType<typeof setInterval>[] = [];
 
@@ -161,48 +176,89 @@ export class Room {
   }
 
   /**
-   * An update from a peer (sync step 2 or update). Queued behind every earlier one, then:
-   * fenced durable append → apply (which broadcasts) → ack. If the append is fenced, this server
-   * is an outdated owner and the whole room steps down. If it fails otherwise, the peer is
-   * disconnected; its reconnect handshake resends the update. Either way nothing is acked.
+   * An update from a peer (sync step 2 or update). Queued behind every earlier one; then, together
+   * with whatever else queued while the previous append was in flight (group commit, D-103):
+   * one fenced durable append → apply each (which broadcasts) → ack each peer. If the append is
+   * fenced, this server is an outdated owner and the whole room steps down. If it fails
+   * otherwise, every peer in the batch is disconnected; their reconnect handshakes resend the
+   * updates. Either way nothing is applied, broadcast or acked.
    */
   ingest(peer: Peer, update: Uint8Array) {
     this.lastActivity = Date.now();
-    this.chain = this.chain.then(async () => {
-      if (peer.closed || this.state !== 'open') {
-        // Arrived while handing off or closing: the next server will get it via the handshake.
-        if (!peer.closed) peer.close(MOVED, 'episode moved');
-        return;
-      }
-      try {
-        if (!isEmptyUpdate(update)) {
-          const seq = this.nextSeq;
-          await this.opts.storage.log.append(this.docId, seq, update, this.fence!);
-          this.nextSeq = seq + 1;
-          this.sinceSnapshot += 1;
-          Y.applyUpdate(this.doc, update, peer);
-        }
-      } catch (err) {
-        if (err instanceof FencedError)
-          return this.lose('append fenced: another server owns this episode');
-        this.opts.logger.error('append failed; closing connection', {
-          docId: this.docId,
-          peer: peer.name,
-          err: String(err),
-        });
-        peer.close(4500, 'storage failed');
-        return;
-      }
-      peer.stored += 1;
-      peer.send(encodeAck(peer.stored));
-      if (this.sinceSnapshot >= this.opts.snapshotEvery) void this.snapshot();
-    });
-    return this.chain;
+    this.queue.push({ peer, update });
+    this.drain();
+    return this.settled();
   }
 
   /** Waits for every queued update to be processed. */
-  settled() {
-    return this.chain;
+  async settled() {
+    while (this.draining) await this.draining;
+  }
+
+  private drain() {
+    if (this.draining) return;
+    this.draining = (async () => {
+      try {
+        while (this.queue.length) await this.commit(this.takeBatch());
+      } finally {
+        this.draining = null;
+      }
+    })();
+  }
+
+  /** The oldest queued updates, up to MAX_BATCH_BYTES (always at least one). */
+  private takeBatch() {
+    let bytes = 0;
+    let n = 0;
+    while (n < this.queue.length) {
+      const size = this.queue[n]!.update.byteLength;
+      if (n > 0 && bytes + size > MAX_BATCH_BYTES) break;
+      bytes += size;
+      n += 1;
+    }
+    return this.queue.splice(0, n);
+  }
+
+  private async commit(batch: Queued[]) {
+    if (this.state !== 'open') {
+      // Arrived while handing off or closing: the next server will get them via the handshake.
+      for (const { peer } of batch) if (!peer.closed) peer.close(MOVED, 'episode moved');
+      return;
+    }
+    // A peer that has gone resends through its next handshake, as it always did.
+    const live = batch.filter(({ peer }) => !peer.closed);
+    const edits = live.filter(({ update }) => !isEmptyUpdate(update));
+    if (edits.length) {
+      const merged =
+        edits.length === 1 ? edits[0]!.update : Y.mergeUpdates(edits.map((e) => e.update));
+      try {
+        const seq = this.nextSeq;
+        await this.opts.storage.log.append(this.docId, seq, merged, this.fence!);
+        this.nextSeq = seq + 1;
+        this.sinceSnapshot += 1;
+        // Each with its own origin, so its writer isn't sent its own edit back.
+        for (const { peer, update } of edits) Y.applyUpdate(this.doc, update, peer);
+      } catch (err) {
+        if (err instanceof FencedError)
+          return this.lose('append fenced: another server owns this episode');
+        const peers = [...new Set(live.map(({ peer }) => peer))];
+        this.opts.logger.error('append failed; closing connection', {
+          docId: this.docId,
+          peers: peers.map((p) => p.name),
+          updates: edits.length,
+          err: String(err),
+        });
+        for (const peer of peers) peer.close(4500, 'storage failed');
+        return;
+      }
+    }
+    // Exactly one ack per message, in order, as before (PROTOCOL.md): only their timing changed,
+    // all sent once the shared append is durable.
+    for (const { peer } of live) {
+      peer.stored += 1;
+      peer.send(encodeAck(peer.stored));
+    }
+    if (this.sinceSnapshot >= this.opts.snapshotEvery) void this.snapshot();
   }
 
   private broadcastUpdate = (update: Uint8Array, origin: unknown) => {
@@ -295,7 +351,7 @@ export class Room {
     if (this.state === 'closing' || this.state === 'closed') return;
     await this.ready.catch(() => {});
     this.state = 'closing';
-    await this.chain;
+    await this.settled();
     await this.snapshotting;
     await this.snapshot();
     if (this.fence) await this.opts.storage.leases.release(this.docId, this.fence).catch(() => {});

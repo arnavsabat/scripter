@@ -163,7 +163,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 ## Proposed (awaiting Arnav)
 
-- **D-102, the load-test failure:** fixes and a rerun (options in Claude's message of 2026-10-29): lease renewal that doesn't fight appends; DynamoDB capacity for the test tables (warm throughput, or a warm-up ramp); group commit; and the harness counting acknowledged-but-missing edits separately from never-acknowledged ones.
+- ~~D-102, the load-test failure~~: all four fixes built (D-103); the AWS rerun is next.
 - ~~D-100, CloudFront → load balancer (504)~~: (a), CloudFront's origin-facing prefix list (D-100).
 - **Waiting on Arnav to finish the beta-readiness phase** (D-089 onwards):
   1. ~~The domain name~~: `scripter.ca`, and the product is Scripter (D-096).
@@ -214,7 +214,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
 
 - ~~D-020: storage-backed tests not yet run~~: resolved in D-021. All 6 pass against DynamoDB Local and SeaweedFS, three runs in a row, including the SIGKILL crash of a real server process.
 - ~~D-020: no client heartbeat~~: decided in D-022 (ping every 5 s, give up after 10 s).
-- **D-101: a lease renewal can collide with a snapshot's fenced transaction** (both touch the lease item), giving `TransactionConflictException`. Harmless at one miss (renewals every 2 s, expiry 6 s), but three in a row would lose the lease mid-write. Options to bring Arnav: retry a conflicted renewal at once with jitter, or skip renewing while a snapshot transaction is in flight.
+- ~~D-101: a lease renewal can collide with a fenced transaction on the lease item~~: retried with jitter (D-103), after the load test showed it at scale (D-102).
 - **D-080: Changes shows removed text inline,** so page view's breaks (computed from the script itself) don't account for it while Changes is on.
 - ~~D-080: a viewer opening a never-opened what-if sees it empty~~: it now says so, and the script appears when a writer opens it (D-094).
 - ~~D-080: usage counting isn't built~~: built in D-083.
@@ -287,7 +287,8 @@ Phase 3:
 ## Future versions
 
 - **From the beta-readiness phase:**
-  - **Group commit** for busy scripts: merge the updates queued behind a slow append into one log entry (D-092).
+  - ~~Group commit~~: built (D-103).
+  - **Appends that renew the lease:** a busy script would then need no separate renewals at all.
   - **Making Firefox exact:** per-browser break tables (D-089).
   - **Changes drawn outside the text,** so removed text doesn't shift page view's breaks (D-080).
   - **The leave prompt on Home too** (D-069).
@@ -379,6 +380,46 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-103 · 2026-10-29 · The four fixes from the load test, built; and a durability bug found on the way
+
+- **Arnav's call:** all four fixes from D-102, before a rerun. Meanwhile `WrLoad` was destroyed (its tables too). `beta:down` waits on Arnav, because its one new permission (the scheduler's `rds:StopDBInstance` on our database) needs a y/n answer at CDK's prompt.
+- **1. Writes on the lease item retry races** (`apps/sync/src/storage/retry.ts`).
+  - A `TransactionConflict` (two writes to one item, one of them transactional) wrote nothing, so it's retried: four tries, with random waits growing to about 0.25 s.
+  - A failed *condition* (the fence or the lease saying "not yours") is never retried.
+  - Used by renew, acquire, release, the fenced append and the snapshot-pointer move.
+  - Both directions were failing in the run: renewals lost to appends (590 failures, 2 lapsed leases), and appends lost to renewals (the connections closed with 4500).
+- **Found on the way, a durability bug, fixed:**
+  - `S3SnapshotStore.save` treated any cancelled pointer transaction that wasn't fenced as "a newer snapshot exists" and returned success. A transaction cancelled by a *conflict* would therefore report a save that never happened.
+  - The room would then truncate the log below that point, removing entries no stored snapshot covered. A later failover would have rebuilt the script without acknowledged edits.
+  - It's unknown whether it fired in D-102's run (the logs can't tell). It became reachable as soon as conflicts were common.
+  - Now only the pointer's own condition failing counts as "newer exists"; anything else fails the save, the room keeps its log and retries later.
+- **2. The honest loss metric** (`tools/loadtest`): each run now reports separately:
+  - characters the server had acknowledged that are missing (a lost edit: must be 0);
+  - characters still pending on a writer when the run stopped;
+  - rooms whose read-back failed.
+
+  (Also: a room can type again after a stop, which the new test needed.)
+- **3. The load-test edit log is created at full size:** provisioned 10,000 write units (about 10 partitions, about $6.50 an hour, deleted with the stack). Coordination and members stay on demand (coordination peaked at 1,740 writes a second, unthrottled). This corrects Claude's "$3-4 an hour" estimate; a one-hour session is about $8-10.
+- **4. Group commit** (`apps/sync/src/room.ts`):
+  - One append per script at a time, as before. Updates that arrive meanwhile are queued, and go out as the next append: one `Y.mergeUpdates` entry, up to 256 KB, fenced.
+  - Each update is then applied with its own origin (no echo), and each message gets exactly one ack in order, so the wire protocol is unchanged.
+  - A failed batch closes every writer in it; nothing is applied or acked.
+- **Tests:**
+  - 11 for races and the snapshot rule (fake AWS clients);
+  - 2 for group commit (41 keystrokes behind a held append land as 2 entries, invisible and unacked until durable; a failed batch resends with nothing lost);
+  - the harness's split between pending and lost;
+  - the load stack's sizes.
+  - Storage 12/12 and chaos 3/3 against DynamoDB Local; the full check is green.
+- **Claude's choices, standing unless changed:**
+  - four tries for a conflict;
+  - the 256 KB batch ceiling;
+  - keeping one ack per message rather than one per batch;
+  - 10,000 write units;
+  - retrying acquire and release too.
+- **A process slip by Claude:** D-102's commit (the log entry and `aws-rooms.json`) was made without running `pnpm check`, and the raw JSON failed the format check. That surfaced at this entry's gated check; the file is now formatted (its data unchanged). Every commit, docs-only ones too, goes through the gated check.
+- **Not changed:** throttling (not a conflict) still closes a writer's connection after the SDK's own three tries. With the table sized, it shouldn't arise in the test; in the beta, a script is far below a partition's limits.
+- **Status:** built and tested; next, the AWS rerun.
 
 ### D-102 · 2026-10-29 · The first AWS load test: 1,000 writers overwhelmed a cold DynamoDB table, and lease renewals fought the appends
 

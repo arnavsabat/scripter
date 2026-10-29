@@ -44,7 +44,10 @@ A short brief for talking about the project: the pitch, the four hardest problem
 
 **Tradeoffs:**
 - **Every keystroke pays a DynamoDB round trip before anyone sees it.** That costs latency (milliseconds in-region) and money (a transactional write per keystroke, which is why the beta's cost is mostly DynamoDB at scale), in exchange for "acknowledged means durable".
-- **Updates are appended strictly in order per script.** That's simple to reason about (one log, no gaps), but it caps one script at one update per round trip. The next step would be **group commit**: merge the updates queued behind a slow append into one log entry, keeping append-before-ack while multiplying throughput. It's measured and noted, not built (D-092).
+- **Updates are appended strictly in order per script, with group commit** (D-103). One append per script at a time keeps the log simple (no gaps, acks in order); updates that queue behind a slow append are merged (`Y.mergeUpdates`) into the next log entry, so a slow DynamoDB round trip costs throughput nothing and every keystroke still waits for durability. A test holds an append open while 40 keystrokes arrive: they land as one entry.
+- **What the first AWS load test taught** (D-102, D-103): a cold on-demand DynamoDB table throttled 1,000 writers, and that exposed two real bugs.
+  - **Lease renewals and fenced appends collided on the same item** (`TransactionConflict`, hundreds a minute), until leases lapsed. The fence kept it safe (no stale write landed), but writers were disconnected. Fix: retry conflicts with jittered backoff, never a failed condition.
+  - **A snapshot whose pointer didn't move could be reported as saved,** which would have let the room truncate log entries no snapshot covered. Fixed, with a test.
 
 ## 3. Pagination as a pure function
 
@@ -127,4 +130,4 @@ Say where a number came from: the local load numbers prove behavior, not capacit
 - **"What about clock skew?"** It can only shift when a lease looks expired. The fencing check in storage is what stops a second writer, and it doesn't read any clock.
 - **"Why not Postgres for the log?"** DynamoDB gives per-item conditional writes and transactions at any scale, with no connection limits, and no database server to run. Postgres holds what is relational (accounts, roles, series).
 - **"How do you know no edits were lost?"** The load test types a known string per writer, reads every script back with a fresh client at the end, and compares character by character. The chaos suite does the same with real processes killed and frozen.
-- **"What would you build next?"** Group commit for busy scripts; then the AI continuity checker and the Beats board (both seams in v1); then the series-level product.
+- **"What would you build next?"** Appends that renew the lease themselves (a busy script would need no separate renewals); then the AI continuity checker and the Beats board (both seams in v1); then the series-level product.

@@ -23,6 +23,7 @@ import {
   type AttributeValue,
   type TransactWriteItem,
 } from '@aws-sdk/client-dynamodb';
+import { retryConflicts } from './retry';
 import type { Acquired, Fence, Lease, LeaseStore, Member, MembershipStore } from './types';
 
 export const leaseKey = (docId: string) => ({ pk: { S: `lease#${docId}` } });
@@ -97,26 +98,28 @@ export class DynamoLeaseStore implements LeaseStore {
    * lease can't both win: DynamoDB applies conditional writes to one item one at a time.
    */
   async acquire(docId: string, serverId: string, ttlMs: number): Promise<Acquired> {
-    const now = Date.now();
     try {
-      const res = await this.client.send(
-        new UpdateItemCommand({
-          TableName: this.table,
-          Key: leaseKey(docId),
-          UpdateExpression:
-            'SET #owner = :me, expiresAt = :exp, epoch = if_not_exists(epoch, :zero) + :one',
-          ConditionExpression: 'attribute_not_exists(#owner) OR expiresAt < :now',
-          ExpressionAttributeNames: { '#owner': 'owner' },
-          ExpressionAttributeValues: {
-            ':me': { S: serverId },
-            ':exp': { N: String(now + ttlMs) },
-            ':now': { N: String(now) },
-            ':zero': { N: '0' },
-            ':one': { N: '1' },
-          },
-          ReturnValues: 'ALL_NEW',
-        }),
-      );
+      const res = await retryConflicts(() => {
+        const now = Date.now();
+        return this.client.send(
+          new UpdateItemCommand({
+            TableName: this.table,
+            Key: leaseKey(docId),
+            UpdateExpression:
+              'SET #owner = :me, expiresAt = :exp, epoch = if_not_exists(epoch, :zero) + :one',
+            ConditionExpression: 'attribute_not_exists(#owner) OR expiresAt < :now',
+            ExpressionAttributeNames: { '#owner': 'owner' },
+            ExpressionAttributeValues: {
+              ':me': { S: serverId },
+              ':exp': { N: String(now + ttlMs) },
+              ':now': { N: String(now) },
+              ':zero': { N: '0' },
+              ':one': { N: '1' },
+            },
+            ReturnValues: 'ALL_NEW',
+          }),
+        );
+      });
       return { ok: true, epoch: Number(res.Attributes?.epoch?.N) };
     } catch (err) {
       if (!(err instanceof ConditionalCheckFailedException)) throw err;
@@ -125,21 +128,24 @@ export class DynamoLeaseStore implements LeaseStore {
     }
   }
 
+  /** Retries a renewal that collided with an append's transaction on the lease item (D-102). */
   async renew(docId: string, fence: Fence, ttlMs: number) {
     try {
-      await this.client.send(
-        new UpdateItemCommand({
-          TableName: this.table,
-          Key: leaseKey(docId),
-          UpdateExpression: 'SET expiresAt = :exp',
-          ConditionExpression: '#owner = :me AND epoch = :epoch',
-          ExpressionAttributeNames: { '#owner': 'owner' },
-          ExpressionAttributeValues: {
-            ':exp': { N: String(Date.now() + ttlMs) },
-            ':me': { S: fence.serverId },
-            ':epoch': { N: String(fence.epoch) },
-          },
-        }),
+      await retryConflicts(() =>
+        this.client.send(
+          new UpdateItemCommand({
+            TableName: this.table,
+            Key: leaseKey(docId),
+            UpdateExpression: 'SET expiresAt = :exp',
+            ConditionExpression: '#owner = :me AND epoch = :epoch',
+            ExpressionAttributeNames: { '#owner': 'owner' },
+            ExpressionAttributeValues: {
+              ':exp': { N: String(Date.now() + ttlMs) },
+              ':me': { S: fence.serverId },
+              ':epoch': { N: String(fence.epoch) },
+            },
+          }),
+        ),
       );
       return true;
     } catch (err) {
@@ -150,19 +156,21 @@ export class DynamoLeaseStore implements LeaseStore {
 
   async release(docId: string, fence: Fence) {
     try {
-      await this.client.send(
-        new UpdateItemCommand({
-          TableName: this.table,
-          Key: leaseKey(docId),
-          UpdateExpression: 'REMOVE #owner SET expiresAt = :zero',
-          ConditionExpression: '#owner = :me AND epoch = :epoch',
-          ExpressionAttributeNames: { '#owner': 'owner' },
-          ExpressionAttributeValues: {
-            ':zero': { N: '0' },
-            ':me': { S: fence.serverId },
-            ':epoch': { N: String(fence.epoch) },
-          },
-        }),
+      await retryConflicts(() =>
+        this.client.send(
+          new UpdateItemCommand({
+            TableName: this.table,
+            Key: leaseKey(docId),
+            UpdateExpression: 'REMOVE #owner SET expiresAt = :zero',
+            ConditionExpression: '#owner = :me AND epoch = :epoch',
+            ExpressionAttributeNames: { '#owner': 'owner' },
+            ExpressionAttributeValues: {
+              ':zero': { N: '0' },
+              ':me': { S: fence.serverId },
+              ':epoch': { N: String(fence.epoch) },
+            },
+          }),
+        ),
       );
     } catch (err) {
       if (!(err instanceof ConditionalCheckFailedException)) throw err; // already not ours: fine

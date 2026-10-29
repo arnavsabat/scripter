@@ -450,6 +450,23 @@ describe('the load-test cluster (D-093)', () => {
     t.hasResourceProperties('AWS::DynamoDB::GlobalTable', { TableName: 'wr-lt-edit-log' });
   });
 
+  it('the edit log is created at full size, so a run is not throttled while DynamoDB splits it (D-102)', () => {
+    t.hasResourceProperties('AWS::DynamoDB::GlobalTable', {
+      TableName: 'wr-lt-edit-log',
+      BillingMode: 'PROVISIONED',
+      WriteProvisionedThroughputSettings: Match.objectLike({
+        WriteCapacityAutoScalingSettings: Match.objectLike({
+          MinCapacity: 10_000,
+          MaxCapacity: 10_000,
+        }),
+      }),
+    });
+    t.hasResourceProperties('AWS::DynamoDB::GlobalTable', {
+      TableName: 'wr-lt-coordination',
+      BillingMode: 'PAY_PER_REQUEST',
+    });
+  });
+
   it('never touches the beta: no Cognito, no Postgres, none of its tables', () => {
     const json = JSON.stringify(t.toJSON());
     expect(json).not.toContain('cognito');

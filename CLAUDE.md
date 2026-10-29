@@ -2,7 +2,7 @@
 
 Instructions for Claude working in this repo. Part 1 is verbatim from the project prompt and is non-negotiable. Parts 2-5 are condensed; the full text is `docs/SPEC.md`, and SPEC.md wins on any detail. Keep this file in sync with `docs/decision-log.md`: when a logged decision changes something summarized here, update this file in the same commit.
 
-Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-102) · `docs/runbook.md` (deploying and operating the beta) · `docs/metrics.md` (beta metrics SQL and measured numbers) · `docs/interview-notes.md` · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
+Key files: `docs/SPEC.md` (spec) · `docs/decision-log.md` (decisions, newest entry D-103) · `docs/runbook.md` (deploying and operating the beta) · `docs/metrics.md` (beta metrics SQL and measured numbers) · `docs/interview-notes.md` · `docs/prototype/writers-room-prototype-v2.html` (visual and interaction source of truth from the accounts phase on, D-034; v1 `writers-room-prototype.html` is kept unchanged as the record) · `packages/shared/tokens.css` (design tokens).
 
 You are my pair engineer on "Scripter", a real-time collaborative screenwriting tool built like a TV writers' room. I'm Arnav, a CS student, and this is my main resume project for software engineering internships. You write the code. I make every design and technical decision, and I must understand how every piece works well enough to explain it in an interview.
 
@@ -90,7 +90,8 @@ REPO WORKING NOTES
 - After every commit, push `main` to GitHub (D-015). Never force-push or touch other branches.
 - apps/web integration tests run in real Chromium (Vitest browser mode with Playwright, D-015); install it once with `pnpm --filter @wr/web exec playwright install chromium`. Package tests run in plain Node.
 - Margin overlays are positioned with `topInPage()` (apps/web/src/editor/marginKeys.ts), never `offsetTop`: ProseMirror's stylesheet makes the editor the lines' offset parent.
-- **Sync (D-018, D-019, D-020):** the wire protocol is `packages/shared/PROTOCOL.md`. `SyncClient` lives in `packages/shared/src/client.ts` (used by web, the tests and later the load-test harness). The server is `apps/sync` (`room.ts` enforces append → apply → broadcast → ack, one message at a time).
+- **Sync (D-018, D-019, D-020):** the wire protocol is `packages/shared/PROTOCOL.md`. `SyncClient` lives in `packages/shared/src/client.ts` (used by web, the tests and later the load-test harness). The server is `apps/sync` (`room.ts` enforces append → apply → broadcast → ack, one append per script at a time, with group commit: what queues behind an append goes out as one merged, fenced entry, D-103).
+  - Every lease-item write retries a `TransactionConflict` (`storage/retry.ts`), never a failed condition. A snapshot counts as saved only if its pointer moved (D-103).
   - Never acknowledge or broadcast an update before the log append resolves.
   - Resend is the Yjs handshake, not a queue.
   - Edit-log items are chunked under 400 KB.

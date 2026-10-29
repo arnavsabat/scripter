@@ -50,7 +50,7 @@ This is how unacknowledged edits are resent (SPEC 5.4). The client never needs a
 
 `[3][stored]`, where `stored` is the running count of **update-bearing messages from this connection** (sync step 2 and sync update) that are now durable in the DynamoDB edit log.
 
-- The server handles one connection's messages strictly in order. For each update-bearing message, it does this:
+- The server handles one connection's messages strictly in order. It runs one append per script at a time; messages that arrive while one is in flight go out together as the next (group commit, D-103), which changes only when their acks arrive. For each update-bearing message, it does this:
   1. Appends the update to the edit log.
   2. Waits for DynamoDB to confirm.
   3. Applies the update to its Y.Doc and broadcasts it to the other connections.
