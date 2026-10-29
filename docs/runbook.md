@@ -35,7 +35,7 @@ Credentials and secrets stay on your machine: Claude never handles them (D-061).
    - AWS pays $20 more each for trying EC2, RDS, Lambda and Bedrock from the console home's **Explore AWS** panel. Launch something tiny and delete it.
    - Don't turn on AWS Organizations, IAM Identity Center or Control Tower: any of them converts the account to paid.
    - Before 2027-04-26, decide whether to upgrade to paid (then it bills, at the same small amounts) or let the account close.
-4. **Postgres version.** `infra/src/data.ts` asks for Postgres 18.3. Check what RDS offers in us-east-2 that day, and use the newest 18.x:
+4. **Postgres version.** `infra/src/data.ts` asks for Postgres 18.6 (the newest on 2026-10-28). Check what RDS offers in us-east-2 that day, and use the newest 18.x:
    ```sh
    aws rds describe-db-engine-versions --engine postgres --region us-east-2 \
      --query "DBEngineVersions[?starts_with(EngineVersion,'18')].EngineVersion" --output text

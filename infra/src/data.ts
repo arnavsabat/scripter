@@ -76,7 +76,8 @@ export class DataStack extends Stack {
     this.servers.addIngressRule(this.lb, Port.tcp(4100), 'the load balancer to the API');
     this.servers.addIngressRule(this.lb, Port.tcp(4000), 'the load balancer to sync');
     this.servers.addIngressRule(this.servers, Port.tcp(4000), 'sync servers forwarding (D-022)');
-    // Postgres (D-082): RDS db.t4g.micro, single-AZ, 7 days of automatic backups.
+    // Postgres (D-082): RDS db.t4g.micro, single-AZ, 7 days of automatic backups. 18.6, the newest
+    // RDS offered on the first deploy and the local compose version; newer than CDK's named list.
     const dbGroup = new SecurityGroup(this, 'Db', {
       vpc: this.vpc,
       description: 'Postgres',
@@ -84,7 +85,7 @@ export class DataStack extends Stack {
     });
     dbGroup.addIngressRule(this.servers, Port.tcp(5432), 'the servers');
     this.db = new DatabaseInstance(this, 'Postgres', {
-      engine: DatabaseInstanceEngine.postgres({ version: PostgresEngineVersion.VER_18_3 }),
+      engine: DatabaseInstanceEngine.postgres({ version: PostgresEngineVersion.of('18.6', '18') }),
       instanceType: InstanceType.of(InstanceClass.T4G, InstanceSize.MICRO),
       vpc: this.vpc,
       vpcSubnets: { subnetType: SubnetType.PRIVATE_ISOLATED },
