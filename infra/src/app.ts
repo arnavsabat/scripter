@@ -1,14 +1,14 @@
 // The CDK app (SPEC 5.5). The accounts-phase stacks, deployed in this order (accounts step 8):
 //   WrBudgets (the $20 / $40 alarms) → WrEmail (SES verification links) → WrAuth (Cognito).
 // Then the beta itself (D-091; docs/runbook.md): WrDns (the domain's Route 53 zone, D-097),
-// WrData (Postgres, DynamoDB, S3, the network), WrCert (only with a domain, in us-east-1), and
+// WrData (Postgres, DynamoDB, S3, the network), the certificate (infra/scripts/cert.sh: the free
+// plan forbids stacks in us-east-1, D-099), and
 // WrApp (CloudFront, the load balancer, the tasks; `-c servers=off` takes the servers away).
 // WrLoad, the temporary load-test cluster (D-093), is deployed only for a load test, then destroyed.
 import { App } from 'aws-cdk-lib';
 import { AuthStack } from './auth';
 import { BetaStack } from './beta';
 import { BudgetsStack } from './budgets';
-import { CertStack } from './cert';
 import { loadConfig } from './config';
 import { DataStack } from './data';
 import { DnsStack } from './dns';
@@ -33,16 +33,12 @@ const data = new DataStack(app, 'WrData', {
   env,
   backupDays: config.accountPlan === 'free' ? 1 : 7, // the free plan's limit (D-098)
 });
-const cert =
-  config.domain &&
-  new CertStack(app, 'WrCert', { env: { region: 'us-east-1' }, domain: config.domain });
 new BetaStack(app, 'WrApp', {
   env,
-  crossRegionReferences: !!cert,
   config,
   data,
   auth,
-  ...(cert ? { certificate: cert.certificate } : {}),
+  ...(config.certificateArn ? { certificateArn: config.certificateArn } : {}),
   // `beta:down` deploys with `-c servers=off` (D-097); anything else brings them up.
   servers: app.node.tryGetContext('servers') !== 'off',
 });

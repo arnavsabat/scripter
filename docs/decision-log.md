@@ -30,6 +30,7 @@ The full specification is `docs/SPEC.md`; this is the index. Entry numbers point
   - **The deploy stacks:** `WrData`, `WrApp`, `WrCert` (D-091).
   - **Load tests:** the harness (D-092) and the load-test cluster `WrLoad` (D-093).
   - **The Privacy Policy** brought up to date, and 7-day recovery (D-094).
+- **The certificate (D-099):** made in us-east-1 by `infra/scripts/cert.sh`, not a stack, because the free plan forbids CloudFormation there; `WrApp` uses it by ARN (`WR_CERTIFICATE_ARN`).
 - **Postgres backups (D-098):** 1 day while the AWS account is on the free plan (its limit), 7 after the upgrade (`WR_ACCOUNT_PLAN=paid`). The writing keeps DynamoDB's 7-day recovery throughout.
 - **Name, domain and hosting (D-096, built in D-097):** the product is Scripter, at `scripter.ca`, with DNS in Route 53. The beta's servers run on demand (`beta:up` / `beta:down`), as two Fargate Spot tasks while up; CloudFront and the web app stay up throughout.
 - **Browsers (D-089):** Chrome, Edge and Safari supported; Firefox works, with a one-time note that a few lines may wrap differently on screen.
@@ -345,7 +346,7 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ## Known risks
 
 - ~~D-091: one sync server on Fargate Spot~~: two tasks (D-096, D-097). Spot can still reclaim both at once; then writers wait a minute or two for replacements, typing on their devices and losing nothing.
-- New (D-098): **free-plan limits show up only at deploy.** Postgres backups were the first (1 day). If another appears, the choice is the same: a smaller setting, or upgrading to paid.
+- New (D-098, D-099): **free-plan limits show up only at deploy.** So far: Postgres backups at most 1 day, and no CloudFormation, SSM or Lambda in us-east-1 (the certificate is made by a script instead). If another appears, the choice is the same: a smaller setting, or upgrading to paid.
 - New (D-096): **the free plan ends on 2027-04-26,** or sooner if the credits run out. The account then closes (AWS keeps its data for 90 days) unless Arnav upgrades it to paid. Running the servers on demand keeps the credits lasting until then.
 - New (D-097): **while the servers are down, `scripter.ca` can't be used,** and anyone who visits sees "Can't reach Scripter". Bring them up (`beta:up`, about 10 minutes) before a session, a demo or interview weeks.
 - New (D-097): **Cognito's custom domain and CloudFront** can take up to an hour on the first deploy. That's slow, but only once.
@@ -375,6 +376,43 @@ Earlier rejections, with reasons from the writer's point of view, are in the imp
 ---
 
 ## Log entries (newest first)
+
+### D-099 · 2026-10-28 · The free plan forbids stacks in us-east-1: the certificate comes from a script
+
+- **What happened:** after `WrData` deployed, checking for `WrCert`'s CDK bootstrap in us-east-1 hit an explicit deny from the free plan's organization policy (a service control policy; the same kind that ruled out `ca-central-1` in D-058).
+  - Tested read-only in us-east-1: ACM, CloudFront and IAM are allowed; CloudFormation, SSM and Lambda are denied.
+  - CloudFront and Cognito's custom domain take certificates only from us-east-1. So `WrCert` can't deploy, and neither can CDK's cross-region references, which use SSM and Lambda there.
+- **Options:**
+  1. Make the certificate with the AWS CLI and keep everything else in CDK: still free, no charges possible.
+  2. Upgrade to the paid plan: same spending while the credits last, both limits gone, but bills once the credits run out.
+  3. Skip the custom domain.
+- **Arnav asked first when the credits would run out with no users.** Claude's estimate (us-east-2 prices):
+  - about $4.50 a month with the servers down, about $1.50 a day with them up, plus about $5-10 for the load tests once;
+  - mostly down, that leaves about 55 full days of "up" time before the free plan ends on 2027-04-26;
+  - always on, the credits would be gone by mid-January.
+- **Decision (Arnav's call, option 1):** the certificate is made by `infra/scripts/cert.sh` (`pnpm --filter @wr/infra cert`).
+  - **What it does:** requests (or finds) the certificate for `scripter.ca` and `auth.scripter.ca`, writes ACM's DNS check records into the Route 53 zone with the CLI, waits until it's issued, and prints `WR_CERTIFICATE_ARN` for `infra/.env.local`.
+  - **`WrApp`** uses the certificate by ARN, and uses the domain only once that's set; until then the site keeps CloudFront's address.
+  - **`WrCert` is retired** (`infra/src/cert.ts` deleted), and with it the cross-region references.
+  - **Claude's choice within option 1:** the check records are written by the script, not by a us-east-2 stack as first described. Their values exist only once AWS has made the certificate, so a stack would need a Lambda-backed lookup of ACM to read them.
+- **For writers:** nothing changes.
+- **For the system:**
+  - one resource lives outside CDK: the certificate and its two check records, written down in the runbook;
+  - ACM renews it by itself while those records stay;
+  - the script is safe to run again.
+- **Rejected (reasons from Arnav's side):**
+  - **Upgrading now:** it could bill after the credits run out.
+  - **No custom domain:** the link wouldn't be resume-worthy.
+- **Other deploy hurdles so far** (logged in D-097 and D-098):
+  - the missing `WR_DOMAIN` line;
+  - a `deploy:data` that never started in the terminal;
+  - the 1-day backup limit and the retained leftovers it left behind.
+- **Tests:**
+  - the distribution and the sign-in domain use the certificate's ARN;
+  - no cross-region plumbing;
+  - a domain without its certificate yet stays on CloudFront's address.
+  - The stack tests are now 22.
+- **Status:** Arnav's call; built in this entry's commit. Claude ran `cert` (the certificate is free).
 
 ### D-098 · 2026-10-28 · The AWS free plan allows one day of Postgres backups: one day until the upgrade
 

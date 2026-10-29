@@ -61,9 +61,12 @@ Cognito refuses to send from `no-reply@scripter.ca` until then. Then:
 ```sh
 pnpm --filter @wr/infra deploy:auth    # Cognito: mail from no-reply@scripter.ca; scripter.ca for Google
 pnpm --filter @wr/infra deploy:data    # the network, Postgres, DynamoDB, the snapshot bucket (kept forever)
-pnpm --filter @wr/infra deploy:cert    # the certificate for scripter.ca and auth.scripter.ca, in us-east-1
+pnpm --filter @wr/infra cert           # the certificate for scripter.ca and auth.scripter.ca, in us-east-1 (D-099)
+                                       # then put the WR_CERTIFICATE_ARN line it prints in infra/.env.local
 pnpm --filter @wr/infra deploy:app     # = beta:up: builds the web app; CloudFront, sign-in domain, load balancer, two tasks
 ```
+
+**Why the certificate is a script, not a stack (D-099):** CloudFront and Cognito take certificates only from us-east-1, and the free plan's organization policy denies CloudFormation, SSM and Lambda there (ACM, CloudFront and IAM are allowed). `cert` requests the certificate with the AWS CLI, writes ACM's two DNS check records into Route 53, and waits until it's issued. ACM renews it by itself while those records stay. It's safe to run again; it finds the existing certificate.
 
 **If `deploy:data` fails on its first run,** CloudFormation rolls back but keeps the tables and the bucket (they're set to be retained), so the retry fails with "already exists". Check they're empty (`aws dynamodb scan --table-name wr-edit-log --select COUNT`, `aws s3 ls s3://<bucket>`), delete them (`aws dynamodb delete-table`, `aws s3api delete-bucket`), fix the cause, and run it again (D-098).
 

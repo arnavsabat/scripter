@@ -6,7 +6,6 @@ import { AuthStack } from '../src/auth';
 import { ContainerImage } from 'aws-cdk-lib/aws-ecs';
 import { BetaStack } from '../src/beta';
 import { BudgetsStack } from '../src/budgets';
-import { CertStack } from '../src/cert';
 import { DataStack } from '../src/data';
 import { DnsStack } from '../src/dns';
 import { LoadStack } from '../src/load';
@@ -20,10 +19,12 @@ const settings = {
   WR_COGNITO_DOMAIN_PREFIX: 'scripter-test',
 };
 const config = loadConfig(settings);
+const CERT = 'arn:aws:acm:us-east-1:111111111111:certificate/abc';
 const withDomain = loadConfig({
   ...settings,
   WR_DOMAIN: 'example.com',
   WR_HOSTED_ZONE_ID: 'Z123',
+  WR_CERTIFICATE_ARN: CERT,
 });
 const env = { region: 'us-east-2' };
 
@@ -167,27 +168,19 @@ describe('the beta (D-082, D-091)', () => {
     const cfg = domain ? withDomain : config;
     const auth = new AuthStack(app, 'A', { env: env2, config: cfg });
     const data = new DataStack(app, 'D', { env: env2 });
-    const cert = domain
-      ? new CertStack(app, 'C', {
-          env: { account: env2.account, region: 'us-east-1' },
-          domain: cfg.domain!,
-        })
-      : undefined;
     const beta = new BetaStack(app, 'W', {
       env: env2,
-      crossRegionReferences: domain,
       config: cfg,
       data,
       auth,
       image: ContainerImage.fromRegistry('public.ecr.aws/docker/library/node:24-alpine'),
-      ...(cert ? { certificate: cert.certificate } : {}),
+      ...(cfg.certificateArn ? { certificateArn: cfg.certificateArn } : {}),
       servers,
     });
     return {
       data: Template.fromStack(data),
       beta: Template.fromStack(beta),
       auth: Template.fromStack(auth),
-      ...(cert ? { cert: Template.fromStack(cert) } : {}),
     };
   };
   const { data, beta, auth } = build();
@@ -305,16 +298,20 @@ describe('the beta (D-082, D-091)', () => {
     auth.hasResourceProperties('AWS::Cognito::UserPool', { DeletionProtection: 'ACTIVE' });
   });
 
-  it('with a domain: its certificate from us-east-1, the site and sign-in at auth.<domain>', () => {
-    const { beta: t, cert } = build(true);
-    cert!.hasResourceProperties('AWS::CertificateManager::Certificate', {
-      DomainName: 'example.com',
-      SubjectAlternativeNames: ['auth.example.com'],
-    });
+  it('with a domain: its us-east-1 certificate by ARN, the site and sign-in at auth.<domain>', () => {
+    const { beta: t } = build(true);
     t.hasResourceProperties('AWS::CloudFront::Distribution', {
-      DistributionConfig: Match.objectLike({ Aliases: ['example.com'] }),
+      DistributionConfig: Match.objectLike({
+        Aliases: ['example.com'],
+        ViewerCertificate: Match.objectLike({ AcmCertificateArn: CERT }),
+      }),
     });
-    t.hasResourceProperties('AWS::Cognito::UserPoolDomain', { Domain: 'auth.example.com' });
+    t.hasResourceProperties('AWS::Cognito::UserPoolDomain', {
+      Domain: 'auth.example.com',
+      CustomDomainConfig: { CertificateArn: CERT },
+    });
+    // No stack in us-east-1 (the free plan forbids it, D-099), so no cross-region plumbing.
+    expect(JSON.stringify(t.toJSON())).not.toContain('CrossRegion');
     t.resourceCountIs('AWS::Route53::RecordSet', 2);
     // Cognito refuses a custom domain whose parent doesn't resolve yet.
     const [apex] = Object.keys(
@@ -380,6 +377,24 @@ describe('the beta (D-082, D-091)', () => {
     expect(JSON.stringify(stop)).toContain(':aws-sdk:rds:stopDBInstance');
     expect(JSON.stringify(stop)).toContain('DbInstanceIdentifier');
     expect(JSON.stringify(t.findResources('AWS::IAM::Policy'))).toContain('rds:StopDBInstance');
+  });
+
+  it("a domain without its certificate yet: the site stays on CloudFront's address", () => {
+    const app = new App();
+    const env2 = { account: '111111111111', region: 'us-east-2' };
+    const cfg = loadConfig({ ...settings, WR_DOMAIN: 'example.com', WR_HOSTED_ZONE_ID: 'Z123' });
+    expect(cfg.certificateArn).toBeUndefined();
+    const t = Template.fromStack(
+      new BetaStack(app, 'W', {
+        env: env2,
+        config: cfg,
+        data: new DataStack(app, 'D', { env: env2 }),
+        auth: new AuthStack(app, 'A', { env: env2, config: cfg }),
+        image: ContainerImage.fromRegistry('public.ecr.aws/docker/library/node:24-alpine'),
+      }),
+    );
+    t.resourceCountIs('AWS::Route53::RecordSet', 0);
+    t.resourceCountIs('AWS::Cognito::UserPoolDomain', 0);
   });
 
   it('servers up: no schedule stopping Postgres', () => {

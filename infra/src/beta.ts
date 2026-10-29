@@ -16,7 +16,7 @@
 // D-085), the purge and the servers' alarms are off, and a nightly schedule keeps Postgres stopped
 // (RDS restarts a stopped database after 7 days). CloudFront, the web app and the domain stay.
 import { CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from 'aws-cdk-lib';
-import type { ICertificate } from 'aws-cdk-lib/aws-certificatemanager';
+import { Certificate } from 'aws-cdk-lib/aws-certificatemanager';
 import {
   AllowedMethods,
   CachePolicy,
@@ -90,8 +90,12 @@ export interface BetaStackProps extends StackProps {
   config: InfraConfig;
   data: DataStack;
   auth: AuthStack;
-  /** The domain's certificate, from the us-east-1 stack (CloudFront only takes certificates there). */
-  certificate?: ICertificate;
+  /**
+   * The domain's certificate (for the domain and auth.<domain>), in us-east-1: CloudFront and
+   * Cognito take certificates only from there. Made by infra/scripts/cert.sh, not a stack, because
+   * the free plan forbids CloudFormation in us-east-1 (D-099).
+   */
+  certificateArn?: string;
   /** Tests build the stack without Docker: a placeholder image. */
   image?: ContainerImage;
   /** The load balancer and tasks exist (D-097: `-c servers=off` takes them away). Default true. */
@@ -106,22 +110,27 @@ export class BetaStack extends Stack {
     const { config, data, auth } = props;
     const { vpc } = data;
     const on = props.servers ?? true;
+    // The domain is used once its certificate exists; until then the site is CloudFront's address.
+    const certificate =
+      props.certificateArn &&
+      Certificate.fromCertificateArn(this, 'Certificate', props.certificateArn);
+    const domain = certificate ? config.domain : undefined;
     const zone =
-      config.domain &&
+      domain &&
       HostedZone.fromHostedZoneAttributes(this, 'Zone', {
-        hostedZoneId: config.domain.hostedZoneId,
-        zoneName: config.domain.name,
+        hostedZoneId: domain.hostedZoneId,
+        zoneName: domain.name,
       });
 
     // ---- Sign-in at auth.<domain> (D-097) -------------------------------------------------
     // Cognito's custom domain, so "Continue with Google" passes through the product's own address.
     // It needs the certificate (us-east-1) and the domain's own A record (below) to exist first.
     const signIn =
-      config.domain &&
-      props.certificate &&
+      domain &&
+      certificate &&
       new UserPoolDomain(this, 'SignIn', {
         userPool: auth.pool,
-        customDomain: { domainName: `auth.${config.domain.name}`, certificate: props.certificate },
+        customDomain: { domainName: `auth.${domain.name}`, certificate },
       });
     const cognitoDomain = signIn ? signIn.baseUrl() : auth.domain.baseUrl();
 
@@ -137,7 +146,7 @@ export class BetaStack extends Stack {
       retention: RetentionDays.ONE_MONTH,
       removalPolicy: RemovalPolicy.DESTROY,
     });
-    const appUrl = config.domain ? `https://${config.domain.name}` : config.appUrls.at(-1)!;
+    const appUrl = domain ? `https://${domain.name}` : config.appUrls.at(-1)!;
     // What every container shares: Cognito, the region, Postgres (verified TLS, D-091) and storage.
     const environment = {
       AWS_REGION: this.region,
@@ -255,9 +264,7 @@ export class BetaStack extends Stack {
       defaultRootObject: 'index.html',
       priceClass: PriceClass.PRICE_CLASS_100,
       httpVersion: HttpVersion.HTTP2_AND_3,
-      ...(config.domain && props.certificate
-        ? { domainNames: [config.domain.name], certificate: props.certificate }
-        : {}),
+      ...(domain && certificate ? { domainNames: [domain.name], certificate } : {}),
     });
     if (zone) {
       const apex = new ARecord(this, 'Apex', {
@@ -420,8 +427,8 @@ export class BetaStack extends Stack {
     alarm('PurgeFailed', purgeFailed.metric({ period: Duration.hours(1), statistic: 'Sum' }), 1);
 
     new CfnOutput(this, 'Url', {
-      value: config.domain
-        ? `https://${config.domain.name}`
+      value: domain
+        ? `https://${domain.name}`
         : `https://${this.distribution.distributionDomainName}`,
       description: 'The beta; add it to WR_APP_URLS for Google sign-in, then redeploy WrAuth',
     });

@@ -16,7 +16,7 @@
     "deploy:auth": "cdk deploy WrAuth --exclusively",
     "bootstrap": "cdk bootstrap",
     "deploy:data": "cdk deploy WrData",
-    "deploy:cert": "cdk deploy WrCert",
+    "cert": "bash scripts/cert.sh",
     "deploy:app": "bash scripts/beta.sh up",
     "beta:up": "bash scripts/beta.sh up",
     "beta:down": "bash scripts/beta.sh down",

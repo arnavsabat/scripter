@@ -26,6 +26,8 @@ export interface InfraConfig {
   zoneName?: string;
   /** The domain, once its zone exists (WR_HOSTED_ZONE_ID, from WrDns). Unset: CloudFront's address. */
   domain?: { name: string; hostedZoneId: string };
+  /** The domain's certificate in us-east-1 (WR_CERTIFICATE_ARN, from infra/scripts/cert.sh, D-099). */
+  certificateArn?: string;
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): InfraConfig {
@@ -61,6 +63,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): InfraConfig {
     appUrls,
     ...(env.WR_DOMAIN ? { zoneName: env.WR_DOMAIN } : {}),
     ...(domain ? { domain } : {}),
+    ...(domain && env.WR_CERTIFICATE_ARN ? { certificateArn: env.WR_CERTIFICATE_ARN } : {}),
     ...(env.WR_GOOGLE_CLIENT_ID
       ? {
           google: {

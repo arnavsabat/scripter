@@ -124,7 +124,7 @@ The CDK app in `infra/src` defines the accounts stacks (`WrBudgets`, `WrEmail`, 
 
 - **`WrData`:** Postgres, DynamoDB, S3 and the network, all kept forever;
 - **`WrDns`:** the domain's Route 53 zone (the domain is registered at Porkbun);
-- **`WrCert`:** the certificate for the site and `auth.<domain>`, the sign-in domain;
+- **the certificate** for the site and `auth.<domain>`, the sign-in domain: made by `infra/scripts/cert.sh` in us-east-1, where the AWS free plan forbids stacks (D-099);
 - **`WrApp`:** CloudFront, the sign-in domain, the load balancer and two tasks, the daily purge, and the alarms. `pnpm --filter @wr/infra beta:up` / `beta:down` brings the servers up or takes them away (the site stays up);
 - **`WrLoad`:** the temporary load-test cluster.
 
